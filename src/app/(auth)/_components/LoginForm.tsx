@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { InputField } from "./InputField";
 import Image from "next/image";
 import { images } from "@/lib/images";
+import { useRouter } from "next/navigation";
 
 // ✅ Validation schema
 const loginSchema = z.object({
@@ -20,6 +22,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -39,6 +42,7 @@ export default function LoginForm() {
 
       console.log("Logging in with:", data);
       toast.success("Login successful!");
+      router.push("/dashboard/dashboard")
     } catch (error) {
       toast.error("Login failed. Please try again.");
     } finally {
@@ -47,15 +51,17 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full md:w-1/2 p-8 lg:p-16 flex flex-col justify-center items-center">
+    <div className="w-full md:w-1/2 p-8 lg:p-16 mb-14 flex flex-col justify-center items-center">
       <div className="max-w-sm w-full space-y-8">
         {/* Logo + Heading */}
         <div className="flex flex-col items-center space-y-3">
           <Image src={images.mechLogo} alt="mech-logo" />
-          <h1 className="text-2xl font-semibold text-teal-700">
+          <h1 className="text-2xl font-bold text-[#00594C]">
             Welcome MechAfrica Admin
           </h1>
-          <p className="text-gray-500 text-sm">Manage MechAfrica from here</p>
+          <p className="text-[#00594C] ray-500 text-sm">
+            Manage MechAfrica from here
+          </p>
         </div>
 
         {/* Form */}
@@ -64,7 +70,7 @@ export default function LoginForm() {
             label="Email"
             name="email"
             type="email"
-            placeholder="ephraimi@mechafrica.com"
+            placeholder="admin@mechafrica.com"
             icon={Mail}
             register={register}
             errors={errors}
@@ -84,7 +90,7 @@ export default function LoginForm() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 rounded-xl font-semibold bg-teal-700 hover:bg-teal-600 flex items-center justify-center gap-2"
+            className="w-full py-5 cursor-pointer rounded-lg font-semibold bg-[#00594C] hover:bg-[#00594cd4] ease-in flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

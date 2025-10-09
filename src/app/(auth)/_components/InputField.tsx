@@ -1,4 +1,4 @@
-import { useState } from "react";
+"use client";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import {
   Path,
   FieldValues,
 } from "react-hook-form";
+import { useState } from "react";
 
 interface InputFieldProps<T extends FieldValues> {
   label: string;
@@ -41,14 +42,14 @@ export function InputField<T extends FieldValues>({
       : undefined;
 
   return (
-    <div className="space-y-2 w-full">
+    <div className="space-y-2 w-full border-none outline-none">
       <Label htmlFor={String(name)} className="text-gray-700">
         {label}
       </Label>
 
       <div className="relative flex items-center">
         {Icon && (
-          <Icon className="absolute left-3 text-gray-400 w-5 h-5 pointer-events-none" />
+          <Icon className="absolute left-3 text-[#00594C] w-5 h-5 pointer-events-none" />
         )}
 
         <Input
@@ -56,7 +57,7 @@ export function InputField<T extends FieldValues>({
           type={inputType}
           placeholder={placeholder}
           {...register(name)}
-          className={`pl-10 pr-10 py-2 border-gray-300 focus:ring-2 focus:ring-teal-500 rounded-xl ${
+          className={`pl-10 pr-10 py-5 bg-white border-gray-200 focus:ring-1 focus:ring-[#00594C] rounded-lg ${
             errorMessage ? "border-red-500" : ""
           }`}
         />
@@ -67,7 +68,7 @@ export function InputField<T extends FieldValues>({
             onClick={() => setShowPassword(!showPassword)}
             variant="ghost"
             size="icon"
-            className="absolute right-3 text-gray-500 hover:text-gray-700"
+            className="absolute right-3 text-[#00594C] cursor-pointer hover:text-gray-700"
             tabIndex={-1}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
