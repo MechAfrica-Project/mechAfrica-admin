@@ -3,6 +3,7 @@ import { Comfortaa, Poppins } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
+import { Toaster } from "sonner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -32,6 +33,7 @@ export default function RootLayout({
         {children}
         {/* ✅ Add Speed Insights component */}
         <SpeedInsights />
+        <Toaster position="top-center" />
       </body>
     </html>
   );
