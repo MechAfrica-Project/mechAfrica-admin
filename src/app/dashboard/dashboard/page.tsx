@@ -1,5 +1,5 @@
-import React from "react";
+import { redirect } from "next/navigation";
 
-export default function Dashboard() {
-  return <div className="h-[120rem]">Dashboard</div>;
+export default function DashboardIndex() {
+  redirect("/dashboard/dashboard/maps-page");
 }

@@ -1,7 +1,5 @@
-import React from 'react'
+import { redirect } from "next/navigation";
 
 export default function Weather() {
-  return (
-    <div>Weather</div>
-  )
+  redirect("/dashboard/weather/weather-data");
 }

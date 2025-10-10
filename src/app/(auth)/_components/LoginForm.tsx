@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,14 +11,13 @@ import { InputField } from "./InputField";
 import Image from "next/image";
 import { images } from "@/lib/images";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/lib/constants";
 
-// ✅ Validation schema
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-// ✅ Type inference
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
@@ -37,13 +37,10 @@ export default function LoginForm() {
     toast.info("Logging in...");
 
     try {
-      // simulate login request
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      console.log("Logging in with:", data);
       toast.success("Login successful!");
-      router.push("/dashboard/dashboard")
-    } catch (error) {
+      router.push(ROUTES.dashboard);
+    } catch {
       toast.error("Login failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -53,20 +50,16 @@ export default function LoginForm() {
   return (
     <div className="w-full md:w-1/2 p-8 lg:p-16 mb-14 flex flex-col justify-center items-center">
       <div className="max-w-sm w-full space-y-8">
-        {/* Logo + Heading */}
         <div className="flex flex-col items-center space-y-3">
           <Image src={images.mechLogo} alt="mech-logo" />
           <h1 className="text-2xl font-bold text-[#00594C]">
             Welcome MechAfrica Admin
           </h1>
-          <p className="text-[#00594C] ray-500 text-sm">
-            Manage MechAfrica from here
-          </p>
+          <p className="text-[#00594C] text-sm">Manage MechAfrica from here</p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <InputField<LoginFormValues>
+          <InputField
             label="Email"
             name="email"
             type="email"
@@ -76,7 +69,7 @@ export default function LoginForm() {
             errors={errors}
           />
 
-          <InputField<LoginFormValues>
+          <InputField
             label="Password"
             name="password"
             type="password"
@@ -90,7 +83,7 @@ export default function LoginForm() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full py-5 cursor-pointer rounded-lg font-semibold bg-[#00594C] hover:bg-[#00594cd4] ease-in flex items-center justify-center gap-2"
+            className="w-full py-5 rounded-lg font-semibold bg-[#00594C] hover:bg-[#00594cd4] flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

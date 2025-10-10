@@ -10,3 +10,9 @@ export interface NavLink {
     link: string;
     text: string;
 }
+
+export interface SectionTab {
+    title: string;
+    path: string;
+  }
+  
