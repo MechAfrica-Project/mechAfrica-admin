@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, ReactNode } from "react";
-import Header from "@/components/header/header";
 import SideNav from "@/components/dashboard/sideNav";
 import { Menu } from "lucide-react";
 
