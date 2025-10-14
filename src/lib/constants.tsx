@@ -41,5 +41,5 @@ export const SECTION_TABS = {
 // lib/routes.ts
 export const ROUTES = {
   admin: "/dashboard/admin/users",
-  dashboard: "/dashboard/dashboard/map",
+  dashboard: "/dashboard/dashboard/maps-page",
 };
