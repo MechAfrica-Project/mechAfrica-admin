@@ -14,7 +14,7 @@ export default function WeatherHeader() {
   const [active, setActive] = useState("Weather Data");
 
   useEffect(() => {
-    const current = weatherTabs.find(tab => pathname.includes(tab.path));
+    const current = weatherTabs.find((tab) => pathname.includes(tab.path));
     if (current) setActive(current.title);
   }, [pathname]);
 
