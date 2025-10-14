@@ -10,7 +10,10 @@ interface SectionLayoutProps {
   children: React.ReactNode;
 }
 
-export default function SectionLayout({ basePath, children }: SectionLayoutProps) {
+export default function SectionLayout({
+  basePath,
+  children,
+}: SectionLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
