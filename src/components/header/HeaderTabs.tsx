@@ -1,8 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { useRouter, usePathname } from "next/navigation";
 import { SECTION_TABS } from "@/lib/constants";
+import { ChevronDown } from "lucide-react";
 
 export default function HeaderTabs() {
   const { activeTab, setActiveTab, resetFilters } = useHeaderStore();
@@ -37,23 +39,54 @@ export default function HeaderTabs() {
   if (!tabs.length) return null;
 
   return (
-    <div className="flex gap-1 sm:gap-2">
-      {tabs.map((tab) => (
-        <Button
-          key={tab.title}
-          variant={tab.title === activeTab ? "default" : "outline"}
-          size="sm"
-          className={`text-xs sm:text-sm ${
-            tab.title === activeTab
-              ? "bg-[#00594C] text-white"
-              : "text-gray-600 hover:text-[#00594C]"
-          }`}
-          onClick={() => handleTabClick(tab)}
-        >
-          <span className="hidden sm:inline">{tab.title}</span>
-          <span className="sm:hidden">{tab.title.split(' ')[0]}</span>
-        </Button>
-      ))}
-    </div>
+    <>
+      {/* Desktop: Show all tabs as buttons */}
+      <div className="hidden sm:flex gap-1 sm:gap-2">
+        {tabs.map((tab) => (
+          <Button
+            key={tab.title}
+            variant={tab.title === activeTab ? "default" : "outline"}
+            size="sm"
+            className={`text-xs sm:text-sm ${
+              tab.title === activeTab
+                ? "bg-[#00594C] text-white"
+                : "text-gray-600 hover:text-[#00594C]"
+            }`}
+            onClick={() => handleTabClick(tab)}
+          >
+            {tab.title}
+          </Button>
+        ))}
+      </div>
+
+      {/* Mobile: Show dropdown with current tab + chevron */}
+      <div className="sm:hidden">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1 text-xs bg-[#00594C] text-white hover:bg-[#00594C]/90"
+            >
+              <span>{activeTab || tabs[0]?.title}</span>
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {tabs.map((tab) => (
+              <DropdownMenuItem
+                key={tab.title}
+                onClick={() => handleTabClick(tab)}
+                className={`cursor-pointer ${
+                  tab.title === activeTab ? "bg-[#00594C]/10 text-[#00594C] font-medium" : ""
+                }`}
+              >
+                {tab.title}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   );
 }
