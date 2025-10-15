@@ -13,11 +13,11 @@ export default function HeaderFilterDropdown({ name }: { name: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="capitalize">
+        <Button variant="outline" size="sm" className="capitalize text-xs sm:text-sm">
           {selected}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent align="center" className="w-40 sm:w-48">
         {options.map((opt) => (
           <DropdownMenuItem key={opt.value} onClick={() => setSelectedFilter(name, opt.label)}>
             {opt.label}
