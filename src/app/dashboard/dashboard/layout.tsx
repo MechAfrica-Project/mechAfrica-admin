@@ -1,9 +1,10 @@
-import SectionLayout from "@/components/layouts/SectionLayout";
+import SmartSectionLayout from "@/components/layouts/SmartSectionLayout";
+
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <SectionLayout basePath="/dashboard">{children}</SectionLayout>;
+  return <SmartSectionLayout basePath="/dashboard">{children}</SmartSectionLayout>;
 }

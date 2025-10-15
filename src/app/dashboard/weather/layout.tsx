@@ -1,9 +1,10 @@
-import SectionLayout from "@/components/layouts/SectionLayout";
+
+import SmartSectionLayout from "@/components/layouts/SmartSectionLayout";
 
 export default function WeatherLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <SectionLayout basePath="/weather">{children}</SectionLayout>;
+  return <SmartSectionLayout basePath="/weather">{children}</SmartSectionLayout>;
 }
