@@ -1,9 +1,16 @@
-"use client"
+"use client";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { useEffect } from "react";
+import SearchBar from "./_components/SearchBar";
+import FilterButton from "./_components/FilterButton";
+import MapCard from "./_components/MapCard";
+import StatsGrid from "./_components/StatsGrid";
+import ChartCard from "./_components/ChartCard";
+import { useMapData } from "./hooks/useMapData";
 
 export default function MapPage() {
   const { setTitle, setFilters } = useHeaderStore();
+  const { mapData, loading, refreshData } = useMapData();
 
   useEffect(() => {
     setTitle("Map");
@@ -23,11 +30,30 @@ export default function MapPage() {
   }, [setTitle, setFilters]);
 
   return (
-    <div className="p-3 sm:p-6">
-      <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">🗺️ Map Content</h3>
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-8 text-center text-gray-600">
-          <p className="text-sm sm:text-base">Interactive map will be displayed here...</p>
+    <div className="p-3 sm:p-6 space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <SearchBar />
+        <FilterButton />
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Map */}
+        <div className="lg:col-span-2">
+          <MapCard />
+        </div>
+
+        {/* Right Column - Stats and Chart */}
+        <div className="space-y-6">
+          {/* Stats Grid */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Overview</h3>
+            <StatsGrid />
+          </div>
+
+          {/* Chart */}
+          <ChartCard />
         </div>
       </div>
     </div>
