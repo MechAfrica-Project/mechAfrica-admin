@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, ReactNode } from "react";
 import SideNav from "@/components/dashboard/sideNav";
-import { Menu } from "lucide-react";
+import Header from "@/components/header/Header";
 
 interface LayoutProps {
   children: ReactNode;
@@ -32,16 +32,10 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content area */}
       <div className="flex flex-col flex-grow bg-white">
-        {/* Fixed Header (same component for mobile + desktop) */}
-        <header className="sticky top-0 z-30   flex items-center justify-between  md:py-0">
-          {/* Hamburger on mobile */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="p-3 rounded-md hover:bg-gray-100 md:hidden"
-          >
-            <Menu className="w-6 h-6 text-gray-700" />
-          </button>
-        </header>
+        {/* Fixed Header */}
+        <div className="sticky top-0 z-30">
+          <Header onMenuClick={() => setIsOpen(true)} />
+        </div>
 
         {/* Scrollable content below fixed header */}
         <main className="flex-grow overflow-y-auto bg-white">{children}</main>

@@ -1,9 +1,9 @@
-import SectionLayout from "@/components/layouts/SectionLayout";
+import SmartSectionLayout from "@/components/layouts/SmartSectionLayout";
 
 export default function RequestsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <SectionLayout basePath="/requests">{children}</SectionLayout>;
+  return <SmartSectionLayout basePath="/requests">{children}</SmartSectionLayout>;
 }
