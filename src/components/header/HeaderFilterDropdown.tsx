@@ -1,6 +1,12 @@
 "use client";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 
 export default function HeaderFilterDropdown({ name }: { name: string }) {
@@ -13,13 +19,37 @@ export default function HeaderFilterDropdown({ name }: { name: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="capitalize text-xs sm:text-sm">
-          {selected}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="
+            border border-gray-200
+            bg-white
+            text-gray-800
+            text-sm
+            font-medium
+            rounded-xl
+            shadow-sm
+            hover:bg-gray-50
+            flex items-center justify-between
+            w-[130px] sm:w-[150px]
+          "
+        >
+          <span className="truncate">{selected}</span>
+          <ChevronDown className="ml-2 h-4 w-4 text-gray-700" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-40 sm:w-48">
+
+      <DropdownMenuContent
+        align="center"
+        className="w-[130px] sm:w-[150px] rounded-xl shadow-md"
+      >
         {options.map((opt) => (
-          <DropdownMenuItem key={opt.value} onClick={() => setSelectedFilter(name, opt.label)}>
+          <DropdownMenuItem
+            key={opt.value}
+            onClick={() => setSelectedFilter(name, opt.label)}
+            className="text-sm capitalize"
+          >
             {opt.label}
           </DropdownMenuItem>
         ))}
