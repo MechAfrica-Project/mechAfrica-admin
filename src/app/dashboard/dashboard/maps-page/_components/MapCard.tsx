@@ -2,8 +2,15 @@
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GoogleMap from "@/components/maps/GoogleMap";
-import { MapMarker, generateMapMarkers, Farmer, ServiceProvider } from "@/lib/dummyData";
+import {
+  MapMarker,
+  generateMapMarkers,
+  Farmer,
+  ServiceProvider,
+} from "@/lib/dummyData";
 import { useState } from "react";
+import Image from "next/image";
+import { images } from "@/lib/images";
 
 interface MapCardProps {
   className?: string;
@@ -15,7 +22,7 @@ export default function MapCard({ className = "" }: MapCardProps) {
 
   const handleMarkerClick = (marker: MapMarker) => {
     setSelectedMarker(marker);
-    console.log('Marker clicked:', marker);
+    console.log("Marker clicked:", marker);
   };
 
   const handleRefresh = () => {
@@ -24,18 +31,26 @@ export default function MapCard({ className = "" }: MapCardProps) {
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border p-4 sm:p-6 ${className}`}>
+    <div
+      className={`bg-white rounded-lg shadow-sm border p-4 sm:p-6 ${className}`}
+    >
       {/* Map Header */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800">Ghana Map</h3>
           <p className="text-sm text-gray-600">
-            {markers.filter(m => m.type === 'farmer').length} Farmers • {' '}
-            {markers.filter(m => m.type === 'service_provider').length} Service Providers
+            {markers.filter((m) => m.type === "farmer").length} Farmers •{" "}
+            {markers.filter((m) => m.type === "service_provider").length}{" "}
+            Service Providers
           </p>
         </div>
-        <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700" onClick={handleRefresh}>
-          <RefreshCw className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="bg-[#00594C] hover:bg-[#00594cec] cursor-pointer"
+          onClick={handleRefresh}
+        >
+          <Image src={images.maximize} alt="max" />
         </Button>
       </div>
 
@@ -60,19 +75,24 @@ export default function MapCard({ className = "" }: MapCardProps) {
       {selectedMarker && (
         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
           <h4 className="font-medium text-gray-800 mb-2">
-            {selectedMarker.type === 'farmer' ? 'Farmer' : 'Service Provider'}: {(selectedMarker.data as Farmer | ServiceProvider).name}
+            {selectedMarker.type === "farmer" ? "Farmer" : "Service Provider"}:{" "}
+            {(selectedMarker.data as Farmer | ServiceProvider).name}
           </h4>
           <p className="text-sm text-gray-600">
-            Location: {(selectedMarker.data as Farmer | ServiceProvider).location.address}
+            Location:{" "}
+            {(selectedMarker.data as Farmer | ServiceProvider).location.address}
           </p>
-          {selectedMarker.type === 'farmer' && (
+          {selectedMarker.type === "farmer" && (
             <p className="text-sm text-gray-600">
-              Crops: {(selectedMarker.data as Farmer).crops.join(', ')} • {(selectedMarker.data as Farmer).acres} acres
+              Crops: {(selectedMarker.data as Farmer).crops.join(", ")} •{" "}
+              {(selectedMarker.data as Farmer).acres} acres
             </p>
           )}
-          {selectedMarker.type === 'service_provider' && (
+          {selectedMarker.type === "service_provider" && (
             <p className="text-sm text-gray-600">
-              Services: {(selectedMarker.data as ServiceProvider).services.join(', ')} • Rating: {(selectedMarker.data as ServiceProvider).rating}/5
+              Services:{" "}
+              {(selectedMarker.data as ServiceProvider).services.join(", ")} •
+              Rating: {(selectedMarker.data as ServiceProvider).rating}/5
             </p>
           )}
         </div>
