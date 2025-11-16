@@ -39,7 +39,7 @@ export default function StatsGrid() {
   const stats = getMapStatistics();
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 gap-2">
       <StatCard
         title="Farmers"
         value={stats.totalFarmers.toLocaleString()}
