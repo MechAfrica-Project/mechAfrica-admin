@@ -13,7 +13,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const { title, filters } = useHeaderStore();
 
   return (
-    <div className="flex items-center justify-between border-b border-gray-200 bg-white px-3 py-3 sm:px-6">
+    <div className="flex items-center justify-between bg-white px-3 py-4 sm:px-6">
       {/* Left side - Mobile Menu Button + Page Title */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
         {/* Mobile Menu Button */}
