@@ -36,7 +36,7 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   useEffect(() => {
     mapMarkers.forEach(marker => marker.setMap(null));
     setMapMarkers([]);
-  }, [markers]);
+  }, [markers, mapMarkers]);
 
   // Add new markers
   useEffect(() => {

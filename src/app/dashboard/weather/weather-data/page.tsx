@@ -52,7 +52,7 @@ export default function WeatherPage() {
   useEffect(() => {
     setTitle("Weather");
     setFilters({});
-  }, [setTitle]);
+  }, [setTitle, setFilters]);
 
   // Listen for `Weather Broadcast` action tab
   // React to header action tabs via the header store. This is more reliable than
