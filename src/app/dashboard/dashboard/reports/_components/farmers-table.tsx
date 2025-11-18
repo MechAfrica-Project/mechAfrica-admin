@@ -79,8 +79,10 @@ const farmerData: Farmer[] = [
   },
 ];
 
+type Metric = "farmer" | "provider" | "solved" | "escalated";
+
 interface FarmersTableProps {
-  metric: string;
+  metric: Metric;
 }
 
 export function FarmersTable({ metric }: FarmersTableProps) {

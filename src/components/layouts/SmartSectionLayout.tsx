@@ -20,7 +20,11 @@ export default function SmartSectionLayout({ basePath, children }: SectionLayout
 
   // Detect the active tab based on pathname
   useEffect(() => {
-    const current = tabs.find((tab) => pathname.startsWith(tab.path));
+    // TabItem may be a NavTab (has path) or an ActionTab (no path). Guard before
+    // accessing `path`.
+    const current = tabs.find((tab) => {
+      return ("path" in tab && typeof tab.path === "string" && pathname.startsWith(tab.path));
+    });
     const newActive = current?.title || tabs[0]?.title || "";
     setActiveTab(newActive);
     setTitle(newActive);

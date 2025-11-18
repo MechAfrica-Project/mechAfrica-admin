@@ -92,7 +92,8 @@ const mockAdmins = [
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState(mockAdmins);
-  const { setTitle, setFilters } = useHeaderStore();
+  const { setTitle, setFilters, selectedFilters } = useHeaderStore();
+  
 
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([
     "1",
@@ -155,7 +156,16 @@ export default function AdminsPage() {
     <main className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-6xl">
         <AdminsTable
-          admins={admins}
+          admins={
+            // Apply header-selected filter (Users)
+            (() => {
+              const sel = selectedFilters["Users"] || "all";
+              if (sel === "all") return admins;
+              return admins.filter((a) =>
+                a.type.toLowerCase().includes(sel.toLowerCase())
+              );
+            })()
+          }
           selectedAdmins={selectedAdmins}
           onSelectAdmin={handleSelectAdmin}
           onDeleteAdmin={handleDeleteAdmin}

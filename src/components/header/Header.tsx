@@ -47,7 +47,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       {/* Right side - Navigation Tabs */}
-      <div className="flex items-center flex-shrink-0">
+      <div className="flex items-center shrink-0">
         <HeaderTabs />
       </div>
     </div>

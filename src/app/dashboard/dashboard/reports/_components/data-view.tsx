@@ -5,8 +5,10 @@ import { BarChart3, Grid3x3 } from "lucide-react";
 import { FarmersTable } from "./farmers-table";
 import { OnboardingChart } from "./onboarding-chart";
 
+type Metric = "farmer" | "provider" | "solved" | "escalated";
+
 interface DataViewProps {
-  metric: string;
+  metric: Metric;
   viewType: "table" | "chart";
   onViewChange: (view: "table" | "chart") => void;
 }

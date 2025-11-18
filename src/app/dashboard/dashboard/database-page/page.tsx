@@ -6,6 +6,7 @@ import { useHeaderStore } from "@/stores/useHeaderStore";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Contact } from "@/types/types";
+import { NewContactInput } from "@/types/custom";
 import { dummyContacts } from "./lib/dummy-data";
 import DataTable from "./_components/data-table";
 import { columns } from "./_components/columns";
@@ -15,6 +16,7 @@ import DeleteConfirmDialog from "./_components/delete-confirm-dialog";
 
 export default function DatabasePage() {
   const { setTitle, setFilters } = useHeaderStore();
+  const { selectedFilters } = useHeaderStore();
   const [contacts, setContacts] = useState<Contact[]>(dummyContacts);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -34,11 +36,57 @@ export default function DatabasePage() {
     });
   }, [setTitle, setFilters]);
 
-  const handleAddContact = (newContact: Omit<Contact, "id">) => {
-    const contact: Contact = {
-      ...newContact,
+  const handleAddContact = (newContact: NewContactInput) => {
+    // Build a full Contact object with sensible defaults for missing fields.
+    const name = newContact.name ?? "";
+    const nameParts = name.trim().split(" ").filter(Boolean);
+    const firstName = nameParts[0] || "";
+    const otherNames = nameParts.slice(1).join(" ") || "";
+
+    const baseCommon = {
       id: Date.now().toString(),
-    };
+      firstName,
+      otherNames,
+      gender: newContact.gender ?? "Male",
+      phone: newContact.phone ?? "",
+      region: newContact.region ?? "",
+      registrationDate: newContact.registrationDate ?? new Date().toISOString().split("T")[0],
+      initials:
+        newContact.initials ?? ((firstName[0] || "") + (otherNames[0] || "")).toUpperCase(),
+      profileImage: newContact.profileImage,
+    } as const;
+
+    const type = newContact.type ?? "Farmer";
+
+    let contact: Contact;
+    if (type === "Farmer") {
+      contact = {
+        ...baseCommon,
+        type: "Farmer",
+        farmName: newContact.farmName ?? "",
+        farmSize: newContact.farmSize ?? 0,
+        farmSizeUnit: (newContact.farmSizeUnit as "Acre" | "Hectare") ?? "Acre",
+        crops: newContact.crops ?? [],
+        formLocation: newContact.formLocation ?? "",
+        district: newContact.district ?? "",
+      } as Contact;
+    } else if (type === "Provider") {
+      contact = {
+        ...baseCommon,
+        type: "Provider",
+        services: newContact.services ?? [],
+        district: newContact.district ?? "",
+      } as Contact;
+    } else {
+      // Agent
+      contact = {
+        ...baseCommon,
+        type: "Agent",
+        district: newContact.district ?? "",
+        assignedRegion: newContact.assignedRegion ?? "",
+      } as Contact;
+    }
+
     setContacts([...contacts, contact]);
     setShowAddDialog(false);
   };
@@ -74,7 +122,13 @@ export default function DatabasePage() {
             onEdit: setEditingContact,
             onDelete: setDeletingContactId,
           })}
-          data={contacts}
+          data={
+            ((): Contact[] => {
+              const sel = selectedFilters["Users"] || "all";
+              if (sel === "all") return contacts;
+              return contacts.filter((c) => c.type.toLowerCase() === sel.toLowerCase());
+            })()
+          }
         />
       </div>
 

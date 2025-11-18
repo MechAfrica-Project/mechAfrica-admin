@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Info, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AdminTypeBadge } from "./admin-type-badge";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
+import { useState } from "react";
 
 interface Admin {
   id: string;
@@ -28,6 +30,7 @@ export function AdminRow({
   onSelect,
   onDelete,
 }: AdminRowProps) {
+  const [open, setOpen] = useState(false);
   return (
     <TableRow className="border-border hover:bg-muted/30">
       <TableCell>
@@ -62,10 +65,21 @@ export function AdminRow({
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={onDelete}
+            onClick={() => setOpen(true)}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
+          <ConfirmDialog
+            open={open}
+            onOpenChange={setOpen}
+            title={`Delete ${admin.name}`}
+            description={`Are you sure you want to delete ${admin.name}? This action cannot be undone.`}
+            confirmLabel="Delete"
+            onConfirm={() => {
+              setOpen(false);
+              onDelete();
+            }}
+          />
         </div>
       </TableCell>
     </TableRow>

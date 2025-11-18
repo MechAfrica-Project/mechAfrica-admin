@@ -34,7 +34,8 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
     { title: "Weather Data", path: "/dashboard/weather/weather-data" },
     {
       title: "Weather Broadcast",
-      path: "/dashboard/weather/weather-broadcast",
+      type: "action",
+      action: "open-weatherBroadcast-modal",
     },
   ],
   "/requests": [
