@@ -23,7 +23,9 @@ import { Contact } from "@/types/types";
 interface AddContactDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (contact: Omit<Contact, "id">) => void;
+  // We only collect a subset of fields in the UI. Accept a partial contact and
+  // let the parent page fill in missing required fields with sensible defaults.
+  onAdd: (contact: Partial<Omit<Contact, "id">>) => void;
 }
 
 export default function AddContactDialog({

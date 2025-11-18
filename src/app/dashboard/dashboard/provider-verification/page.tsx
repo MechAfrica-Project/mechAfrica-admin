@@ -1,5 +1,8 @@
-import React from "react";
+"use client";
 
-export default function ProviderVerification() {
-  return <div>ProviderVerification</div>;
+import ProvidersPage from "./ProvidersPage";
+
+
+export default function Page() {
+  return <ProvidersPage />;
 }

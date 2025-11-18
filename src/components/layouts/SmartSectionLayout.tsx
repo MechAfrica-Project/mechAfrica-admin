@@ -20,7 +20,11 @@ export default function SmartSectionLayout({ basePath, children }: SectionLayout
 
   // Detect the active tab based on pathname
   useEffect(() => {
-    const current = tabs.find((tab) => pathname.startsWith(tab.path));
+    // TabItem may be a NavTab (has path) or an ActionTab (no path). Guard before
+    // accessing `path`.
+    const current = tabs.find((tab) => {
+      return ("path" in tab && typeof tab.path === "string" && pathname.startsWith(tab.path));
+    });
     const newActive = current?.title || tabs[0]?.title || "";
     setActiveTab(newActive);
     setTitle(newActive);
@@ -29,7 +33,7 @@ export default function SmartSectionLayout({ basePath, children }: SectionLayout
   return (
     <div className="flex flex-col h-full">
       {/* Page Transition Animation */}
-      <div className="relative flex-grow overflow-y-auto p-2 sm:p-4">
+      <div className="relative grow overflow-y-auto p-2 sm:p-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}

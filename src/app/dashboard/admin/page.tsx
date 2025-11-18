@@ -1,22 +1,181 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { useHeaderStore } from "@/stores/useHeaderStore";
-import { useEffect } from "react";
+import { AddAdminDialog } from "./_components/add-admin-dialog";
+import { AdminsTable } from "./_components/admins-table";
 
-export default function Admin() {
-  const { setTitle } = useHeaderStore();
+// Mock data - replace with real data fetching
+const mockAdmins = [
+  {
+    id: "1",
+    name: "Jane Cooper",
+    email: "jad324h463",
+    avatar: "JC",
+    type: "Admin",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "5/27/15",
+  },
+  {
+    id: "2",
+    name: "Wade Warren",
+    email: "ad324h463",
+    avatar: "WW",
+    type: "Admin",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "5/19/12",
+  },
+  {
+    id: "3",
+    name: "Esther Howard",
+    email: "ad324h463",
+    avatar: "EH",
+    type: "Agent",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "3/4/16",
+  },
+  {
+    id: "4",
+    name: "Jenny Wilson",
+    email: "ad324h463",
+    avatar: "JW",
+    type: "Agent",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "3/4/16",
+  },
+  {
+    id: "5",
+    name: "Guy Hawkins",
+    email: "ad324h463",
+    avatar: "GH",
+    type: "Accounting",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "7/27/13",
+  },
+  {
+    id: "6",
+    name: "Jacob Jones",
+    email: "ad324h463",
+    avatar: "JJ",
+    type: "Agent",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "5/27/15",
+  },
+  {
+    id: "7",
+    name: "Ronald Richards",
+    email: "ad324h463",
+    avatar: "RR",
+    type: "Admin",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "7/11/19",
+  },
+  {
+    id: "8",
+    name: "Devon Lane",
+    email: "ad324h463",
+    avatar: "DL",
+    type: "Accounting",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "9/23/16",
+  },
+  {
+    id: "9",
+    name: "Jerome Bell",
+    email: "ad324h463",
+    avatar: "JB",
+    type: "Accounting",
+    phoneNumber: "05552731324",
+    dateOfRegistration: "8/2/19",
+  },
+];
 
+export default function AdminsPage() {
+  const [admins, setAdmins] = useState(mockAdmins);
+  const { setTitle, setFilters, selectedFilters } = useHeaderStore();
+  
+
+  const [selectedAdmins, setSelectedAdmins] = useState<string[]>([
+    "1",
+    "2",
+    "6",
+  ]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Define Admin type for type safety
+  type Admin = {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    type: string;
+    phoneNumber: string;
+    dateOfRegistration: string;
+  };
+
+  // Set page title
   useEffect(() => {
     setTitle("Admin");
+    setFilters({
+      Users: [
+        { label: "All Users", value: "all" },
+        { label: "Admin", value: "admin" },
+        { label: "Providers", value: "provider" },
+        { label: "Accounting", value: "accounting" },
+      ],
+    });
   }, [setTitle]);
 
+  // Listen for action tab events from HeaderTabs
+  useEffect(() => {
+    const handleOpenModal = () => setIsDialogOpen(true);
+    window.addEventListener("open-agent-modal", handleOpenModal);
+    return () =>
+      window.removeEventListener("open-agent-modal", handleOpenModal);
+  }, []);
+
+  const handleAddAdmin = (newAdmin: Omit<Admin, "id">) => {
+    setAdmins([...admins, { ...newAdmin, id: String(admins.length + 1) }]);
+    setIsDialogOpen(false);
+  };
+
+  const handleSelectAdmin = (id: string) => {
+    setSelectedAdmins((prev) =>
+      prev.includes(id)
+        ? prev.filter((adminId) => adminId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleDeleteAdmin = (id: string) => {
+    setAdmins(admins.filter((admin) => admin.id !== id));
+    setSelectedAdmins(selectedAdmins.filter((adminId) => adminId !== id));
+  };
+
   return (
-    <div className="p-3 sm:p-6">
-      <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">👥 Admin Panel</h3>
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-8 text-center text-gray-600">
-          <p className="text-sm sm:text-base">Admin management tools will be displayed here...</p>
-        </div>
+    <main className="min-h-screen bg-background p-8">
+      <div className="mx-auto max-w-6xl">
+        <AdminsTable
+          admins={
+            // Apply header-selected filter (Users)
+            (() => {
+              const sel = selectedFilters["Users"] || "all";
+              if (sel === "all") return admins;
+              return admins.filter((a) =>
+                a.type.toLowerCase().includes(sel.toLowerCase())
+              );
+            })()
+          }
+          selectedAdmins={selectedAdmins}
+          onSelectAdmin={handleSelectAdmin}
+          onDeleteAdmin={handleDeleteAdmin}
+        />
+        <AddAdminDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          onAddAdmin={handleAddAdmin}
+        />
       </div>
-    </div>
+    </main>
   );
 }

@@ -9,6 +9,7 @@ import {
   ServiceProvider,
 } from "@/lib/dummyData";
 import { useState } from "react";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import Image from "next/image";
 import { images } from "@/lib/images";
 
@@ -17,7 +18,41 @@ interface MapCardProps {
 }
 
 export default function MapCard({ className = "" }: MapCardProps) {
-  const [markers] = useState<MapMarker[]>(generateMapMarkers());
+  const { selectedFilters } = useHeaderStore();
+  const [allMarkers] = useState<MapMarker[]>(generateMapMarkers());
+  // Apply header-selected filters (Services, Crops)
+  const markers = (() => {
+    const serviceSel = selectedFilters["Services"] || "all";
+    const cropSel = selectedFilters["Crops"] || "all";
+
+    return allMarkers.filter((m) => {
+      if (m.type === "service_provider") {
+        if (serviceSel !== "all") {
+          const services = (m.data as ServiceProvider).services || [];
+          const matches = services.some((s) =>
+            s.toLowerCase().includes(serviceSel.toLowerCase())
+          );
+          if (!matches) return false;
+        }
+        // crops filter doesn't apply to providers
+        return true;
+      }
+
+      // farmer
+      if (m.type === "farmer") {
+        if (cropSel !== "all") {
+          const crops = (m.data as Farmer).crops || [];
+          const matches = crops.some((c) =>
+            c.toLowerCase().includes(cropSel.toLowerCase())
+          );
+          if (!matches) return false;
+        }
+        // services filter doesn't apply to farmers
+        return true;
+      }
+      return true;
+    });
+  })();
   const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
 
   const handleMarkerClick = (marker: MapMarker) => {

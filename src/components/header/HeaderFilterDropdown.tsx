@@ -12,7 +12,10 @@ import { useHeaderStore } from "@/stores/useHeaderStore";
 export default function HeaderFilterDropdown({ name }: { name: string }) {
   const { filters, selectedFilters, setSelectedFilter } = useHeaderStore();
   const options = filters[name] || [];
-  const selected = selectedFilters[name] || `All ${name}`;
+  const selectedValue = selectedFilters[name];
+  // Display label for selected value (fallback to All <name>)
+  const selected =
+    options.find((o) => o.value === selectedValue)?.label || `All ${name}`;
 
   if (!options.length) return null;
 
@@ -47,7 +50,7 @@ export default function HeaderFilterDropdown({ name }: { name: string }) {
         {options.map((opt) => (
           <DropdownMenuItem
             key={opt.value}
-            onClick={() => setSelectedFilter(name, opt.label)}
+            onClick={() => setSelectedFilter(name, opt.value)}
             className="text-sm capitalize"
           >
             {opt.label}
