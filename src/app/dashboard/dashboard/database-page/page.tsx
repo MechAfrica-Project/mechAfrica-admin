@@ -56,7 +56,7 @@ export default function DatabasePage() {
   };
 
   return (
-    <main className="p-3">
+    <main className="p-3 md:px-6">
       <div className=" mx-auto">
         {/* Header with Add button */}
         <div className="mb-2 flex justify-end items-center">

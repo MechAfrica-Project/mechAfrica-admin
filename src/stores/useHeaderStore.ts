@@ -22,12 +22,17 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   activeTab: "",
   filters: {},
   selectedFilters: {},
+
   setTitle: (title) => set({ title }),
+
   setActiveTab: (tab) => set({ activeTab: tab }),
+
   setFilters: (filters) => set({ filters }),
+
   setSelectedFilter: (key, value) =>
     set((state) => ({
       selectedFilters: { ...state.selectedFilters, [key]: value },
     })),
+
   resetFilters: () => set({ filters: {}, selectedFilters: {} }),
 }));
