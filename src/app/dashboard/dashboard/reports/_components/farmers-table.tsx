@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import Pagination from "@/components/ui/pagination";
+import ListCard from "@/components/lists/ListCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InfoIcon } from "lucide-react";
 
@@ -85,10 +86,14 @@ interface FarmersTableProps {
   metric: Metric;
 }
 
-export function FarmersTable({ metric }: FarmersTableProps) {
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(
-    new Set(["1", "2", "6"])
-  );
+export function FarmersTable({ metric: _metric }: FarmersTableProps) {
+  void _metric;
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set(["1", "2", "6"]));
+  // Pagination
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+  const totalPages = Math.max(1, Math.ceil(farmerData.length / pageSize));
+  const visibleFarmers = farmerData.slice((page - 1) * pageSize, page * pageSize);
 
   const toggleRow = (id: string) => {
     const newSelected = new Set(selectedRows);
@@ -122,7 +127,7 @@ export function FarmersTable({ metric }: FarmersTableProps) {
   };
 
   return (
-    <Card className="overflow-hidden">
+    <ListCard title="Farmers" subtitle={`Total: ${farmerData.length}`} className="overflow-hidden" footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -152,7 +157,7 @@ export function FarmersTable({ metric }: FarmersTableProps) {
             </tr>
           </thead>
           <tbody>
-            {farmerData.map((farmer, index) => (
+            {visibleFarmers.map((farmer) => (
               <tr
                 key={farmer.id}
                 className="border-b hover:bg-muted/30 transition-colors"
@@ -205,6 +210,6 @@ export function FarmersTable({ metric }: FarmersTableProps) {
           </tbody>
         </table>
       </div>
-    </Card>
+    </ListCard>
   );
 }

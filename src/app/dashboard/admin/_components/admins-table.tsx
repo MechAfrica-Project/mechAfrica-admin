@@ -1,11 +1,7 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Pagination from "@/components/ui/pagination";
+import ListCard from "@/components/lists/ListCard";
+import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdminRow } from "./admin-row";
 
@@ -32,6 +28,11 @@ export function AdminsTable({
   onSelectAdmin,
   onDeleteAdmin,
 }: AdminsTableProps) {
+  // Local pagination state
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
+  const totalPages = Math.max(1, Math.ceil(admins.length / pageSize));
+  const pagedAdmins = admins.slice((page - 1) * pageSize, page * pageSize);
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       // Select all
@@ -52,7 +53,7 @@ export function AdminsTable({
     selectedAdmins.length > 0 && selectedAdmins.length < admins.length;
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <ListCard title="Admins" subtitle={`Total: ${admins.length}`} footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-card">
@@ -75,7 +76,7 @@ export function AdminsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {admins.map((admin) => (
+          {pagedAdmins.map((admin) => (
             <AdminRow
               key={admin.id}
               admin={admin}
@@ -86,32 +87,6 @@ export function AdminsTable({
           ))}
         </TableBody>
       </Table>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-center gap-2 border-t border-border px-6 py-4">
-        {Array.from({ length: 6 }, (_, i) => (
-          <button
-            key={i + 1}
-            className={`h-8 w-8 rounded text-sm font-medium transition-colors ${
-              i === 0
-                ? "bg-muted text-muted-foreground"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            {String(i + 1).padStart(2, "0")}
-          </button>
-        ))}
-        <span className="text-muted-foreground">...</span>
-        <button className="h-8 w-8 rounded text-sm font-medium text-muted-foreground transition-colors hover:bg-muted">
-          04
-        </button>
-        <button className="h-8 w-8 rounded text-sm font-medium text-muted-foreground transition-colors hover:bg-muted">
-          05
-        </button>
-        <button className="h-8 w-8 rounded text-sm font-medium text-muted-foreground transition-colors hover:bg-muted">
-          06
-        </button>
-      </div>
-    </div>
+    </ListCard>
   );
 }

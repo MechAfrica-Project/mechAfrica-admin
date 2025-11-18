@@ -55,13 +55,19 @@ export default function WeatherPage() {
   }, [setTitle]);
 
   // Listen for `Weather Broadcast` action tab
-  useEffect(() => {
-    const openModal = () => setIsBroadcastOpen(true);
-    window.addEventListener("open-weatherBroadcast-modal", openModal);
+  // React to header action tabs via the header store. This is more reliable than
+  // relying only on window events (ensures the modal opens even if events are
+  // dispatched before the page is mounted).
+  const lastAction = useHeaderStore((s) => s.lastAction);
+  const setAction = useHeaderStore((s) => s.setAction);
 
-    return () =>
-      window.removeEventListener("open-weatherBroadcast-modal", openModal);
-  }, []);
+  useEffect(() => {
+    if (lastAction === "open-weatherBroadcast-modal") {
+      setIsBroadcastOpen(true);
+      // clear the action so it doesn't reopen repeatedly
+      setAction(null);
+    }
+  }, [lastAction, setAction]);
 
   const handleSendBroadcast = (data: Record<string, unknown>) => {
     console.log("Weather Broadcast sent:", data);

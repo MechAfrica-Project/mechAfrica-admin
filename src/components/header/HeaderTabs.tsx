@@ -18,7 +18,7 @@ type ActionTab = { title: string; type: "action"; action: string };
 type TabItem = NavTab | ActionTab;
 
 export default function HeaderTabs() {
-  const { activeTab, setActiveTab, resetFilters } = useHeaderStore();
+  const { activeTab, setActiveTab, resetFilters, setAction } = useHeaderStore();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -42,9 +42,16 @@ export default function HeaderTabs() {
     resetFilters();
     setActiveTab(tab.title);
 
-    // Handle ACTION tab
+    // Handle ACTION tab: set store action (pages can react) and also dispatch browser event
     if ("type" in tab && tab.type === "action") {
-      window.dispatchEvent(new CustomEvent(tab.action));
+      setAction(tab.action);
+      // keep existing event dispatch for compatibility
+      try {
+        window.dispatchEvent(new CustomEvent(tab.action));
+      } catch (err) {
+        // ignore if dispatching fails in some environments; pages will still react to the store change
+        console.warn("Failed to dispatch action event:", err);
+      }
       return;
     }
 

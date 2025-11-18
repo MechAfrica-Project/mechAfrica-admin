@@ -61,17 +61,42 @@ const COLORS = {
   overTime: "#0ea5e9",
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
+type TooltipEntry = { name: string; value: number; color?: string };
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: unknown;
+  label?: string;
+}) => {
+  if (active && Array.isArray(payload) && payload.length) {
+    // Narrow payload entries to TooltipEntry where possible
+    const entries: TooltipEntry[] = (payload as unknown[])
+      .map((p) => {
+        if (p && typeof p === "object") {
+          const rec = p as Record<string, unknown>;
+          if ("name" in rec && "value" in rec) {
+            return {
+              name: String(rec["name"]),
+              value: Number(rec["value"]) || 0,
+              color: rec["color"] ? String(rec["color"]) : undefined,
+            } as TooltipEntry;
+          }
+        }
+        return null;
+      })
+      .filter(Boolean) as TooltipEntry[];
+
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
         <p className="text-sm font-semibold text-gray-900">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {entries.map((entry, index) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.name}:{" "}
-            <span className="font-semibold">
-              {entry.value.toLocaleString()}
-            </span>
+            <span className="font-semibold">{entry.value.toLocaleString()}</span>
           </p>
         ))}
       </div>
@@ -136,12 +161,11 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
   const visibleSeries = getVisibleSeries();
 
   const avgValue = Math.round(
-    chartData.reduce(
-      (sum, item) =>
-        sum +
-        (item as any)[timeFilter === "overTime" ? "overTime" : timeFilter],
-      0
-    ) / chartData.length
+    chartData.reduce((sum, item) => {
+      const key = timeFilter === "overTime" ? "overTime" : timeFilter;
+      const v = Number((item as Record<string, unknown>)[key]) || 0;
+      return sum + v;
+    }, 0) / chartData.length
   );
 
   return (
@@ -266,15 +290,10 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
             <p className="text-lg font-semibold text-gray-900 mt-1">
               {
                 chartData.reduce((max, item) => {
-                  const val = (item as any)[
-                    timeFilter === "overTime" ? "overTime" : timeFilter
-                  ];
-                  return val >
-                    ((max as any)[
-                      timeFilter === "overTime" ? "overTime" : timeFilter
-                    ] || 0)
-                    ? item
-                    : max;
+                  const key = timeFilter === "overTime" ? "overTime" : timeFilter;
+                  const val = Number((item as Record<string, unknown>)[key]) || 0;
+                  const maxVal = Number((max as Record<string, unknown>)[key]) || 0;
+                  return val > maxVal ? item : max;
                 }).month
               }
             </p>
@@ -285,12 +304,12 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
             </p>
             <p className="text-lg font-semibold text-green-600 mt-1">
               {Math.round(
-                ((chartData[chartData.length - 1] as any)[
+                (((chartData[chartData.length - 1] as Record<string, unknown>)[
                   timeFilter === "overTime" ? "overTime" : timeFilter
-                ] /
-                  (chartData[0] as any)[
+                ] as number || 0) /
+                  ((chartData[0] as Record<string, unknown>)[
                     timeFilter === "overTime" ? "overTime" : timeFilter
-                  ] -
+                  ] as number || 1) -
                   1) *
                   100
               )}
