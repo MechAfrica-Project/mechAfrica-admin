@@ -124,7 +124,7 @@ export default function AdminsPage() {
         { label: "Accounting", value: "accounting" },
       ],
     });
-  }, [setTitle]);
+  }, [setTitle, setFilters]);
 
   // Listen for action tab events from HeaderTabs
   useEffect(() => {

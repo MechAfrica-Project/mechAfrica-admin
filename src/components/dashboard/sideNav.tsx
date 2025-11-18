@@ -1,4 +1,3 @@
-import Link from "next/link";
 import NavLinks from "./nav-links";
 import { PowerIcon, X } from "lucide-react";
 import Image from "next/image";
@@ -36,7 +35,7 @@ export default function SideNav({ closeMenu }: SideNavProps) {
 
         {/* Sign out button */}
         <form>
-          <button className="flex h-[48px] w-full items-center justify-center md:justify-start gap-3 rounded-md p-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-all">
+          <button className="flex h-12 w-full items-center justify-center md:justify-start gap-3 rounded-md p-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-all">
             <PowerIcon className="w-5" />
             <span>Sign Out</span>
           </button>

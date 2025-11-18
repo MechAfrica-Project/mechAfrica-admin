@@ -9,28 +9,11 @@ import { ProvidersTable } from "./_components/providers-table";
 
 export default function ProvidersPage() {
   const [providers] = useState<ProviderListItem[]>(providersSeed);
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set()); // start empty
+  // selection state removed: not used by current table implementation
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
     null
   );
 
-  const toggleRow = (id: string) => {
-    const next = new Set(selectedRows);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedRows(next);
-  };
-
-  const toggleAll = () => {
-    const allIds = providers.map((p) => p.id);
-    const allSelected = allIds.every((id) => selectedRows.has(id));
-
-    if (allSelected) {
-      setSelectedRows(new Set()); // deselect all
-    } else {
-      setSelectedRows(new Set(allIds)); // select all
-    }
-  };
 
   // Convert ProviderListItem → Provider
   const handleProviderClick = (p: ProviderListItem) => {

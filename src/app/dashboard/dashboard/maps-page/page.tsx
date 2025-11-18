@@ -10,7 +10,7 @@ import { useMapData } from "./hooks/useMapData";
 
 export default function MapPage() {
   const { setTitle, setFilters } = useHeaderStore();
-  const { mapData, loading, refreshData } = useMapData();
+  useMapData();
 
   useEffect(() => {
     setTitle("Map");
