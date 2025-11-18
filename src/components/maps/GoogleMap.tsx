@@ -1,10 +1,11 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import { useEffect, useRef, useState } from "react";
 import { MapMarker, Farmer, ServiceProvider } from "@/lib/dummyData";
 
 interface MapProps {
-  center: google.maps.LatLngLiteral;
+  center: { lat: number; lng: number };
   zoom: number;
   markers: MapMarker[];
   onMarkerClick?: (marker: MapMarker) => void;
@@ -12,12 +13,13 @@ interface MapProps {
 
 const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map>();
-  const [mapMarkers, setMapMarkers] = useState<google.maps.Marker[]>([]);
+  const [map, setMap] = useState<any>();
+  const [mapMarkers, setMapMarkers] = useState<any[]>([]);
 
   useEffect(() => {
     if (ref.current && !map) {
-      const newMap = new window.google.maps.Map(ref.current, {
+      const g = (window as any).google;
+      const newMap = new g.maps.Map(ref.current, {
         center,
         zoom,
         styles: [
@@ -34,7 +36,7 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
 
   // Clear existing markers
   useEffect(() => {
-    mapMarkers.forEach(marker => marker.setMap(null));
+    mapMarkers.forEach((marker: any) => marker.setMap(null));
     setMapMarkers([]);
   }, [markers, mapMarkers]);
 
@@ -42,34 +44,45 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   useEffect(() => {
     if (!map) return;
 
-    const newMarkers: google.maps.Marker[] = [];
+    const g = (window as any).google;
+    const newMarkers: any[] = [];
 
     markers.forEach((markerData) => {
-      const marker = new google.maps.Marker({
+      const marker = new g.maps.Marker({
         position: markerData.position,
         map,
-        title: markerData.type === 'farmer' 
-          ? (markerData.data as Farmer).name 
-          : (markerData.data as ServiceProvider).name,
+        title:
+          markerData.type === "farmer"
+            ? (markerData.data as Farmer).name
+            : (markerData.data as ServiceProvider).name,
         icon: {
-          url: markerData.type === 'farmer' 
-            ? 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          url:
+            markerData.type === "farmer"
+              ?
+                "data:image/svg+xml;charset=UTF-8," +
+                encodeURIComponent(
+                  `
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" fill="#00594C" stroke="white" stroke-width="2"/>
                 <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">F</text>
               </svg>
-            `)
-            : 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            `
+                )
+              :
+                "data:image/svg+xml;charset=UTF-8," +
+                encodeURIComponent(
+                  `
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" fill="#3B82F6" stroke="white" stroke-width="2"/>
                 <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">S</text>
               </svg>
-            `),
-          scaledSize: new google.maps.Size(24, 24),
+            `
+                ),
+          scaledSize: new g.maps.Size(24, 24),
         },
       });
 
-      marker.addListener('click', () => {
+      marker.addListener("click", () => {
         if (onMarkerClick) {
           onMarkerClick(markerData);
         }
@@ -105,11 +118,11 @@ const render = (status: Status) => {
         </div>
       );
     case Status.SUCCESS:
-      return <MapComponent center={{ lat: 7.9465, lng: -1.0232 }} zoom={6} markers={[]} />;
+        return <MapComponent center={{ lat: 7.9465, lng: -1.0232 }} zoom={6} markers={[]} />;
   }
 };
 
-export default function GoogleMap({ markers, onMarkerClick }: { markers: MapMarker[], onMarkerClick?: (marker: MapMarker) => void }) {
+export default function GoogleMap({ markers, onMarkerClick }: { markers: MapMarker[]; onMarkerClick?: (marker: MapMarker) => void }) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey) {
