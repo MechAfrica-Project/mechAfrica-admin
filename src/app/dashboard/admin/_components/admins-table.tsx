@@ -53,7 +53,7 @@ export function AdminsTable({
     selectedAdmins.length > 0 && selectedAdmins.length < admins.length;
 
   return (
-    <ListCard title="Admins" subtitle={`Total: ${admins.length}`} footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
+    <ListCard footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-card">

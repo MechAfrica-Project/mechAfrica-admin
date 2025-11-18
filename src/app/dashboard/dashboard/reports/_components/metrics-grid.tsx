@@ -57,7 +57,7 @@ export function MetricsGrid({
         <button
           key={metric.id}
           onClick={() => onMetricChange(metric.id)}
-          className="text-left transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-lg"
+          className="text-left transition-all hover:shadow-md focus:outline-none focus:ring-primary rounded-md"
         >
           <Card
             className={`p-5 cursor-pointer transition-all ${

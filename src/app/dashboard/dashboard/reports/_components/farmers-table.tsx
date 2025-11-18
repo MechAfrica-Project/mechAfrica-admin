@@ -127,7 +127,7 @@ export function FarmersTable({ metric: _metric }: FarmersTableProps) {
   };
 
   return (
-    <ListCard title="Farmers" subtitle={`Total: ${farmerData.length}`} className="overflow-hidden" footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
+    <ListCard className="overflow-hidden" footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
