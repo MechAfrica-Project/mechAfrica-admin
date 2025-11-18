@@ -33,7 +33,7 @@ export default function SmartSectionLayout({ basePath, children }: SectionLayout
   return (
     <div className="flex flex-col h-full">
       {/* Page Transition Animation */}
-      <div className="relative flex-grow overflow-y-auto p-2 sm:p-4">
+      <div className="relative grow overflow-y-auto p-2 sm:p-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
