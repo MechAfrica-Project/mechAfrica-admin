@@ -248,9 +248,9 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
               <Legend
                 wrapperStyle={{ paddingTop: "20px" }}
                 iconType="line"
-                formatter={(value) => (
+                formatter={(value: string | number | undefined) => (
                   <span className="text-sm text-gray-700 font-medium">
-                    {value}
+                    {String(value)}
                   </span>
                 )}
               />
