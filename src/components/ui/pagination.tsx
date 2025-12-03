@@ -11,26 +11,30 @@ interface PaginationProps {
 }
 
 function getPageList(current: number, total: number) {
-  // Always show first and last. Show up to 3 pages centered on current.
-  // Result array contains numbers or '...'
+  // Show a condensed pagination: at most two page numbers are visible at once
+  // (a pair). Example: « ... 02 03 ... » with previous/next arrows.
+  // For small totals, show all pages for usability.
   const pages: (number | string)[] = [];
-  if (total <= 7) {
+
+  if (total <= 4) {
     for (let i = 1; i <= total; i++) pages.push(i);
     return pages;
   }
 
-  pages.push(1);
+  // Determine the start of the two-page window. Show [current-1, current]
+  // (previous + current). Clamp to valid page range so window doesn't overflow.
+  let start = current - 1;
+  if (start < 1) start = 1;
+  if (start > total - 1) start = total - 1;
 
-  const left = Math.max(2, current - 1);
-  const right = Math.min(total - 1, current + 1);
+  // Leading ellipsis if there are pages before the window (beyond page 1 and 2)
+  if (start > 2) pages.push("...");
 
-  if (left > 2) pages.push("...");
+  pages.push(start);
+  pages.push(start + 1);
 
-  for (let i = left; i <= right; i++) pages.push(i);
-
-  if (right < total - 1) pages.push("...");
-
-  pages.push(total);
+  // Trailing ellipsis if there are pages after the window
+  if (start + 1 < total - 1) pages.push("...");
 
   return pages;
 }

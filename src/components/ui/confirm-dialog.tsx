@@ -40,7 +40,7 @@ export default function ConfirmDialog({
 
         <div className="flex gap-2 justify-end mt-4">
           <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-white hover:bg-destructive/90">
             {confirmLabel}
           </AlertDialogAction>
         </div>

@@ -1,7 +1,9 @@
+"use client";
+
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
-import { useState } from "react";
+import { useTableStore } from "@/stores/useTableStore";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdminRow } from "./admin-row";
 
@@ -28,32 +30,47 @@ export function AdminsTable({
   onSelectAdmin,
   onDeleteAdmin,
 }: AdminsTableProps) {
-  // Local pagination state
-  const [page, setPage] = useState(1);
+  // Pagination state (centralized)
+  const page = useTableStore((s) => s.pages["admins"] || 1);
+  const setPage = useTableStore((s) => s.setPage);
   const pageSize = 6;
   const totalPages = Math.max(1, Math.ceil(admins.length / pageSize));
   const pagedAdmins = admins.slice((page - 1) * pageSize, page * pageSize);
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      // Select all
-      admins.forEach((admin) => {
+  const handleSelectAll = (checked?: boolean | "indeterminate") => {
+    const shouldSelect = Boolean(checked);
+    if (shouldSelect) {
+      // Select all on current page
+      pagedAdmins.forEach((admin) => {
         if (!selectedAdmins.includes(admin.id)) {
           onSelectAdmin(admin.id);
         }
       });
     } else {
-      // Deselect all
-      selectedAdmins.forEach((id) => onSelectAdmin(id));
+      // Deselect all on current page
+      pagedAdmins.forEach((admin) => {
+        if (selectedAdmins.includes(admin.id)) {
+          onSelectAdmin(admin.id);
+        }
+      });
     }
   };
 
-  const allSelected =
-    admins.length > 0 && selectedAdmins.length === admins.length;
-  const someSelected =
-    selectedAdmins.length > 0 && selectedAdmins.length < admins.length;
+  const allSelected = pagedAdmins.length > 0 && pagedAdmins.every((a) => selectedAdmins.includes(a.id));
+  const someSelected = pagedAdmins.some((a) => selectedAdmins.includes(a.id)) && !allSelected;
 
   return (
-    <ListCard footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
+    <ListCard
+      footer={
+        totalPages > 1 ? (
+          <div className="mt-2">
+            <Pagination current={page} total={totalPages} onChange={(p) => setPage("admins", p)} />
+            <div className="mt-3 text-center text-sm text-muted-foreground">
+              Page <span className="font-semibold text-foreground">{String(page).padStart(2, "0")}</span> of <span className="font-semibold text-foreground">{String(totalPages).padStart(2, "0")}</span>
+            </div>
+          </div>
+        ) : null
+      }
+    >
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-card">

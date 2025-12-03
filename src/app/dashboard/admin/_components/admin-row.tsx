@@ -1,3 +1,5 @@
+"use client";
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -5,6 +7,7 @@ import { Info, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AdminTypeBadge } from "./admin-type-badge";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import AdminDetailsDialog from "./AdminDetailsDialog";
 import { useState } from "react";
 
 interface Admin {
@@ -31,6 +34,7 @@ export function AdminRow({
   onDelete,
 }: AdminRowProps) {
   const [open, setOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   return (
     <TableRow className="border-border hover:bg-muted/30">
       <TableCell>
@@ -58,7 +62,12 @@ export function AdminRow({
       </TableCell>
       <TableCell>
         <div className="flex items-center justify-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setInfoOpen(true)}
+          >
             <Info className="h-4 w-4 text-muted-foreground" />
           </Button>
           <Button
@@ -79,6 +88,11 @@ export function AdminRow({
               setOpen(false);
               onDelete();
             }}
+          />
+          <AdminDetailsDialog
+            open={infoOpen}
+            onOpenChange={setInfoOpen}
+            admin={admin}
           />
         </div>
       </TableCell>
