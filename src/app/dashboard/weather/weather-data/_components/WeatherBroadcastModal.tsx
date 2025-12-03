@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -51,83 +45,134 @@ export function WeatherBroadcastModal({
     onOpenChange(false);
   };
 
+  if (!isOpen) {
+    return (
+      <AnimatePresence>
+        {false && <></>}
+      </AnimatePresence>
+    );
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Custom Weather BroadCast</DialogTitle>
-          <DialogDescription>
-            Send custom weather notifications to selected regions.
-          </DialogDescription>
-        </DialogHeader>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            className="fixed inset-0 z-40 bg-black/40"
+            onClick={() => onOpenChange(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
 
-        <div className="space-y-4 mt-4">
-          {/* AI Notifications Toggle */}
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <MapIcon className="h-4 w-4" />
-              AI Weather Notifications
-            </span>
-            <Switch
-              checked={aiNotifications}
-              onCheckedChange={setAiNotifications}
-            />
-          </div>
+          <motion.aside
+            className="fixed inset-y-0 right-0 z-50 w-full bg-white shadow-2xl sm:w-[520px] lg:w-[720px]"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <div className="flex h-full flex-col px-8 py-8">
+              <header className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Custom Weather BroadCast
+                </h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  Send custom weather notifications to selected regions.
+                </p>
+              </header>
 
-          {/* Region */}
-          <div className="space-y-1">
-            <span className="text-sm font-medium">Region</span>
-            <Select value={region} onValueChange={setRegion}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Region" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Ashanti">Ashanti Region</SelectItem>
-                <SelectItem value="GreaterAccra">Greater Accra</SelectItem>
-                <SelectItem value="Eastern">Eastern Region</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="flex-1 space-y-6">
+                {/* AI Notifications Toggle */}
+                <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#f8faf9] px-4 py-3">
+                  <span className="flex items-center gap-2 text-sm text-gray-800">
+                    <MapIcon className="h-4 w-4 text-emerald-700" />
+                    AI Weather Notifications
+                  </span>
+                  <Switch
+                    checked={aiNotifications}
+                    onCheckedChange={setAiNotifications}
+                  />
+                </div>
 
-          {/* District */}
-          <div className="space-y-1">
-            <span className="text-sm font-medium">District</span>
-            <Select value={district} onValueChange={setDistrict}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select District" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="District1">District 1</SelectItem>
-                <SelectItem value="District2">District 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                {/* Region */}
+                <div className="space-y-2">
+                  <span className="text-xs font-medium text-gray-600">
+                    Region
+                  </span>
+                  <div className="rounded-2xl border border-gray-100 bg-[#f8faf9] px-3 py-1.5">
+                    <Select value={region} onValueChange={setRegion}>
+                      <SelectTrigger className="h-10 border-none bg-transparent px-0 text-sm focus:ring-0">
+                        <SelectValue placeholder="Ashanti Region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ashanti">Ashanti Region</SelectItem>
+                        <SelectItem value="GreaterAccra">
+                          Greater Accra
+                        </SelectItem>
+                        <SelectItem value="Eastern">Eastern Region</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-          {/* Custom Notifications */}
-          <div className="space-y-1">
-            <span className="text-sm font-medium">Custom Notifications</span>
-            <Textarea
-              placeholder="Type your custom notification here..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-            />
-          </div>
+                {/* District */}
+                <div className="space-y-2">
+                  <span className="text-xs font-medium text-gray-600">
+                    District
+                  </span>
+                  <div className="rounded-2xl border border-gray-100 bg-[#f8faf9] px-3 py-1.5">
+                    <Select value={district} onValueChange={setDistrict}>
+                      <SelectTrigger className="h-10 border-none bg-transparent px-0 text-sm focus:ring-0">
+                        <SelectValue placeholder="District Name" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="District1">District 1</SelectItem>
+                        <SelectItem value="District2">District 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="destructive" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSend}
-              className="bg-[#00594C] hover:bg-[#004437]"
-            >
-              Send
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+                {/* Custom Notifications */}
+                <div className="space-y-2">
+                  <span className="text-xs font-medium text-gray-600">
+                    Custom Notifications
+                  </span>
+                  <div className="rounded-2xl border border-gray-100 bg-[#f8faf9] px-3 py-2">
+                    <Textarea
+                      placeholder="Type your custom notification here..."
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      rows={4}
+                      className="border-none bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="mt-6 flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => onOpenChange(false)}
+                  className="rounded-xl px-8 py-2 text-sm font-semibold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSend}
+                  className="rounded-xl bg-[#00594C] px-10 py-2 text-sm font-semibold text-white hover:bg-[#004437]"
+                >
+                  Send
+                </Button>
+              </div>
+            </div>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

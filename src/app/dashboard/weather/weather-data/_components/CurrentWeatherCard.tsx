@@ -30,7 +30,7 @@ export default function CurrentWeatherCard({
   });
 
   return (
-    <div className={"text-left pb-4 " + className}>
+    <div className={"text-left pb-4" + className}>
       {/* Header row: location + units toggle */}
       <div className="mb-4 flex items-center justify-between">
         <div>
@@ -53,7 +53,7 @@ export default function CurrentWeatherCard({
       </div>
 
       {/* Main temperature + icon */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-12 justify-between">
         <div className="flex items-center">
           <span className="mr-4">{icon.symbol}</span>
           <div>
