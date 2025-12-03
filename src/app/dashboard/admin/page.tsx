@@ -4,114 +4,22 @@ import { useEffect, useState } from "react";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { AddAdminDialog } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
-
-// Mock data - replace with real data fetching
-const mockAdmins = [
-  {
-    id: "1",
-    name: "Jane Cooper",
-    email: "jad324h463",
-    avatar: "JC",
-    type: "Admin",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "5/27/15",
-  },
-  {
-    id: "2",
-    name: "Wade Warren",
-    email: "ad324h463",
-    avatar: "WW",
-    type: "Admin",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "5/19/12",
-  },
-  {
-    id: "3",
-    name: "Esther Howard",
-    email: "ad324h463",
-    avatar: "EH",
-    type: "Agent",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "3/4/16",
-  },
-  {
-    id: "4",
-    name: "Jenny Wilson",
-    email: "ad324h463",
-    avatar: "JW",
-    type: "Agent",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "3/4/16",
-  },
-  {
-    id: "5",
-    name: "Guy Hawkins",
-    email: "ad324h463",
-    avatar: "GH",
-    type: "Accounting",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "7/27/13",
-  },
-  {
-    id: "6",
-    name: "Jacob Jones",
-    email: "ad324h463",
-    avatar: "JJ",
-    type: "Agent",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "5/27/15",
-  },
-  {
-    id: "7",
-    name: "Ronald Richards",
-    email: "ad324h463",
-    avatar: "RR",
-    type: "Admin",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "7/11/19",
-  },
-  {
-    id: "8",
-    name: "Devon Lane",
-    email: "ad324h463",
-    avatar: "DL",
-    type: "Accounting",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "9/23/16",
-  },
-  {
-    id: "9",
-    name: "Jerome Bell",
-    email: "ad324h463",
-    avatar: "JB",
-    type: "Accounting",
-    phoneNumber: "05552731324",
-    dateOfRegistration: "8/2/19",
-  },
-];
+import { useAdminsStore, AdminsState, Admin } from "@/stores/useAdminsStore";
+import { useTableStore, TableStore } from "@/stores/useTableStore";
 
 export default function AdminsPage() {
-  const [admins, setAdmins] = useState(mockAdmins);
+  const admins = useAdminsStore((s: AdminsState) => s.admins);
+  const addAdmin = useAdminsStore((s: AdminsState) => s.addAdmin);
+  const deleteAdmin = useAdminsStore((s: AdminsState) => s.deleteAdmin);
   const { setTitle, setFilters, selectedFilters } = useHeaderStore();
-  
 
-  const [selectedAdmins, setSelectedAdmins] = useState<string[]>([
-    "1",
-    "2",
-    "6",
-  ]);
+  const selectedAdmins = useTableStore((s: TableStore) => s.selections['admins'] || []);
+  const toggleSelect = useTableStore((s: TableStore) => s.toggleSelect);
+  const clearSelection = useTableStore((s: TableStore) => s.clearSelection);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Define Admin type for type safety
-  type Admin = {
-    id: string;
-    name: string;
-    email: string;
-    avatar: string;
-    type: string;
-    phoneNumber: string;
-    dateOfRegistration: string;
-  };
+
 
   // Set page title
   useEffect(() => {
@@ -135,21 +43,17 @@ export default function AdminsPage() {
   }, []);
 
   const handleAddAdmin = (newAdmin: Omit<Admin, "id">) => {
-    setAdmins([...admins, { ...newAdmin, id: String(admins.length + 1) }]);
+    addAdmin(newAdmin);
     setIsDialogOpen(false);
   };
 
   const handleSelectAdmin = (id: string) => {
-    setSelectedAdmins((prev) =>
-      prev.includes(id)
-        ? prev.filter((adminId) => adminId !== id)
-        : [...prev, id]
-    );
+    toggleSelect('admins', id);
   };
 
   const handleDeleteAdmin = (id: string) => {
-    setAdmins(admins.filter((admin) => admin.id !== id));
-    setSelectedAdmins(selectedAdmins.filter((adminId) => adminId !== id));
+    deleteAdmin(id);
+    clearSelection('admins');
   };
 
   return (

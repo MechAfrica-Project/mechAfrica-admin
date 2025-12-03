@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useTableStore } from "@/stores/useTableStore";
 import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,37 +89,32 @@ interface FarmersTableProps {
 
 export function FarmersTable({ metric: _metric }: FarmersTableProps) {
   void _metric;
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set(["1", "2", "6"]));
+  const selectedRows = useTableStore((s) => s.selections["farmers"] || []);
+  const toggleSelect = useTableStore((s) => s.toggleSelect);
+  const selectMany = useTableStore((s) => s.selectMany);
+  const deselectMany = useTableStore((s) => s.deselectMany);
   // Pagination
-  const [page, setPage] = useState(1);
+  const page = useTableStore((s) => s.pages["farmers"] || 1);
+  const setPage = useTableStore((s) => s.setPage);
   const pageSize = 5;
   const totalPages = Math.max(1, Math.ceil(farmerData.length / pageSize));
   const visibleFarmers = farmerData.slice((page - 1) * pageSize, page * pageSize);
 
   const toggleRow = (id: string, value?: boolean) => {
-    const newSelected = new Set(selectedRows);
     if (typeof value === 'boolean') {
-      if (value) newSelected.add(id);
-      else newSelected.delete(id);
+      if (value) selectMany('farmers', [id]);
+      else deselectMany('farmers', [id]);
     } else {
-      if (newSelected.has(id)) newSelected.delete(id);
-      else newSelected.add(id);
+      toggleSelect('farmers', id);
     }
-    setSelectedRows(newSelected);
   };
 
   const toggleAll = (value?: boolean) => {
     const shouldSelect = Boolean(value);
     if (shouldSelect) {
-      // select only visible page
-      setSelectedRows((prev) => new Set([...Array.from(prev), ...visibleFarmers.map((f) => f.id)]));
+      selectMany('farmers', visibleFarmers.map((f) => f.id));
     } else {
-      // deselect visible
-      setSelectedRows((prev) => {
-        const next = new Set(prev);
-        visibleFarmers.forEach((f) => next.delete(f.id));
-        return next;
-      });
+      deselectMany('farmers', visibleFarmers.map((f) => f.id));
     }
   };
 
@@ -137,15 +132,15 @@ export function FarmersTable({ metric: _metric }: FarmersTableProps) {
   };
 
   return (
-    <ListCard className="overflow-hidden" footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
+    <ListCard className="overflow-hidden" footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage("farmers", p)} />}>
       <Table>
         <TableHeader>
           <TableRow className="border-b bg-muted/50">
             <TableHead className="w-12">
               <Checkbox
-                checked={visibleFarmers.length > 0 && visibleFarmers.every((f) => selectedRows.has(f.id))}
+                checked={visibleFarmers.length > 0 && visibleFarmers.every((f) => selectedRows.includes(f.id))}
                 onCheckedChange={(v) => toggleAll(!!v)}
-                data-indeterminate={visibleFarmers.some((f) => selectedRows.has(f.id)) && !visibleFarmers.every((f) => selectedRows.has(f.id)) || undefined}
+                data-indeterminate={visibleFarmers.some((f) => selectedRows.includes(f.id)) && !visibleFarmers.every((f) => selectedRows.includes(f.id)) || undefined}
                 className="rounded"
               />
             </TableHead>
@@ -161,7 +156,7 @@ export function FarmersTable({ metric: _metric }: FarmersTableProps) {
             <TableRow key={farmer.id} className="border-b hover:bg-muted/30 transition-colors">
               <TableCell className="py-3 px-4">
                 <Checkbox
-                  checked={selectedRows.has(farmer.id)}
+                  checked={selectedRows.includes(farmer.id)}
                   onCheckedChange={(v) => toggleRow(farmer.id, !!v)}
                   className="rounded"
                 />

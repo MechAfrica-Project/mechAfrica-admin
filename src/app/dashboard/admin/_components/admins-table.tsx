@@ -1,7 +1,9 @@
+"use client";
+
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
-import { useState } from "react";
+import { useTableStore } from "@/stores/useTableStore";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdminRow } from "./admin-row";
 
@@ -28,8 +30,9 @@ export function AdminsTable({
   onSelectAdmin,
   onDeleteAdmin,
 }: AdminsTableProps) {
-  // Local pagination state
-  const [page, setPage] = useState(1);
+  // Pagination state (centralized)
+  const page = useTableStore((s) => s.pages["admins"] || 1);
+  const setPage = useTableStore((s) => s.setPage);
   const pageSize = 6;
   const totalPages = Math.max(1, Math.ceil(admins.length / pageSize));
   const pagedAdmins = admins.slice((page - 1) * pageSize, page * pageSize);
@@ -60,7 +63,7 @@ export function AdminsTable({
       footer={
         totalPages > 1 ? (
           <div className="mt-2">
-            <Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />
+            <Pagination current={page} total={totalPages} onChange={(p) => setPage("admins", p)} />
             <div className="mt-3 text-center text-sm text-muted-foreground">
               Page <span className="font-semibold text-foreground">{String(page).padStart(2, "0")}</span> of <span className="font-semibold text-foreground">{String(totalPages).padStart(2, "0")}</span>
             </div>

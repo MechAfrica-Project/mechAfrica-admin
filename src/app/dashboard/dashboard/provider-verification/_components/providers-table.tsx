@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { useTableStore } from "@/stores/useTableStore";
 import { Badge } from "@/components/ui/badge";
 import type { ProviderListItem } from "../types";
 import ListCard from '@/components/lists/ListCard';
@@ -13,13 +14,14 @@ interface Props {
 }
 
 export function ProvidersTable({ providers, onProviderClick }: Props) {
-  const [page, setPage] = useState(1);
+  const page = useTableStore((s) => s.pages["providers"] || 1);
+  const setPage = useTableStore((s) => s.setPage);
   const pageSize = 6;
   const totalPages = Math.max(1, Math.ceil(providers.length / pageSize));
   const visibleProviders = providers.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <ListCard className="overflow-hidden" footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
+    <ListCard className="overflow-hidden" footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage("providers", p)} />}>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>

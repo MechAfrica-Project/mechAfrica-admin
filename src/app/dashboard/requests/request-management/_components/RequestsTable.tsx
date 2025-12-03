@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { mockRequests, RequestItem } from './mockRequests';
+import { RequestItem } from './mockRequests';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,6 +12,8 @@ import RequestDetailsDialog from './RequestDetailsDialog';
 import { toast } from 'sonner';
 import ListCard from '@/components/lists/ListCard';
 import Pagination from '@/components/ui/pagination';
+import { useRequestsStore, RequestsState } from '@/stores/useRequestsStore';
+import { useTableStore, TableStore } from '@/stores/useTableStore';
 
 function StatusPill({ status }: { status: RequestItem['status'] }) {
   const color =
@@ -32,54 +34,57 @@ function StatusPill({ status }: { status: RequestItem['status'] }) {
 }
 
 export default function RequestsTable({ filter }: { filter: string }) {
+  const allRequests = useRequestsStore((s: RequestsState) => s.requests);
+  const deleteRequest = useRequestsStore((s: RequestsState) => s.deleteRequest);
+
   const filtered = React.useMemo(() => {
-    if (!filter) return mockRequests;
+    if (!filter) return allRequests;
     switch (filter) {
       case 'new':
-        return mockRequests.slice(0, 3);
+        return allRequests.slice(0, 3);
       case 'ongoing':
-        return mockRequests.filter((r) => r.status === 'Active' || r.status === 'Ongoing');
+        return allRequests.filter((r) => r.status === 'Active' || r.status === 'Ongoing');
       case 'completed':
-        return mockRequests.filter((r) => r.status === 'Completed');
+        return allRequests.filter((r) => r.status === 'Completed');
       case 'cancelled':
-        return mockRequests.filter((r) => r.status === 'Cancelled');
+        return allRequests.filter((r) => r.status === 'Cancelled');
       case 'provider':
-        return mockRequests.slice(2, 6);
+        return allRequests.slice(2, 6);
       case 'demand':
-        return mockRequests.slice(6);
+        return allRequests.slice(6);
       default:
-        return mockRequests;
+        return allRequests;
     }
-  }, [filter]);
+  }, [filter, allRequests]);
 
-  const [rows, setRows] = React.useState<RequestItem[]>(filtered);
-  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
-  // pagination
-  const [page, setPage] = React.useState(1);
+  // pagination handled by table store
+  const page = useTableStore((s: TableStore) => s.pages['requests'] || 1);
+  const setPage = useTableStore((s: TableStore) => s.setPage);
   const pageSize = 6;
-  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
-  const visibleRows = rows.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const visibleRows = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  React.useEffect(() => {
-    setRows(filtered);
-    setSelectedIds([]);
-    setPage(1);
-  }, [filter, filtered]);
+  const selectedIds = useTableStore((s: TableStore) => s.selections['requests'] || []);
+  const toggleSelect = useTableStore((s: TableStore) => s.toggleSelect);
+  const selectMany = useTableStore((s: TableStore) => s.selectMany);
+  const deselectMany = useTableStore((s: TableStore) => s.deselectMany);
 
   const toggleSelectAll = (value?: boolean) => {
     const shouldSelect = Boolean(value);
     if (shouldSelect) {
-      setSelectedIds((prev) => Array.from(new Set([...prev, ...visibleRows.map((r) => r.id)])));
+      selectMany('requests', visibleRows.map((r) => r.id));
     } else {
-      setSelectedIds((prev) => prev.filter((id) => !visibleRows.some((r) => r.id === id)));
+      deselectMany('requests', visibleRows.map((r) => r.id));
     }
   };
 
   const toggleRow = (id: string, value?: boolean) => {
-    setSelectedIds((prev) => {
-      if (value) return Array.from(new Set([...prev, id]));
-      return prev.filter((p) => p !== id);
-    });
+    if (typeof value === 'boolean') {
+      if (value) selectMany('requests', [id]);
+      else deselectMany('requests', [id]);
+    } else {
+      toggleSelect('requests', id);
+    }
   };
 
   const [infoOpen, setInfoOpen] = React.useState(false);
@@ -95,8 +100,9 @@ export default function RequestsTable({ filter }: { filter: string }) {
 
   const confirmDelete = () => {
     if (!toDeleteId) return;
-    setRows((prev) => prev.filter((r) => r.id !== toDeleteId));
-    setSelectedIds((prev) => prev.filter((p) => p !== toDeleteId));
+    deleteRequest(toDeleteId);
+    // remove from selection if present
+    deselectMany('requests', [toDeleteId]);
     setToDeleteId(null);
     setConfirmOpen(false);
     toast.success('Request deleted');
@@ -113,7 +119,7 @@ export default function RequestsTable({ filter }: { filter: string }) {
       footer={
         totalPages > 1 ? (
           <div className="mt-2">
-            <Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />
+            <Pagination current={page} total={totalPages} onChange={(p) => setPage('requests', p)} />
             <div className="mt-3 text-center text-sm text-muted-foreground">
               Page <span className="font-semibold text-foreground">{String(page).padStart(2, "0")}</span> of <span className="font-semibold text-foreground">{String(totalPages).padStart(2, "0")}</span>
             </div>
