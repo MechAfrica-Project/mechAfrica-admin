@@ -1,70 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
 import CurrentWeatherCard from "./_components/CurrentWeatherCard";
-import DailyForecastList from "./_components/DailyForecastList";
-import HourlyForecastList from "./_components/HourlyForecastList";
-import { WeatherData } from "./types/weather";
+import { DaysForecastCard } from "./_components/DaysForecastCard";
+import { TodayHighlights } from "./_components/TodayHighlights";
 import { useHeaderStore } from "@/stores/useHeaderStore";
-import { WeatherBroadcastModal } from "./_components/WeatherBroadcastModal";
+import { useWeatherStore } from "@/stores/useWeatherStore";
+import { WeatherBroadcastModal } from "../weather-broadcast/_components/WeatherBroadcastModal";
 
 export default function WeatherPage() {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
   const { setTitle, setFilters } = useHeaderStore();
+  const {
+    data: weatherData,
+    error,
+    isLoading,
+    setFromResponse,
+  } = useWeatherStore();
 
-  // Fetch weather data (client-side or switch back to server-side if you prefer)
+  // Fetch weather data once on mount
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/weather"); // You can replace with your API route
-          const data = await res.json();
-
-          // If the API returned an error object, surface it to the UI instead of
-          // blindly using the payload (which may be missing expected arrays).
-          const isErrorPayload = typeof data === "object" && data !== null && "error" in data;
-          if (isErrorPayload) {
-            const errValue = (data as { error?: unknown }).error;
-            setError(String(errValue ?? "Failed to load weather"));
-            setWeatherData(null);
-            return;
-          }
-
-          // Basic shape validation
-          if (!data || !data.current || !Array.isArray(data.daily) || !Array.isArray(data.hourly)) {
-            setError("Unexpected weather data. Check your OPENWEATHER_KEY and API response.");
-            setWeatherData(null);
-            return;
-          }
-
-          setWeatherData(data as WeatherData);
+        const res = await fetch("/api/weather");
+        const data = await res.json();
+        setFromResponse(data);
       } catch (err) {
         console.error("Failed to load weather", err);
-        setError(String(err ?? "Failed to load weather"));
+        setFromResponse({ error: String(err ?? "Failed to load weather") });
       }
     }
-    fetchData();
-  }, []);
 
-  // Set header title and filters
+    fetchData();
+  }, [setFromResponse]);
+
+  // Set dashboard header
   useEffect(() => {
     setTitle("Weather");
     setFilters({});
   }, [setTitle, setFilters]);
 
   // Listen for `Weather Broadcast` action tab
-  // React to header action tabs via the header store. This is more reliable than
-  // relying only on window events (ensures the modal opens even if events are
-  // dispatched before the page is mounted).
   const lastAction = useHeaderStore((s) => s.lastAction);
   const setAction = useHeaderStore((s) => s.setAction);
 
   useEffect(() => {
     if (lastAction === "open-weatherBroadcast-modal") {
       setIsBroadcastOpen(true);
-      // clear the action so it doesn't reopen repeatedly
       setAction(null);
     }
   }, [lastAction, setAction]);
@@ -74,47 +58,68 @@ export default function WeatherPage() {
     setIsBroadcastOpen(false);
   };
 
-  if (!weatherData) {
-    if (error) {
+  if (isLoading || !weatherData) {
+    if (!error) {
       return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <p className="text-lg font-semibold text-red-600">{error}</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              The server API returned an error or invalid data. Make sure the
-              environment variables are set: <code>OPENWEATHER_KEY</code> (server)
-              or <code>NEXT_PUBLIC_OPENWEATHER_KEY</code> (public). See
-              <code>.env.example</code> for names.
-            </p>
-          </div>
-        </div>
+        <main className="flex min-h-screen items-center justify-center bg-[#f5fbf7]">
+          <p className="text-lg text-emerald-900">Loading weather…</p>
+        </main>
       );
     }
+
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Loading weather…</p>
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-[#f5fbf7]">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-red-600">{error}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The server API returned an error or invalid data. Make sure the
+            environment variables are set: <code>OPENWEATHER_KEY</code> (server)
+            or <code>NEXT_PUBLIC_OPENWEATHER_KEY</code> (public). See
+            <code>.env.example</code> for names.
+          </p>
+        </div>
+      </main>
     );
   }
 
+  const todayDaily = weatherData.daily[0];
+
   return (
-    <main className="flex justify-center p-4 min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="w-full max-w-md p-6 rounded-3xl shadow-2xl bg-linear-to-br from-blue-600 to-indigo-700 text-white">
-        <CurrentWeatherCard
-          current={weatherData.current}
-          daily={weatherData.daily[0]}
-          location="Kumasi, Ghana"
+    <main className="flex min-h-screen justify-center bg-[#f5fbf7] px-4 py-6 md:px-8">
+      <motion.div
+        className="w-full max-w-6xl space-y-6"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        {/* Top section */}
+        <section className="flex flex-col lg:flex-row lg:justify-between">
+          {/* Left: current weather card */}
+          <motion.div
+            className="rounded-[24px] bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.05 }}
+          >
+            <CurrentWeatherCard
+              current={weatherData.current}
+              daily={todayDaily}
+              location="Kumasi, Ghana"
+            />
+          </motion.div>
+          {/* Right: Days Forecast */}
+          <DaysForecastCard daily={weatherData.daily} />
+        </section>
+
+        {/* Today's Highlight */}
+        <TodayHighlights current={weatherData.current} todayDaily={todayDaily} />
+
+        <WeatherBroadcastModal
+          isOpen={isBroadcastOpen}
+          onOpenChange={setIsBroadcastOpen}
+          onSend={handleSendBroadcast}
         />
-
-        <HourlyForecastList hourlyData={weatherData.hourly.slice(0, 24)} />
-        <DailyForecastList dailyData={weatherData.daily.slice(1, 8)} />
-      </div>
-
-      <WeatherBroadcastModal
-        isOpen={isBroadcastOpen}
-        onOpenChange={setIsBroadcastOpen}
-        onSend={handleSendBroadcast}
-      />
+      </motion.div>
     </main>
   );
 }

@@ -15,6 +15,7 @@ export interface CurrentWeather {
   humidity: number;
   uvi: number;
   wind_speed: number;
+  visibility?: number;
   weather: WeatherDetail[];
 }
 
@@ -33,6 +34,8 @@ export interface DailyTemp {
 
 export interface DailyWeather {
   dt: number;
+  sunrise: number;
+  sunset: number;
   temp: DailyTemp;
   pop: number;
   weather: WeatherDetail[];
@@ -48,6 +51,6 @@ export interface WeatherData {
 }
 
 export interface IconStyle {
-  symbol: string;
-  className: string;
+  symbol: import("react").ReactNode;
+  className?: string;
 }
