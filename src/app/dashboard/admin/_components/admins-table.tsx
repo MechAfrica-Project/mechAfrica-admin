@@ -56,7 +56,18 @@ export function AdminsTable({
   const someSelected = pagedAdmins.some((a) => selectedAdmins.includes(a.id)) && !allSelected;
 
   return (
-    <ListCard footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />}>
+    <ListCard
+      footer={
+        totalPages > 1 ? (
+          <div className="mt-2">
+            <Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />
+            <div className="mt-3 text-center text-sm text-muted-foreground">
+              Page <span className="font-semibold text-foreground">{String(page).padStart(2, "0")}</span> of <span className="font-semibold text-foreground">{String(totalPages).padStart(2, "0")}</span>
+            </div>
+          </div>
+        ) : null
+      }
+    >
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-card">

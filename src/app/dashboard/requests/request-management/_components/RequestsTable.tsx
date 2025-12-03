@@ -4,6 +4,7 @@ import React from 'react';
 import { mockRequests, RequestItem } from './mockRequests';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Info, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
@@ -66,8 +67,12 @@ export default function RequestsTable({ filter }: { filter: string }) {
   }, [filter, filtered]);
 
   const toggleSelectAll = (value?: boolean) => {
-    if (value) setSelectedIds((prev) => Array.from(new Set([...prev, ...visibleRows.map((r) => r.id)])));
-    else setSelectedIds((prev) => prev.filter((id) => !visibleRows.some((r) => r.id === id)));
+    const shouldSelect = Boolean(value);
+    if (shouldSelect) {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...visibleRows.map((r) => r.id)])));
+    } else {
+      setSelectedIds((prev) => prev.filter((id) => !visibleRows.some((r) => r.id === id)));
+    }
   };
 
   const toggleRow = (id: string, value?: boolean) => {
@@ -103,65 +108,77 @@ export default function RequestsTable({ filter }: { filter: string }) {
   };
 
   return (
-    <ListCard footer={<Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />} className="mt-6">
+    <ListCard
+      className="mt-6"
+      footer={
+        totalPages > 1 ? (
+          <div className="mt-2">
+            <Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />
+            <div className="mt-3 text-center text-sm text-muted-foreground">
+              Page <span className="font-semibold text-foreground">{String(page).padStart(2, "0")}</span> of <span className="font-semibold text-foreground">{String(totalPages).padStart(2, "0")}</span>
+            </div>
+          </div>
+        ) : null
+      }
+    >
       <div className="overflow-x-auto bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-white">
-          <tr>
-            <th className="px-4 py-3">
-              <Checkbox
-                checked={selectedIds.length === rows.length && rows.length > 0}
-                onCheckedChange={(v) => toggleSelectAll(!!v)}
-                aria-label="Select all"
-              />
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Users</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-mail</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-            <th className="px-6 py-3"></th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-100">
-          {visibleRows.map((row) => (
-            <tr key={row.id} className="hover:bg-gray-50">
-              <td className="px-4 py-4 whitespace-nowrap">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b bg-muted/50">
+              <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedIds.includes(row.id)}
-                  onCheckedChange={(v) => toggleRow(row.id, !!v)}
-                  aria-label={`Select ${row.name}`}
+                  checked={visibleRows.length > 0 && visibleRows.every((r) => selectedIds.includes(r.id))}
+                  onCheckedChange={(v) => toggleSelectAll(!!v)}
+                  data-indeterminate={visibleRows.some((r) => selectedIds.includes(r.id)) && !visibleRows.every((r) => selectedIds.includes(r.id)) || undefined}
                 />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-teal-600 text-white font-semibold text-xs">
-                      {row.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{row.name}</div>
-                    <div className="text-xs text-muted-foreground">{row.handle}</div>
+              </TableHead>
+              <TableHead className="text-sm font-medium text-muted-foreground">Users</TableHead>
+              <TableHead className="text-sm font-medium text-muted-foreground">Status</TableHead>
+              <TableHead className="text-sm font-medium text-muted-foreground">E-mail</TableHead>
+              <TableHead className="text-sm font-medium text-muted-foreground">Date</TableHead>
+              <TableHead className="w-24" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {visibleRows.map((row) => (
+              <TableRow key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                <TableCell className="py-3 px-4">
+                  <Checkbox
+                    checked={selectedIds.includes(row.id)}
+                    onCheckedChange={(v) => toggleRow(row.id, !!v)}
+                    aria-label={`Select ${row.name}`}
+                  />
+                </TableCell>
+                <TableCell className="py-3 px-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-teal-600 text-white font-semibold text-xs">
+                        {row.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{row.name}</div>
+                      <div className="text-xs text-muted-foreground">{row.handle}</div>
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap"><StatusPill status={row.status} /></td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{row.email}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.date}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-400">
-                <div className="flex items-center gap-2 justify-end">
-                  <Button variant="ghost" size="icon" onClick={() => handleInfo(row)} className="h-8 w-8">
-                    <Info className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(row.id)} className="h-8 w-8 text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-        </table>
+                </TableCell>
+                <TableCell className="py-3 px-4"><StatusPill status={row.status} /></TableCell>
+                <TableCell className="py-3 px-4 text-sm text-foreground">{row.email}</TableCell>
+                <TableCell className="py-3 px-4 text-sm text-muted-foreground">{row.date}</TableCell>
+                <TableCell className="py-3 px-4 text-right">
+                  <div className="flex items-center gap-2 justify-end">
+                    <Button variant="ghost" size="icon" onClick={() => handleInfo(row)} className="h-8 w-8">
+                      <Info className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(row.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
       <RequestDetailsDialog open={infoOpen} onOpenChange={setInfoOpen} row={infoRow} />
 
@@ -178,3 +195,4 @@ export default function RequestsTable({ filter }: { filter: string }) {
     </ListCard>
   );
 }
+ 
