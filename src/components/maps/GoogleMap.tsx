@@ -1,6 +1,6 @@
 "use client";
+import React, { useEffect, useRef, useState } from "react";
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
-import { useEffect, useRef, useState } from "react";
 import { MapMarker, Farmer, ServiceProvider } from "@/lib/dummyData";
 
 interface MapProps {
@@ -106,8 +106,8 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
           typeof g.maps.marker.AdvancedMarkerElement === "function" &&
           // Guard against the "map is initialized without a valid Map ID" case:
           // if no mapId is configured, fall back to classic Marker to avoid warnings.
-          // @ts-expect-error mapId is not in the TS typings but exists at runtime on options
-          (map as google.maps.Map).get("mapId")
+          // mapId exists at runtime on options but is not declared in the TS typings.
+          typeof (map as google.maps.Map).get("mapId") === "string"
         ) {
           const content = document.createElement("div");
           content.innerHTML = svgString;
@@ -170,7 +170,7 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   return <div ref={ref} className="w-full h-full rounded-lg" />;
 };
 
-const render = (status: Status) => {
+const render = (status: Status): React.ReactElement => {
   switch (status) {
     case Status.LOADING:
       return (
@@ -193,7 +193,7 @@ const render = (status: Status) => {
     case Status.SUCCESS:
       // When the API is successfully loaded, let the Wrapper render its children
       // (the actual MapComponent is provided as a child in GoogleMap below).
-      return null;
+      return <></>;
   }
 };
 

@@ -17,7 +17,7 @@ export const getWeatherIcon = (
 ): IconStyle => {
   const code = (iconCode || "").slice(0, 2);
   let symbol: React.ReactNode = <Cloud className={sizeClass} />;
-  let className = "";
+  const className = "";
 
   switch (code) {
     case "01": // Clear

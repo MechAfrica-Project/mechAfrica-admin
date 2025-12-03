@@ -7,8 +7,8 @@ import CurrentWeatherCard from "./_components/CurrentWeatherCard";
 import { DaysForecastCard } from "./_components/DaysForecastCard";
 import { TodayHighlights } from "./_components/TodayHighlights";
 import { useHeaderStore } from "@/stores/useHeaderStore";
-import { WeatherBroadcastModal } from "./_components/WeatherBroadcastModal";
 import { useWeatherStore } from "@/stores/useWeatherStore";
+import { WeatherBroadcastModal } from "../weather-broadcast/_components/WeatherBroadcastModal";
 
 export default function WeatherPage() {
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
@@ -112,10 +112,7 @@ export default function WeatherPage() {
         </section>
 
         {/* Today's Highlight */}
-        <TodayHighlights
-          current={weatherData.current}
-          todayDaily={todayDaily}
-        />
+        <TodayHighlights current={weatherData.current} todayDaily={todayDaily} />
 
         <WeatherBroadcastModal
           isOpen={isBroadcastOpen}
