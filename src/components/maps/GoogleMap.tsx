@@ -13,7 +13,9 @@ interface MapProps {
 const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [mapMarkers, setMapMarkers] = useState<(google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[]>([]);
+  const markersRef = useRef<
+    (google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[]
+  >([]);
   const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,15 +44,22 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
         setMapError(String(err ?? "Failed to initialize map"));
       }
     }
-  }, [ref, map, center, zoom]);
+  }, [map, center, zoom]);
 
-  // Clear existing markers
+  // Add / update markers whenever map or input markers change
   useEffect(() => {
-    // Attempt to remove existing markers safely
-    mapMarkers.forEach((marker) => {
+    if (!map) return;
+
+    const g = (window as unknown as { google?: typeof google }).google;
+
+    // First clear any existing markers
+    markersRef.current.forEach((marker) => {
       try {
         // AdvancedMarkerElement doesn't expose setMap; it has .map property
-        if ("setMap" in marker && typeof (marker as google.maps.Marker).setMap === "function") {
+        if (
+          "setMap" in marker &&
+          typeof (marker as google.maps.Marker).setMap === "function"
+        ) {
           (marker as google.maps.Marker).setMap(null);
         } else if ("map" in marker) {
           // AdvancedMarkerElement exposes a map property
@@ -60,34 +69,46 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
         // ignore cleanup errors
       }
     });
-    setMapMarkers([]);
-  }, [markers, mapMarkers]);
 
-  // Add new markers
-  useEffect(() => {
-    if (!map) return;
-
-  const g = (window as unknown as { google?: typeof google }).google;
-  const newMarkers: (google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[] = [];
+    const newMarkers: (
+      | google.maps.Marker
+      | google.maps.marker.AdvancedMarkerElement
+    )[] = [];
 
     markers.forEach((markerData) => {
       try {
         // Build SVG content for the marker
-        const svgString = markerData.type === "farmer"
-          ? `
+        const svgString =
+          markerData.type === "farmer"
+            ? `
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="12" cy="12" r="10" fill="#00594C" stroke="white" stroke-width="2"/>
               <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">F</text>
             </svg>`
-          : `
+            : `
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="12" cy="12" r="10" fill="#3B82F6" stroke="white" stroke-width="2"/>
               <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">S</text>
             </svg>`;
 
         // Preferred: use AdvancedMarkerElement from the marker library
-        let marker: google.maps.Marker | google.maps.marker.AdvancedMarkerElement | null = null;
-        if (g && g.maps && g.maps.marker && typeof g.maps.marker.AdvancedMarkerElement === "function") {
+        let marker:
+          | google.maps.Marker
+          | google.maps.marker.AdvancedMarkerElement
+          | null = null;
+
+        // Prefer AdvancedMarkerElement only if marker library is loaded AND
+        // a valid vector map ID is configured on the map instance.
+        if (
+          g &&
+          g.maps &&
+          g.maps.marker &&
+          typeof g.maps.marker.AdvancedMarkerElement === "function" &&
+          // Guard against the "map is initialized without a valid Map ID" case:
+          // if no mapId is configured, fall back to classic Marker to avoid warnings.
+          // @ts-expect-error mapId is not in the TS typings but exists at runtime on options
+          (map as google.maps.Map).get("mapId")
+        ) {
           const content = document.createElement("div");
           content.innerHTML = svgString;
           marker = new g.maps.marker.AdvancedMarkerElement({
@@ -132,7 +153,7 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
       }
     });
 
-    setMapMarkers(newMarkers);
+    markersRef.current = newMarkers;
   }, [map, markers, onMarkerClick]);
 
   if (mapError) {
@@ -170,7 +191,9 @@ const render = (status: Status) => {
         </div>
       );
     case Status.SUCCESS:
-        return <MapComponent center={{ lat: 7.9465, lng: -1.0232 }} zoom={6} markers={[]} />;
+      // When the API is successfully loaded, let the Wrapper render its children
+      // (the actual MapComponent is provided as a child in GoogleMap below).
+      return null;
   }
 };
 

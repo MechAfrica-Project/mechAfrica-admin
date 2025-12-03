@@ -48,6 +48,6 @@ export interface WeatherData {
 }
 
 export interface IconStyle {
-  symbol: string;
-  className: string;
+  symbol: import("react").ReactNode;
+  className?: string;
 }
