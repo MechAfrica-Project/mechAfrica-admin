@@ -9,7 +9,7 @@ import ChartCard from "./_components/ChartCard";
 import { useMapData } from "./hooks/useMapData";
 
 export default function MapPage() {
-  const { setTitle, setFilters } = useHeaderStore();
+  const { setTitle, setFilters, setSelectedFilter } = useHeaderStore();
   const [isFullscreen, setIsFullscreen] = useState(false);
   useMapData();
 
@@ -28,7 +28,10 @@ export default function MapPage() {
         { label: "Cocoa", value: "cocoa" },
       ],
     });
-  }, [setTitle, setFilters]);
+    // Initialize selected filters to "all"
+    setSelectedFilter("Services", "all");
+    setSelectedFilter("Crops", "all");
+  }, [setTitle, setFilters, setSelectedFilter]);
 
   return (
     <div className="p-3 sm:p-6 space-y-6">
