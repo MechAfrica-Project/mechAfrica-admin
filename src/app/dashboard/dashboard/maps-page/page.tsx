@@ -1,6 +1,6 @@
 "use client";
 import { useHeaderStore } from "@/stores/useHeaderStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import SearchBar from "./_components/SearchBar";
 import FilterButton from "./_components/FilterButton";
 import MapCard from "./_components/MapCard";
@@ -10,6 +10,7 @@ import { useMapData } from "./hooks/useMapData";
 
 export default function MapPage() {
   const { setTitle, setFilters } = useHeaderStore();
+  const [isFullscreen, setIsFullscreen] = useState(false);
   useMapData();
 
   useEffect(() => {
@@ -38,13 +39,19 @@ export default function MapPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+      <div className={`grid grid-cols-1 gap-6 w-full transition-all duration-300 ${
+        isFullscreen ? "lg:grid-cols-1" : "lg:grid-cols-3"
+      }`}>
        {/* Left Column - Map */}
-        <div className="lg:col-span-2">
-          <MapCard />
+        <div className={isFullscreen ? "lg:col-span-1" : "lg:col-span-2"}>
+          <MapCard 
+            isFullscreen={isFullscreen}
+            onFullscreenToggle={() => setIsFullscreen(!isFullscreen)}
+          />
         </div>
 
         {/* Right Column - Stats and Chart */}
+        {!isFullscreen && (
         <div className="space-y-6">
           {/* Stats Grid */}
           <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-4">
@@ -55,6 +62,7 @@ export default function MapPage() {
           {/* Chart */}
           <ChartCard />
         </div>
+        )}
       </div>
     </div>
   );

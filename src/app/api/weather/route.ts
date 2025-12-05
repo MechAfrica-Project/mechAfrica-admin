@@ -4,11 +4,11 @@ export async function GET() {
   try {
     // Read the OpenWeather API key from env. Try both server-only and public names.
     const apiKey =
-      process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+      process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing OPENWEATHER_KEY / NEXT_PUBLIC_OPENWEATHER_KEY" },
+        { error: "Missing OPENWEATHER_API_KEY / NEXT_PUBLIC_OPENWEATHER_API_KEY" },
         { status: 500 }
       );
     }

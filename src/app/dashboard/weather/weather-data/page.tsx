@@ -65,9 +65,9 @@ export default function WeatherPage() {
             <p className="text-lg font-semibold text-red-600">{error}</p>
             <p className="mt-2 text-sm text-muted-foreground">
               The server API returned an error or invalid data. Make sure the
-              environment variables are set: <code>OPENWEATHER_KEY</code> (server)
-              or <code>NEXT_PUBLIC_OPENWEATHER_KEY</code> (public). See
-              <code>.env.example</code> for names.
+              environment variables are set: <code>OPENWEATHER_API_KEY</code> (server)
+              or <code>NEXT_PUBLIC_OPENWEATHER_API_KEY</code> (public). See
+              <code>.env</code> for configuration.
             </p>
           </div>
         </div>

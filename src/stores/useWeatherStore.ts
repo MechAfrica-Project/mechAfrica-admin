@@ -34,7 +34,7 @@ export const useWeatherStore = create<WeatherState>((set) => ({
     ) {
       set({
         error:
-          "Unexpected weather data. Check your OPENWEATHER_KEY and API response.",
+          "Unexpected weather data. Check your OPENWEATHER_API_KEY and API response.",
         data: null,
         isLoading: false,
       });
