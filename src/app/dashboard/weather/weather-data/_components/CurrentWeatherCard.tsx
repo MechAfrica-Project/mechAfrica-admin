@@ -1,6 +1,5 @@
 import { CurrentWeather, DailyWeather } from "../types/weather";
 import { getWeatherIcon, capitalizeFirstLetter } from "../utils/weatherUtils";
-import { MapPin, ChevronDown } from "lucide-react";
 
 interface CurrentWeatherCardProps {
   current: CurrentWeather;
@@ -30,50 +29,45 @@ export default function CurrentWeatherCard({
   });
 
   return (
-    <div className={"text-left pb-4" + className}>
-      {/* Header row: location + units toggle */}
-      <div className="mb-4 flex items-center justify-between">
+    <div className={"text-left pb-6 mb-6 " + className}>
+      <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
-            <MapPin className="h-4 w-4" />
-            <span>{location}</span>
-          </div>
-          <div className="mt-1 text-xs text-gray-500">
-            {dayName}, {dateStr}
-          </div>
+          <div className="text-sm text-emerald-700 font-semibold">{location}</div>
+          <div className="text-xs text-gray-500">{dayName} · {dateStr}</div>
         </div>
-
-        <button
-          type="button"
-          className="flex items-center gap-1 rounded-full bg-[#f5fbf7] px-3 py-1 text-xs font-medium text-emerald-900"
-        >
-          °C
-          <ChevronDown className="h-3 w-3" />
-        </button>
+        <div className="text-sm text-gray-400">{description}</div>
       </div>
 
-      {/* Main temperature + icon */}
-      <div className="flex items-center gap-12 justify-between">
+      <div className="flex items-center justify-between mt-6">
         <div className="flex items-center">
           <span className="mr-4">{icon.symbol}</span>
           <div>
-            <div className="text-6xl font-extrabold text-emerald-800">
-              {mainTemp}°C
-            </div>
-            <div className="mt-1 text-sm text-gray-500">
-              Feels like {Math.round(current.feels_like)}°
-            </div>
+            <div className="text-6xl font-extrabold text-emerald-800">{mainTemp}°C</div>
+            <div className="text-sm text-gray-500">Feels like {Math.round(current.feels_like)}°</div>
           </div>
         </div>
+        <div className="text-sm text-gray-600">
+          <div>H: <span className="font-semibold">{high}°</span></div>
+          <div>L: <span className="font-semibold">{low}°</span></div>
+        </div>
+      </div>
 
-        <div className="text-right text-sm text-gray-600">
-          <div className="font-semibold text-emerald-900">Heavy Rain</div>
-          <div className="text-xs text-gray-500">
-            H: {high}° · L: {low}°
-          </div>
-          <div className="mt-1 text-xs text-gray-400">
-            {capitalizeFirstLetter(description)}
-          </div>
+      <div className="grid grid-cols-4 gap-4 mt-6 text-sm">
+        <div className="p-3 bg-gray-50 rounded-lg text-center">
+          <div className="text-xs text-gray-500">Wind Status</div>
+          <div className="text-lg font-bold">{Math.round(current.wind_speed * 3.6)} km/h</div>
+        </div>
+        <div className="p-3 bg-gray-50 rounded-lg text-center">
+          <div className="text-xs text-gray-500">Humidity</div>
+          <div className="text-lg font-bold">{current.humidity}%</div>
+        </div>
+        <div className="p-3 bg-gray-50 rounded-lg text-center">
+          <div className="text-xs text-gray-500">Visibility</div>
+          <div className="text-lg font-bold">{Math.round((current.visibility ?? 0) / 1000)} km</div>
+        </div>
+        <div className="p-3 bg-gray-50 rounded-lg text-center">
+          <div className="text-xs text-gray-500">UV Index</div>
+          <div className="text-lg font-bold">{current.uvi}</div>
         </div>
       </div>
     </div>

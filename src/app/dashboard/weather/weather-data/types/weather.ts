@@ -15,7 +15,6 @@ export interface CurrentWeather {
   humidity: number;
   uvi: number;
   wind_speed: number;
-  visibility?: number;
   weather: WeatherDetail[];
 }
 
@@ -34,8 +33,6 @@ export interface DailyTemp {
 
 export interface DailyWeather {
   dt: number;
-  sunrise: number;
-  sunset: number;
   temp: DailyTemp;
   pop: number;
   weather: WeatherDetail[];

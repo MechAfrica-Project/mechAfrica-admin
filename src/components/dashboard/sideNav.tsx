@@ -34,10 +34,13 @@ export default function SideNav({ closeMenu }: SideNavProps) {
         </div>
 
         {/* Sign out button */}
-        <form>
-          <button className="flex h-12 w-full items-center justify-center md:justify-start gap-3 rounded-md p-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-all">
-            <PowerIcon className="w-5" />
-            <span>Sign Out</span>
+        <form action="/" method="POST">
+          <button 
+            type="submit"
+            className="flex h-12 w-full items-center justify-center md:justify-start gap-3 rounded-md p-3 text-sm font-medium text-red-600 hover:bg-red-100 active:bg-red-200 transition-colors duration-200"
+          >
+            <PowerIcon className="w-5 h-5" />
+            <span className="md:inline">Sign Out</span>
           </button>
         </form>
       </div>
