@@ -6,7 +6,6 @@ import DailyForecastList from "./_components/DailyForecastList";
 import HourlyForecastList from "./_components/HourlyForecastList";
 import { getWeatherIcon } from "./utils/weatherUtils";
 import { Sun, Moon } from "lucide-react";
-import { WeatherData } from "./types/weather";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { WeatherBroadcastModal } from "@/app/dashboard/weather/weather-broadcast/_components/WeatherBroadcastModal";
 import { useWeatherStore } from "@/stores/useWeatherStore";
@@ -30,7 +29,7 @@ export default function WeatherPage() {
       }
     }
     if (!weatherData && isLoading) fetchData();
-  }, []);
+  }, [weatherData, isLoading, setFromResponse]);
 
   // Set header title and filters
   useEffect(() => {
@@ -126,9 +125,9 @@ export default function WeatherPage() {
           </div>
         </div>
 
-        {/* Today's Highlight */}
+        {/* Today&apos;s Highlight */}
         <section className="mt-6 rounded-2xl bg-white p-6 shadow-md">
-          <h3 className="text-2xl font-semibold text-emerald-800 mb-4">Today's Highlight</h3>
+          <h3 className="text-2xl font-semibold text-emerald-800 mb-4">Today&apos;s Highlight</h3>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 bg-gray-50 rounded-xl text-center">
@@ -160,7 +159,7 @@ export default function WeatherPage() {
             <div className="p-6 bg-gray-50 rounded-2xl flex items-center justify-between">
               <div>
                 <div className="text-sm text-gray-500">Sunset</div>
-                <div className="text-2xl font-bold">{new Date(todayDaily.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                <div className="text-2xl font-bold">{todayDaily.sunset ? new Date(todayDaily.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
               </div>
               <div className="text-4xl"><Sun className="h-8 w-8 text-orange-400" /></div>
             </div>
@@ -168,7 +167,7 @@ export default function WeatherPage() {
             <div className="p-6 bg-gray-50 rounded-2xl flex items-center justify-between">
               <div>
                 <div className="text-sm text-gray-500">Sunrise</div>
-                <div className="text-2xl font-bold">{new Date(todayDaily.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                <div className="text-2xl font-bold">{todayDaily.sunrise ? new Date(todayDaily.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</div>
               </div>
               <div className="text-4xl"><Moon className="h-8 w-8 text-yellow-400" /></div>
             </div>

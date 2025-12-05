@@ -8,16 +8,11 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest'
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: {
+        jsx: 'react-jsx',
+      },
+    }]
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
-};
-
-// Ensure ts-jest compiles JSX for tests (tsconfig used in app keeps JSX as 'preserve')
-module.exports.globals = {
-  'ts-jest': {
-    tsconfig: {
-      jsx: 'react-jsx',
-    },
-  },
 };

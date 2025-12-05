@@ -20,7 +20,7 @@ export default function ProvidersPage() {
     const provider: Provider = {
       id: p.id,
       name: p.name,
-      email: "", // TODO: add real email if available
+      email: `${p.handle.replace('@', '')}@example.com`,
       phone: p.phone,
       providerType: p.type,
       status: "pending",

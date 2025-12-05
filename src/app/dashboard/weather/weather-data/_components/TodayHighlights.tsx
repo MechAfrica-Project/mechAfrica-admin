@@ -10,15 +10,17 @@ interface TodayHighlightsProps {
 }
 
 export function TodayHighlights({ current, todayDaily }: TodayHighlightsProps) {
-  const formatTime = (unix: number) =>
-    new Date(unix * 1000).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatTime = (unix?: number) =>
+    unix
+      ? new Date(unix * 1000).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
 
   return (
     <motion.section
-      className="rounded-[24px] bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
+      className="rounded-3xl bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.15 }}

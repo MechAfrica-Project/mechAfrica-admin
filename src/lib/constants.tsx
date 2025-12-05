@@ -50,10 +50,6 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
       title: "Revenue & Payments",
       path: "/dashboard/finances/revenue-payment",
     },
-    {
-      title: "Withdrawal Requests",
-      path: "/dashboard/finances/withdrawal-requests",
-    },
   ],
   "/admin": [
     {
