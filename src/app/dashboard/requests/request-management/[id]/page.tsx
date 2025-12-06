@@ -12,12 +12,12 @@ const labelMap: Record<string, string> = {
   demand: "Demand to Supply",
 };
 
-export default function RequestsByCategory({
+export default async function RequestsByCategory({
   params,
 }: {
   params: { id: string };
 }) {
-  const id = params.id;
+  const { id } = await params;
   const title = labelMap[id] ?? "Requests";
 
   return (

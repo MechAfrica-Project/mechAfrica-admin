@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Local Weather API Route (Fallback)
+ *
+ * NOTE: The backend now provides a weather endpoint at /api/v1/weather
+ * This local route is kept as a fallback in case the backend is unavailable.
+ * The frontend API client (src/lib/api/client.ts) uses the backend endpoint by default.
+ */
 export async function GET(request: Request) {
   try {
     // Read the OpenWeather API key from env. Try both server-only and public names.

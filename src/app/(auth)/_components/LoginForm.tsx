@@ -12,9 +12,21 @@ import Image from "next/image";
 import { images } from "@/lib/images";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z
+    .string()
+    .min(1, "Email or phone number is required")
+    .refine(
+      (val) => {
+        // Allow email or phone number format
+        const isEmail = val.includes("@");
+        const isPhone = /^\+?[\d\s-]{10,}$/.test(val.replace(/\s/g, ""));
+        return isEmail || isPhone;
+      },
+      { message: "Please enter a valid email or phone number" }
+    ),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -23,6 +35,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
 
   const {
     register,
@@ -32,17 +45,23 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit: SubmitHandler<LoginFormValues> = async (_data) => {
-    void _data;
+  const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
     setIsLoading(true);
     toast.info("Logging in...");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success("Login successful!");
-      router.push(ROUTES.dashboard);
-    } catch {
-      toast.error("Login failed. Please try again.");
+      const success = await login(data.email, data.password);
+
+      if (success) {
+        toast.success("Login successful!");
+        router.push(ROUTES.dashboard);
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Login failed. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -61,10 +80,10 @@ export default function LoginForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <InputField
-            label="Email"
+            label="Email or Phone"
             name="email"
-            type="email"
-            placeholder="admin@mechafrica.com"
+            type="text"
+            placeholder="admin@mechafrica.com or +233..."
             icon={Mail}
             register={register}
             errors={errors}

@@ -10,6 +10,7 @@ import { useHeaderStore } from "@/stores/useHeaderStore";
 import { WeatherBroadcastModal } from "@/app/dashboard/weather/weather-broadcast/_components/WeatherBroadcastModal";
 import { useWeatherStore } from "@/stores/useWeatherStore";
 import { useGeolocation } from "./hooks/useGeolocation";
+import { api } from "@/lib/api";
 
 export default function WeatherPage() {
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
@@ -17,7 +18,7 @@ export default function WeatherPage() {
   const [isFetching, setIsFetching] = useState(false);
   const { location: geoLocation, loading: isLocating, error: locationError } = useGeolocation();
   const { setTitle, setFilters } = useHeaderStore();
-  
+
   const {
     data: weatherData,
     error,
@@ -59,12 +60,8 @@ export default function WeatherPage() {
 
       try {
         setIsFetching(true);
-        const params = new URLSearchParams({
-          lat: geoLocation.lat.toString(),
-          lon: geoLocation.lon.toString(),
-        });
-        const res = await fetch(`/api/weather?${params}`);
-        const data = await res.json();
+        // Use the API client to fetch weather from backend
+        const data = await api.getWeather(geoLocation.lat, geoLocation.lon);
         setFromResponse(data);
       } catch (err) {
         console.error("Failed to load weather", err);
@@ -97,8 +94,18 @@ export default function WeatherPage() {
     }
   }, [lastAction, setAction]);
 
-  const handleSendBroadcast = (data: Record<string, unknown>) => {
-    console.log("Weather Broadcast sent:", data);
+  const handleSendBroadcast = async (data: Record<string, unknown>) => {
+    try {
+      await api.sendWeatherBroadcast({
+        aiNotifications: data.aiNotifications as boolean,
+        region: data.region as string,
+        district: data.district as string,
+        message: data.message as string,
+      });
+      console.log("Weather Broadcast sent:", data);
+    } catch (err) {
+      console.error("Failed to send broadcast:", err);
+    }
     setIsBroadcastOpen(false);
   };
 
@@ -109,20 +116,12 @@ export default function WeatherPage() {
           <div className="text-center">
             <p className="text-lg font-semibold text-emerald-600">{error}</p>
             <p className="mt-2 text-sm text-emerald-700">
-              The server API returned an error or invalid data. Make sure the
-              environment variables are set:{" "}
+              The server API returned an error or invalid data. Please check that
+              the backend server is running and the{" "}
               <code className="bg-emerald-50 px-2 py-1 rounded text-emerald-800">
-                OPENWEATHER_API_KEY
+                NEXT_PUBLIC_API_BASE_URL
               </code>{" "}
-              (server) or{" "}
-              <code className="bg-emerald-50 px-2 py-1 rounded text-emerald-800">
-                NEXT_PUBLIC_OPENWEATHER_API_KEY
-              </code>{" "}
-              (public). See{" "}
-              <code className="bg-emerald-50 px-2 py-1 rounded text-emerald-800">
-                .env
-              </code>{" "}
-              for configuration.
+              environment variable is set correctly.
             </p>
           </div>
         </div>
@@ -145,7 +144,7 @@ export default function WeatherPage() {
       <div className="w-full max-w-6xl">
         {/* Location Display */}
         <div className="mb-4 text-sm text-emerald-700">
-           Weather for: <span className="font-semibold">{locationDisplay}</span>
+          Weather for: <span className="font-semibold">{locationDisplay}</span>
           {locationError ? (
             <span className="ml-2 text-xs text-amber-700">
               (Geolocation error: {locationError}. Using fallback.)

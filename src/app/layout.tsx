@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -30,7 +31,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${comfortaa.variable} antialiased`}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <SpeedInsights />
         <Toaster position="top-center" />
       </body>

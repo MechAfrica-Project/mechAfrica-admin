@@ -1,6 +1,7 @@
 "use client";
+
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { getMapStatistics } from "@/lib/dummyData";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 
 interface StatCardProps {
   title: string;
@@ -36,32 +37,57 @@ function StatCard({ title, value, change, trend, isBlue = false }: StatCardProps
 }
 
 export default function StatsGrid() {
-  const stats = getMapStatistics();
+  const statistics = useDashboardStore((state) => state.statistics);
+  const isLoading = useDashboardStore((state) => state.isLoading);
+
+  // Show loading skeleton if loading and no data
+  if (isLoading && !statistics) {
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="rounded-lg p-4 bg-gray-200 animate-pulse h-24" />
+        ))}
+      </div>
+    );
+  }
+
+  // Get trend direction from change string
+  const getTrend = (change: string): "up" | "down" => {
+    return change.startsWith("+") ? "up" : "down";
+  };
+
+  const totalFarmers = statistics?.totalFarmers ?? 0;
+  const totalServiceProviders = statistics?.totalServiceProviders ?? 0;
+  const totalAcres = statistics?.totalAcres ?? 0;
+  const demandToSupply = statistics?.demandToSupply ?? "N/A";
+  const farmersGrowth = statistics?.farmersGrowth ?? "+0%";
+  const providersGrowth = statistics?.providersGrowth ?? "+0%";
+  const acresGrowth = statistics?.acresGrowth ?? "+0%";
 
   return (
     <div className="grid grid-cols-2 gap-2">
       <StatCard
         title="Farmers"
-        value={stats.totalFarmers.toLocaleString()}
-        change={stats.farmersGrowth}
-        trend="up"
+        value={totalFarmers.toLocaleString()}
+        change={farmersGrowth}
+        trend={getTrend(farmersGrowth)}
       />
       <StatCard
         title="S.Providers"
-        value={stats.totalServiceProviders.toLocaleString()}
-        change={stats.providersGrowth}
-        trend="down"
+        value={totalServiceProviders.toLocaleString()}
+        change={providersGrowth}
+        trend={getTrend(providersGrowth)}
         isBlue={true}
       />
       <StatCard
         title="Total Acres"
-        value={stats.totalAcres.toLocaleString()}
-        change={stats.acresGrowth}
-        trend="up"
+        value={totalAcres.toLocaleString()}
+        change={acresGrowth}
+        trend={getTrend(acresGrowth)}
       />
       <StatCard
         title="Demand to Supply"
-        value={stats.demandToSupply}
+        value={demandToSupply}
       />
     </div>
   );

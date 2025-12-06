@@ -1,49 +1,172 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+import { api } from "@/lib/api";
+import type { FrontendAdmin, FrontendPagination } from "@/lib/api";
 
-export type Admin = {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  type: string;
-  phoneNumber: string;
-  dateOfRegistration: string;
-};
+// =============================================================================
+// Admins Store Types
+// =============================================================================
 
-export type AdminsState = {
+export type AdminType = "Admin" | "Agent" | "Farmer" | "Provider" | "Accounts";
+
+export type Admin = FrontendAdmin;
+
+export interface AdminsState {
+  // State
   admins: Admin[];
-  setAdmins: (a: Admin[]) => void;
-  addAdmin: (admin: Omit<Admin, 'id'>) => void;
-  deleteAdmin: (id: string) => void;
+  pagination: FrontendPagination | null;
+  isLoading: boolean;
+  error: string | null;
+
+  // Actions
+  fetchAdmins: (page?: number, limit?: number) => Promise<void>;
+  setAdmins: (admins: Admin[]) => void;
+  addAdmin: (
+    admin: Omit<Admin, "id"> & {
+      password: string;
+      idNumber: string;
+      idType: string;
+      communityName: string;
+      gender: string;
+    }
+  ) => Promise<boolean>;
+  deleteAdmin: (id: string) => Promise<boolean>;
   updateAdmin: (id: string, patch: Partial<Admin>) => void;
-};
+  clearError: () => void;
+}
 
-const initialAdmins: Admin[] = [
-  { id: '1', name: 'Jane Cooper', email: 'jad324h463', avatar: 'JC', type: 'Admin', phoneNumber: '05552731324', dateOfRegistration: '5/27/15' },
-  { id: '2', name: 'Wade Warren', email: 'ad324h463', avatar: 'WW', type: 'Admin', phoneNumber: '05552731324', dateOfRegistration: '5/19/12' },
-  { id: '3', name: 'Esther Howard', email: 'ad324h463', avatar: 'EH', type: 'Agent', phoneNumber: '05552731324', dateOfRegistration: '3/4/16' },
-  { id: '4', name: 'Jenny Wilson', email: 'ad324h463', avatar: 'JW', type: 'Agent', phoneNumber: '05552731324', dateOfRegistration: '3/4/16' },
-  { id: '5', name: 'Guy Hawkins', email: 'ad324h463', avatar: 'GH', type: 'Accounting', phoneNumber: '05552731324', dateOfRegistration: '7/27/13' },
-  { id: '6', name: 'Jacob Jones', email: 'ad324h463', avatar: 'JJ', type: 'Agent', phoneNumber: '05552731324', dateOfRegistration: '5/27/15' },
-  { id: '7', name: 'Ronald Richards', email: 'ad324h463', avatar: 'RR', type: 'Admin', phoneNumber: '05552731324', dateOfRegistration: '7/11/19' },
-  { id: '8', name: 'Devon Lane', email: 'ad324h463', avatar: 'DL', type: 'Accounting', phoneNumber: '05552731324', dateOfRegistration: '9/23/16' },
-  { id: '9', name: 'Jerome Bell', email: 'ad324h463', avatar: 'JB', type: 'Accounting', phoneNumber: '05552731324', dateOfRegistration: '8/2/19' },
-];
+// =============================================================================
+// Admins Store
+// =============================================================================
 
-export const useAdminsStore = create<AdminsState>((set) => ({
-  admins: initialAdmins,
-  setAdmins(a) {
-    set({ admins: a });
+export const useAdminsStore = create<AdminsState>((set, get) => ({
+  // Initial state
+  admins: [],
+  pagination: null,
+  isLoading: false,
+  error: null,
+
+  // Fetch admins from API
+  fetchAdmins: async (page = 1, limit = 20) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await api.getAdmins(page, limit);
+
+      if (response.success) {
+        set({
+          admins: response.data,
+          pagination: response.pagination || null,
+          isLoading: false,
+        });
+      } else {
+        set({
+          isLoading: false,
+          error: "Failed to fetch admins",
+        });
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch admins";
+
+      set({
+        isLoading: false,
+        error: errorMessage,
+      });
+    }
   },
-  addAdmin(admin) {
-    set((s) => ({ admins: [...s.admins, { ...admin, id: String(s.admins.length + 1) }] }));
+
+  // Set admins directly (for local updates)
+  setAdmins: (admins: Admin[]) => {
+    set({ admins });
   },
-  deleteAdmin(id) {
-    set((s) => ({ admins: s.admins.filter((a) => a.id !== id) }));
+
+  // Add a new admin via API
+  addAdmin: async (adminData) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await api.createAdmin(adminData);
+
+      if (response.success) {
+        // Refresh the admins list
+        await get().fetchAdmins();
+        return true;
+      } else {
+        set({
+          isLoading: false,
+          error: response.message || "Failed to create admin",
+        });
+        return false;
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create admin";
+
+      set({
+        isLoading: false,
+        error: errorMessage,
+      });
+      return false;
+    }
   },
-  updateAdmin(id, patch) {
-    set((s) => ({ admins: s.admins.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
+
+  // Delete an admin via API
+  deleteAdmin: async (id: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await api.deleteAdmin(id);
+
+      if (response.success) {
+        // Remove from local state
+        const { admins } = get();
+        set({
+          admins: admins.filter((a) => a.id !== id),
+          isLoading: false,
+        });
+        return true;
+      } else {
+        set({
+          isLoading: false,
+          error: "Failed to delete admin",
+        });
+        return false;
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete admin";
+
+      set({
+        isLoading: false,
+        error: errorMessage,
+      });
+      return false;
+    }
+  },
+
+  // Update admin locally (API update would need profile endpoint)
+  updateAdmin: (id: string, patch: Partial<Admin>) => {
+    const { admins } = get();
+    set({
+      admins: admins.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+    });
+  },
+
+  // Clear error
+  clearError: () => {
+    set({ error: null });
   },
 }));
+
+// =============================================================================
+// Selector Hooks
+// =============================================================================
+
+export const useAdmins = () => useAdminsStore((state) => state.admins);
+export const useAdminsLoading = () =>
+  useAdminsStore((state) => state.isLoading);
+export const useAdminsError = () => useAdminsStore((state) => state.error);
+export const useAdminsPagination = () =>
+  useAdminsStore((state) => state.pagination);
 
 export default useAdminsStore;

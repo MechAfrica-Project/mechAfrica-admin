@@ -1,6 +1,6 @@
 "use client";
 import { Wrapper, Status } from "@googlemaps/react-wrapper";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { MapMarker, Farmer, ServiceProvider } from "@/lib/dummyData";
 
 interface MapProps {
@@ -13,9 +13,12 @@ interface MapProps {
 const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [mapMarkers, setMapMarkers] = useState<(google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[]>([]);
   const [mapError, setMapError] = useState<string | null>(null);
 
+  // Use ref to track markers to avoid infinite loops
+  const mapMarkersRef = useRef<(google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[]>([]);
+
+  // Initialize map
   useEffect(() => {
     if (ref.current && !map) {
       try {
@@ -36,39 +39,37 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
         });
         setMap(newMap);
       } catch (err) {
-        // Save a user-friendly error so the UI can show a message instead of crashing
-        // Common case: ApiNotActivatedMapError from the loaded script
         console.error("Failed to initialize Google Map:", err);
         setMapError(String(err ?? "Failed to initialize map"));
       }
     }
   }, [ref, map, center, zoom]);
 
-  // Clear existing markers
-  useEffect(() => {
-    // Attempt to remove existing markers safely
-    mapMarkers.forEach((marker) => {
+  // Clear existing markers helper function
+  const clearMarkers = useCallback(() => {
+    mapMarkersRef.current.forEach((marker) => {
       try {
-        // AdvancedMarkerElement doesn't expose setMap; it has .map property
         if ("setMap" in marker && typeof (marker as google.maps.Marker).setMap === "function") {
           (marker as google.maps.Marker).setMap(null);
         } else if ("map" in marker) {
-          // AdvancedMarkerElement exposes a map property
           (marker as google.maps.marker.AdvancedMarkerElement).map = null;
         }
       } catch {
         // ignore cleanup errors
       }
     });
-    setMapMarkers([]);
-  }, [markers, mapMarkers]);
+    mapMarkersRef.current = [];
+  }, []);
 
-  // Add new markers
+  // Add markers when map or markers change
   useEffect(() => {
     if (!map) return;
 
-  const g = (window as unknown as { google?: typeof google }).google;
-  const newMarkers: (google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[] = [];
+    // Clear existing markers first
+    clearMarkers();
+
+    const g = (window as unknown as { google?: typeof google }).google;
+    const newMarkers: (google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[] = [];
 
     markers.forEach((markerData) => {
       try {
@@ -85,8 +86,8 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
               <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">S</text>
             </svg>`;
 
-        // Preferred: use AdvancedMarkerElement from the marker library
         let marker: google.maps.Marker | google.maps.marker.AdvancedMarkerElement | null = null;
+
         if (g && g.maps && g.maps.marker && typeof g.maps.marker.AdvancedMarkerElement === "function") {
           const content = document.createElement("div");
           content.innerHTML = svgString;
@@ -97,7 +98,6 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
             content,
           });
         } else if (g && g.maps && typeof g.maps.Marker === "function") {
-          // Fallback to legacy Marker if advanced markers are not available
           marker = new g.maps.Marker({
             position: markerData.position,
             map: map as google.maps.Map,
@@ -106,7 +106,6 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
         }
 
         if (marker) {
-          // Attach click handler, compatible with both marker types
           try {
             if ("addListener" in marker && typeof (marker as google.maps.Marker).addListener === "function") {
               (marker as google.maps.Marker).addListener("click", () => onMarkerClick?.(markerData));
@@ -114,7 +113,6 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
               "addEventListener" in marker &&
               typeof (marker as unknown as { addEventListener?: (evt: string, cb: () => void) => void }).addEventListener === "function"
             ) {
-              // AdvancedMarkerElement may implement addEventListener
               (marker as unknown as { addEventListener?: (evt: string, cb: () => void) => void }).addEventListener?.(
                 "click",
                 () => onMarkerClick?.(markerData)
@@ -127,13 +125,17 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
           newMarkers.push(marker);
         }
       } catch (err) {
-        // If marker creation fails, continue — map should remain usable
         console.warn("Failed to create marker", err);
       }
     });
 
-    setMapMarkers(newMarkers);
-  }, [map, markers, onMarkerClick]);
+    mapMarkersRef.current = newMarkers;
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      clearMarkers();
+    };
+  }, [map, markers, onMarkerClick, clearMarkers]);
 
   if (mapError) {
     return (
@@ -170,7 +172,7 @@ const render = (status: Status) => {
         </div>
       );
     case Status.SUCCESS:
-        return <MapComponent center={{ lat: 7.9465, lng: -1.0232 }} zoom={6} markers={[]} />;
+      return <MapComponent center={{ lat: 7.9465, lng: -1.0232 }} zoom={6} markers={[]} />;
   }
 };
 
@@ -189,7 +191,6 @@ export default function GoogleMap({ markers, onMarkerClick }: { markers: MapMark
   }
 
   return (
-    // Load the 'marker' library so we can use AdvancedMarkerElement (recommended)
     <Wrapper apiKey={apiKey} render={render} libraries={["marker"]}>
       <MapComponent
         center={{ lat: 7.9465, lng: -1.0232 }}

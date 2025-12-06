@@ -1,38 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useFinancesStore } from "@/stores/useFinancesStore";
 
-type Summary = {
-  revenue: { value: string; delta: string };
-  withdrawals: { value: string; delta: string };
-  payments: { value: string; delta: string };
-  commission: { value: string; delta: string };
+export type ChartPoint = {
+  month: string;
+  thisYear: number;
+  lastYear: number;
+  overTime: number;
 };
 
-export type ChartPoint = { month: string; thisYear: number; lastYear: number; overTime: number };
-
 export function useFinancesData() {
-  const [data, setData] = useState<{ summary?: Summary; chart?: ChartPoint[] } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const summary = useFinancesStore((state) => state.summary);
+  const chartData = useFinancesStore((state) => state.chartData);
+  const isLoading = useFinancesStore((state) => state.isLoading);
+  const error = useFinancesStore((state) => state.error);
+  const fetchFinances = useFinancesStore((state) => state.fetchFinances);
 
+  // Fetch finances on mount
   useEffect(() => {
-    let mounted = true;
+    fetchFinances();
+  }, [fetchFinances]);
 
-    fetch("/api/finances/data")
-      .then((res) => res.json())
-      .then((json) => {
-        if (!mounted) return;
-        setData(json);
-      })
-      .catch(() => {
-        // ignore and keep defaults
-      })
-      .finally(() => mounted && setLoading(false));
+  // Transform to expected format
+  const data = summary
+    ? {
+      summary,
+      chart: chartData,
+    }
+    : null;
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  return { data, loading };
+  return {
+    data,
+    loading: isLoading,
+    error,
+    refetch: fetchFinances,
+  };
 }

@@ -17,7 +17,7 @@ export const SidebarTabs = [
     url: "/dashboard/finances/revenue-payment",
     icon: Wallet,
   },
-  { title: "Admin", url: "/dashboard/admin", icon: Users },
+  { title: "Users", url: "/dashboard/users", icon: Users },
 ];
 
 export const SECTION_TABS: Record<string, TabItem[]> = {
