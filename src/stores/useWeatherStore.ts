@@ -1,17 +1,30 @@
 import { create } from "zustand";
 import type { WeatherData } from "@/app/dashboard/weather/weather-data/types/weather";
 
+export interface LocationData {
+  lat: number;
+  lon: number;
+  name: string;
+  isDefault: boolean;
+}
+
 interface WeatherState {
   data: WeatherData | null;
   error: string | null;
   isLoading: boolean;
+  location: LocationData | null;
+  currentTime: Date;
   setFromResponse: (payload: unknown) => void;
+  setLocation: (location: LocationData | null) => void;
+  setCurrentTime: (time: Date) => void;
 }
 
 export const useWeatherStore = create<WeatherState>((set) => ({
   data: null,
   error: null,
   isLoading: true,
+  location: null,
+  currentTime: new Date(),
   setFromResponse: (payload: unknown) => {
     // Handle API error envelopes
     if (typeof payload === "object" && payload !== null && "error" in payload) {

@@ -13,22 +13,30 @@ import { useGeolocation } from "./hooks/useGeolocation";
 
 export default function WeatherPage() {
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
   const { location, loading: isLocating, error: locationError } = useGeolocation();
   const { setTitle, setFilters } = useHeaderStore();
   // use weather store
   const {
     data: weatherData,
     error,
-    isLoading,
     setFromResponse,
   } = useWeatherStore();
 
-  // Fetch weather data (client-side or switch back to server-side if you prefer)
+  // Auto-refresh weather every 10 minutes and on location change
+  useEffect(() => {
+    const interval = setInterval(() => setRefreshTick((t) => t + 1), 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch weather data when location is known or refresh tick increments
   useEffect(() => {
     async function fetchData() {
       if (!location) return; // Wait for location to be determined
 
       try {
+        setIsFetching(true);
         const params = new URLSearchParams({
           lat: location.lat.toString(),
           lon: location.lon.toString(),
@@ -39,10 +47,12 @@ export default function WeatherPage() {
       } catch (err) {
         console.error("Failed to load weather", err);
         setFromResponse({ error: String(err ?? "Failed to load weather") });
+      } finally {
+        setIsFetching(false);
       }
     }
-    if (!weatherData && isLoading && location) fetchData();
-  }, [weatherData, isLoading, setFromResponse, location]);
+    fetchData();
+  }, [setFromResponse, location, refreshTick]);
 
   // Set header title and filters
   useEffect(() => {
@@ -99,7 +109,7 @@ export default function WeatherPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-lg text-emerald-700">
-          {isLocating ? "Detecting location…" : "Loading weather…"}
+          {isLocating ? "Detecting location…" : isFetching ? "Loading weather…" : "Preparing weather…"}
         </p>
       </div>
     );

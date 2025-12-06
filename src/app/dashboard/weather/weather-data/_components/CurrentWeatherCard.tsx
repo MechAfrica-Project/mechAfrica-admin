@@ -1,5 +1,7 @@
+import Image from "next/image";
 import { CurrentWeather, DailyWeather } from "../types/weather";
 import { getWeatherIcon, capitalizeFirstLetter } from "../utils/weatherUtils";
+import { images } from "@/lib/images";
 
 interface CurrentWeatherCardProps {
   current: CurrentWeather;
@@ -44,7 +46,9 @@ export default function CurrentWeatherCard({
 
       <div className="flex items-center justify-between mt-6">
         <div className="flex items-center">
-          <span className={"mr-4 " + (icon.className ?? "")}>{icon.symbol}</span>
+          <span className={"mr-4 " + (icon.className ?? "")}>
+            <Image src={images.rainCloud} alt="rain cloud" />
+          </span>
           <div>
             <div className="text-6xl font-extrabold text-emerald-800">
               {mainTemp}°C
