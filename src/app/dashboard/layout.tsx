@@ -31,14 +31,14 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Main content area */}
-      <div className="flex flex-col flex-grow bg-white">
+      <div className="flex flex-col grow bg-white">
         {/* Fixed Header */}
         <div className="sticky top-0 z-30">
           <Header onMenuClick={() => setIsOpen(true)} />
         </div>
 
         {/* Scrollable content below fixed header */}
-        <main className="flex-grow overflow-y-auto bg-white">{children}</main>
+        <main className="grow overflow-y-auto bg-white">{children}</main>
       </div>
     </div>
   );
