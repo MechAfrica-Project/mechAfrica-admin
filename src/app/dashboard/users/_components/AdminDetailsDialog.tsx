@@ -23,39 +23,39 @@ interface Admin {
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  admin: Admin | null;
+  user: Admin | null;
 }
 
-export default function AdminDetailsDialog({ open, onOpenChange, admin }: Props) {
+export default function AdminDetailsDialog({ open, onOpenChange, user }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Admin Details</DialogTitle>
+          <DialogTitle>User Details</DialogTitle>
           <DialogDescription>Full details for the selected admin.</DialogDescription>
         </DialogHeader>
 
-        {admin ? (
+        {user ? (
           <div className="mt-4 space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-medium">{admin.name}</p>
+              <p className="font-medium">{user.name}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{admin.email}</p>
+              <p className="font-medium">{user.email}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Type</p>
-              <p className="font-medium">{admin.type}</p>
+              <p className="font-medium">{user.type}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Phone</p>
-              <p className="font-medium">{admin.phoneNumber}</p>
+              <p className="font-medium">{user.phoneNumber}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Date of registration</p>
-              <p className="font-medium">{admin.dateOfRegistration}</p>
+              <p className="font-medium">{user.dateOfRegistration}</p>
             </div>
           </div>
         ) : (

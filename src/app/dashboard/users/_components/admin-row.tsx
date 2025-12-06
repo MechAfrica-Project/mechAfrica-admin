@@ -92,7 +92,7 @@ export function AdminRow({
           <AdminDetailsDialog
             open={infoOpen}
             onOpenChange={setInfoOpen}
-            admin={admin}
+            user={admin}
           />
         </div>
       </TableCell>

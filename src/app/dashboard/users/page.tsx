@@ -6,6 +6,7 @@ import { AddAdminDialog } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
 import { useAdminsStore, Admin } from "@/stores/useAdminsStore";
 import { useTableStore } from "@/stores/useTableStore";
+import { RefreshCcw } from "lucide-react";
 
 export default function AdminsPage() {
   // Get store state and actions
@@ -89,34 +90,35 @@ export default function AdminsPage() {
   })();
 
   // Loading state
-  if (isLoading && admins.length === 0) {
-    return (
-      <main className="min-h-screen bg-background p-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00594C] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  // if (isLoading && admins.length === 0) {
+  //   return (
+  //     <main className="min-h-screen bg-background p-8">
+  //       <div className="mx-auto max-w-6xl">
+  //         <div className="flex items-center justify-center h-64">
+  //           <div className="text-center">
+  //             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00594C] mx-auto mb-4"></div>
+  //             <p className="text-gray-600">Loading...</p>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </main>
+  //   );
+  // }
 
   // Error state
   if (error && admins.length === 0) {
     return (
-      <main className="min-h-screen bg-background p-8">
+      <main className="min-h-screen bg-red p-8">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <p className="text-red-600 font-medium mb-2">Failed to load admins</p>
+              <p className="text-red-600 font-medium mb-2">Failed to load Users</p>
               <p className="text-gray-500 text-sm mb-4">{error}</p>
               <button
                 onClick={() => fetchAdmins()}
-                className="px-4 py-2 bg-[#00594C] text-white rounded-lg hover:bg-[#00594cd4] transition-colors"
+                className="px-4 py-2  text-primary rounded-lg hover:bg-[#00594cd4] transition-colors flex"
               >
+                <span><RefreshCcw /></span>
                 Try Again
               </button>
             </div>
