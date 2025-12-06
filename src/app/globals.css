@@ -119,4 +119,16 @@
   body {
     @apply bg-background text-foreground;
   }
+  button,
+  [role="button"],
+  a,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="file"]::file-selector-button,
+  select,
+  textarea,
+  label {
+    @apply cursor-pointer;
+  }
 }

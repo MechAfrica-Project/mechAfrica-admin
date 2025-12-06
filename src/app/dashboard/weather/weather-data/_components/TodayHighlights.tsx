@@ -10,15 +10,17 @@ interface TodayHighlightsProps {
 }
 
 export function TodayHighlights({ current, todayDaily }: TodayHighlightsProps) {
-  const formatTime = (unix: number) =>
-    new Date(unix * 1000).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatTime = (unix?: number) =>
+    unix
+      ? new Date(unix * 1000).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
 
   return (
     <motion.section
-      className="rounded-[24px] bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
+      className="rounded-3xl bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.15 }}
@@ -47,7 +49,7 @@ export function TodayHighlights({ current, todayDaily }: TodayHighlightsProps) {
         <div className="rounded-2xl bg-[#f5fbf7] px-4 py-4 text-center">
           <div className="text-sm text-emerald-900">Visibility</div>
           <div className="mt-2 text-2xl font-semibold text-emerald-900">
-            {Math.round((current.visibility ?? 0) / 1000)} km
+            {((current as unknown) as Record<string, unknown>).visibility ? Math.round((((current as unknown) as Record<string, unknown>).visibility as number) / 1000) : "N/A"} km
           </div>
           <div className="mt-1 text-xs text-gray-500">9:00 AM</div>
         </div>
@@ -66,7 +68,7 @@ export function TodayHighlights({ current, todayDaily }: TodayHighlightsProps) {
           <div>
             <div className="text-sm text-emerald-900">Sunset</div>
             <div className="mt-2 text-2xl font-semibold text-emerald-900">
-              {formatTime(todayDaily.sunset)}
+              {formatTime(((todayDaily as unknown) as Record<string, unknown>).sunset as number | undefined)}
             </div>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ffe9c7]">
@@ -78,7 +80,7 @@ export function TodayHighlights({ current, todayDaily }: TodayHighlightsProps) {
           <div>
             <div className="text-sm text-emerald-900">Sunrise</div>
             <div className="mt-2 text-2xl font-semibold text-emerald-900">
-              {formatTime(todayDaily.sunrise)}
+              {formatTime(((todayDaily as unknown) as Record<string, unknown>).sunrise as number | undefined)}
             </div>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ffe9c7]">
@@ -89,5 +91,7 @@ export function TodayHighlights({ current, todayDaily }: TodayHighlightsProps) {
     </motion.section>
   );
 }
+
+
 
 

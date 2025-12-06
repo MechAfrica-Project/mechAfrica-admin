@@ -11,7 +11,7 @@ interface DaysForecastCardProps {
 export function DaysForecastCard({ daily }: DaysForecastCardProps) {
   return (
     <motion.div
-      className="rounded-[24px] bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
+      className="rounded-3xl bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}

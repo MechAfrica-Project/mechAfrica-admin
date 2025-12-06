@@ -1,54 +1,98 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-
 import CurrentWeatherCard from "./_components/CurrentWeatherCard";
+import DailyForecastList from "./_components/DailyForecastList";
+import HourlyForecastList from "./_components/HourlyForecastList";
 import { DaysForecastCard } from "./_components/DaysForecastCard";
 import { TodayHighlights } from "./_components/TodayHighlights";
 import { useHeaderStore } from "@/stores/useHeaderStore";
+import { WeatherBroadcastModal } from "@/app/dashboard/weather/weather-broadcast/_components/WeatherBroadcastModal";
 import { useWeatherStore } from "@/stores/useWeatherStore";
-import { WeatherBroadcastModal } from "../weather-broadcast/_components/WeatherBroadcastModal";
+import { useGeolocation } from "./hooks/useGeolocation";
 
 export default function WeatherPage() {
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
+  const { location: geoLocation, loading: isLocating, error: locationError } = useGeolocation();
   const { setTitle, setFilters } = useHeaderStore();
+  
   const {
     data: weatherData,
     error,
-    isLoading,
     setFromResponse,
+    setLocation,
+    setCurrentTime,
   } = useWeatherStore();
 
-  // Fetch weather data once on mount
+  // Sync geolocation to weather store
+  useEffect(() => {
+    if (geoLocation) {
+      setLocation({
+        lat: geoLocation.lat,
+        lon: geoLocation.lon,
+        name: geoLocation.name,
+        isDefault: geoLocation.isDefault,
+      });
+    }
+  }, [geoLocation, setLocation]);
+
+  // Real-time clock: update store time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [setCurrentTime]);
+
+  // Auto-refresh weather every 10 minutes and on location change
+  useEffect(() => {
+    const interval = setInterval(() => setRefreshTick((t) => t + 1), 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch weather data when location is known or refresh tick increments
   useEffect(() => {
     async function fetchData() {
+      if (!geoLocation) return; // Wait for location to be determined
+
       try {
-        const res = await fetch("/api/weather");
+        setIsFetching(true);
+        const params = new URLSearchParams({
+          lat: geoLocation.lat.toString(),
+          lon: geoLocation.lon.toString(),
+        });
+        const res = await fetch(`/api/weather?${params}`);
         const data = await res.json();
         setFromResponse(data);
       } catch (err) {
         console.error("Failed to load weather", err);
         setFromResponse({ error: String(err ?? "Failed to load weather") });
+      } finally {
+        setIsFetching(false);
       }
     }
-
     fetchData();
-  }, [setFromResponse]);
+  }, [setFromResponse, geoLocation, refreshTick]);
 
-  // Set dashboard header
+  // Set header title and filters
   useEffect(() => {
     setTitle("Weather");
     setFilters({});
   }, [setTitle, setFilters]);
 
   // Listen for `Weather Broadcast` action tab
+  // React to header action tabs via the header store. This is more reliable than
+  // relying only on window events (ensures the modal opens even if events are
+  // dispatched before the page is mounted).
   const lastAction = useHeaderStore((s) => s.lastAction);
   const setAction = useHeaderStore((s) => s.setAction);
 
   useEffect(() => {
     if (lastAction === "open-weatherBroadcast-modal") {
       setIsBroadcastOpen(true);
+      // clear the action so it doesn't reopen repeatedly
       setAction(null);
     }
   }, [lastAction, setAction]);
@@ -58,68 +102,97 @@ export default function WeatherPage() {
     setIsBroadcastOpen(false);
   };
 
-  if (isLoading || !weatherData) {
-    if (!error) {
+  if (!weatherData) {
+    if (error) {
       return (
-        <main className="flex min-h-screen items-center justify-center bg-[#f5fbf7]">
-          <p className="text-lg text-emerald-900">Loading weather…</p>
-        </main>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-emerald-600">{error}</p>
+            <p className="mt-2 text-sm text-emerald-700">
+              The server API returned an error or invalid data. Make sure the
+              environment variables are set:{" "}
+              <code className="bg-emerald-50 px-2 py-1 rounded text-emerald-800">
+                OPENWEATHER_API_KEY
+              </code>{" "}
+              (server) or{" "}
+              <code className="bg-emerald-50 px-2 py-1 rounded text-emerald-800">
+                NEXT_PUBLIC_OPENWEATHER_API_KEY
+              </code>{" "}
+              (public). See{" "}
+              <code className="bg-emerald-50 px-2 py-1 rounded text-emerald-800">
+                .env
+              </code>{" "}
+              for configuration.
+            </p>
+          </div>
+        </div>
       );
     }
-
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5fbf7]">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-red-600">{error}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            The server API returned an error or invalid data. Make sure the
-            environment variables are set: <code>OPENWEATHER_KEY</code> (server)
-            or <code>NEXT_PUBLIC_OPENWEATHER_KEY</code> (public). See
-            <code>.env.example</code> for names.
-          </p>
-        </div>
-      </main>
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg text-emerald-700">
+          {isLocating ? "Detecting location…" : isFetching ? "Loading weather…" : "Preparing weather…"}
+        </p>
+      </div>
     );
   }
 
   const todayDaily = weatherData.daily[0];
+  const locationDisplay = geoLocation?.name || "Unknown Location";
 
   return (
-    <main className="flex min-h-screen justify-center bg-[#f5fbf7] px-4 py-6 md:px-8">
-      <motion.div
-        className="w-full max-w-6xl space-y-6"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      >
-        {/* Top section */}
-        <section className="flex flex-col lg:flex-row lg:justify-between">
-          {/* Left: current weather card */}
-          <motion.div
-            className="rounded-[24px] bg-white px-6 py-6 shadow-sm md:px-8 md:py-8"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.05 }}
-          >
-            <CurrentWeatherCard
-              current={weatherData.current}
-              daily={todayDaily}
-              location="Kumasi, Ghana"
-            />
-          </motion.div>
+    <main className="flex justify-center p-6 min-h-screen bg-gray-50">
+      <div className="w-full max-w-6xl">
+        {/* Location Display */}
+        <div className="mb-4 text-sm text-emerald-700">
+           Weather for: <span className="font-semibold">{locationDisplay}</span>
+          {locationError ? (
+            <span className="ml-2 text-xs text-amber-700">
+              (Geolocation error: {locationError}. Using fallback.)
+            </span>
+          ) : null}
+        </div>
+
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left: Current Weather */}
+          <div className="col-span-12 lg:col-span-7">
+            <div className="rounded-2xl bg-white p-6 shadow-md">
+              <CurrentWeatherCard
+                current={weatherData.current}
+                daily={todayDaily}
+                location={locationDisplay}
+                className=""
+              />
+
+              <HourlyForecastList
+                hourlyData={weatherData.hourly.slice(0, 24)}
+              />
+            </div>
+          </div>
+
           {/* Right: Days Forecast */}
-          <DaysForecastCard daily={weatherData.daily} />
-        </section>
+          <div className="col-span-12 lg:col-span-5">
+            <DaysForecastCard daily={weatherData.daily} />
+            <div className="mt-6">
+              <DailyForecastList dailyData={weatherData.daily.slice(1, 8)} />
+            </div>
+          </div>
+        </div>
 
         {/* Today's Highlight */}
-        <TodayHighlights current={weatherData.current} todayDaily={todayDaily} />
+        <div className="mt-6">
+          <TodayHighlights
+            current={weatherData.current}
+            todayDaily={todayDaily}
+          />
+        </div>
 
         <WeatherBroadcastModal
           isOpen={isBroadcastOpen}
           onOpenChange={setIsBroadcastOpen}
           onSend={handleSendBroadcast}
         />
-      </motion.div>
+      </div>
     </main>
   );
 }

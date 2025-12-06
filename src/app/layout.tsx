@@ -31,7 +31,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} ${comfortaa.variable} antialiased`}>
         {children}
-        {/* ✅ Add Speed Insights component */}
         <SpeedInsights />
         <Toaster position="top-center" />
       </body>

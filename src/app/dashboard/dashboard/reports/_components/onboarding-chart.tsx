@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   LineChart,
@@ -13,6 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
   ReferenceLine,
+  Area,
 } from "recharts";
 import { TrendingUp } from "lucide-react";
 
@@ -110,60 +109,11 @@ interface OnboardingChartProps {
 }
 
 export function OnboardingChart({ metric }: OnboardingChartProps) {
-  const [timeFilter, setTimeFilter] = useState("thisYear");
   const chartData = chartDataMap[metric];
-
-  const getVisibleSeries = () => {
-    switch (timeFilter) {
-      case "overTime":
-        return [
-          {
-            key: "overTime",
-            name: "Over time",
-            color: COLORS.overTime,
-            strokeWidth: 3,
-            opacity: 1,
-          },
-        ];
-      case "thisYear":
-        return [
-          {
-            key: "thisYear",
-            name: "This year",
-            color: COLORS.thisYear,
-            strokeWidth: 3,
-            opacity: 1,
-          },
-          {
-            key: "lastYear",
-            name: "Last year",
-            color: COLORS.lastYear,
-            strokeWidth: 2,
-            strokeDasharray: "5 5",
-            opacity: 0.7,
-          },
-        ];
-      case "lastYear":
-        return [
-          {
-            key: "lastYear",
-            name: "Last year",
-            color: COLORS.lastYear,
-            strokeWidth: 3,
-            opacity: 1,
-          },
-        ];
-      default:
-        return [];
-    }
-  };
-
-  const visibleSeries = getVisibleSeries();
 
   const avgValue = Math.round(
     chartData.reduce((sum, item) => {
-      const key = timeFilter === "overTime" ? "overTime" : timeFilter;
-      const v = Number((item as Record<string, unknown>)[key]) || 0;
+      const v = Number((item as Record<string, unknown>)["thisYear"]) || 0;
       return sum + v;
     }, 0) / chartData.length
   );
@@ -171,35 +121,11 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
   return (
     <Card className="p-6 bg-white">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Trend Analysis
-            </h3>
-          </div>
-
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-            {[
-              { id: "overTime", label: "Over time" },
-              { id: "thisYear", label: "This year" },
-              { id: "lastYear", label: "Last year" },
-            ].map((filter) => (
-              <Button
-                key={filter.id}
-                onClick={() => setTimeFilter(filter.id)}
-                variant={timeFilter === filter.id ? "default" : "ghost"}
-                size="sm"
-                className={`text-xs font-medium transition-all ${
-                  timeFilter === filter.id
-                    ? "bg-green-600 text-white"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {filter.label}
-              </Button>
-            ))}
-          </div>
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-green-600" />
+          <h3 className="text-lg font-semibold text-gray-900">
+            Trend Analysis
+          </h3>
         </div>
 
         <div className="h-96 w-full bg-gray-50 rounded-lg border border-gray-200 p-4">
@@ -208,6 +134,12 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
               data={chartData}
               margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
             >
+              <defs>
+                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#16a34a" stopOpacity={0.12} />
+                  <stop offset="80%" stopColor="#16a34a" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="#e5e7eb"
@@ -255,21 +187,28 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
                 )}
               />
 
-              {visibleSeries.map((series) => (
-                <Line
-                  key={series.key}
-                  type="monotone"
-                  dataKey={series.key}
-                  stroke={series.color}
-                  strokeWidth={series.strokeWidth}
-                  strokeDasharray={series.strokeDasharray || undefined}
-                  dot={false}
-                  isAnimationActive={true}
-                  animationDuration={600}
-                  name={series.name}
-                  opacity={series.opacity}
-                />
-              ))}
+              <Area dataKey="thisYear" stroke="none" fill="url(#areaGradient)" />
+              <Line
+                type="monotone"
+                dataKey="thisYear"
+                stroke={COLORS.thisYear}
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={true}
+                animationDuration={600}
+                name="This Year"
+              />
+              <Line
+                type="monotone"
+                dataKey="lastYear"
+                stroke={COLORS.lastYear}
+                strokeWidth={2}
+                strokeDasharray="6 6"
+                dot={false}
+                isAnimationActive={true}
+                animationDuration={600}
+                name="Last Year"
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -290,9 +229,8 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
             <p className="text-lg font-semibold text-gray-900 mt-1">
               {
                 chartData.reduce((max, item) => {
-                  const key = timeFilter === "overTime" ? "overTime" : timeFilter;
-                  const val = Number((item as Record<string, unknown>)[key]) || 0;
-                  const maxVal = Number((max as Record<string, unknown>)[key]) || 0;
+                  const val = Number((item as Record<string, unknown>)["thisYear"]) || 0;
+                  const maxVal = Number((max as Record<string, unknown>)["thisYear"]) || 0;
                   return val > maxVal ? item : max;
                 }).month
               }
@@ -305,10 +243,10 @@ export function OnboardingChart({ metric }: OnboardingChartProps) {
             <p className="text-lg font-semibold text-green-600 mt-1">
               {Math.round(
                 (((chartData[chartData.length - 1] as Record<string, unknown>)[
-                  timeFilter === "overTime" ? "overTime" : timeFilter
+                  "thisYear"
                 ] as number || 0) /
                   ((chartData[0] as Record<string, unknown>)[
-                    timeFilter === "overTime" ? "overTime" : timeFilter
+                    "thisYear"
                   ] as number || 1) -
                   1) *
                   100

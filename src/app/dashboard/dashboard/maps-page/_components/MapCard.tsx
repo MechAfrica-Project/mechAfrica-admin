@@ -14,9 +14,11 @@ import { images } from "@/lib/images";
 
 interface MapCardProps {
   className?: string;
+  isFullscreen?: boolean;
+  onFullscreenToggle?: () => void;
 }
 
-export default function MapCard({ className = "" }: MapCardProps) {
+export default function MapCard({ className = "", isFullscreen = false, onFullscreenToggle }: MapCardProps) {
   const { selectedFilters } = useHeaderStore();
   const [allMarkers] = useState<MapMarker[]>(generateMapMarkers());
   // Apply header-selected filters (Services, Crops)
@@ -59,9 +61,10 @@ export default function MapCard({ className = "" }: MapCardProps) {
     console.log("Marker clicked:", marker);
   };
 
-  const handleRefresh = () => {
-    // In a real app, this would refresh the data from the API
-    window.location.reload();
+  const handleFullscreenToggle = () => {
+    if (onFullscreenToggle) {
+      onFullscreenToggle();
+    }
   };
 
   return (
@@ -82,14 +85,16 @@ export default function MapCard({ className = "" }: MapCardProps) {
           variant="ghost"
           size="sm"
           className="bg-[#00594C] hover:bg-[#00594cec] cursor-pointer"
-          onClick={handleRefresh}
+          onClick={handleFullscreenToggle}
         >
           <Image src={images.maximize} alt="max" />
         </Button>
       </div>
 
       {/* Map Container */}
-      <div className="relative bg-gray-50 rounded-lg h-96 sm:h-[500px] overflow-hidden">
+      <div className={`relative bg-gray-50 rounded-lg overflow-hidden transition-all duration-300 ${
+        isFullscreen ? "h-[calc(100vh-200px)]" : "h-96 sm:h-[500px]"
+      }`}>
         <GoogleMap markers={markers} onMarkerClick={handleMarkerClick} />
       </div>
 

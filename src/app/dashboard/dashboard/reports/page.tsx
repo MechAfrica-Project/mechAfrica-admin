@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import { MetricsGrid } from "./_components/metrics-grid";
 import { DataView } from "./_components/data-view";
 
@@ -8,8 +9,14 @@ import { DataView } from "./_components/data-view";
 type MetricType = "farmer" | "provider" | "solved" | "escalated";
 
 export default function Dashboard() {
+  const { setTitle, setFilters } = useHeaderStore();
   const [activeMetric, setActiveMetric] = useState<MetricType>("farmer");
   const [viewType, setViewType] = useState<"table" | "chart">("table");
+
+  useEffect(() => {
+    setTitle("Reports");
+    setFilters({});
+  }, [setTitle, setFilters]);
 
   return (
     <main className="min-h-screen bg-background p-6">
