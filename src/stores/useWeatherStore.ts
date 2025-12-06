@@ -60,7 +60,14 @@ export const useWeatherStore = create<WeatherState>((set) => ({
       isLoading: false,
     });
   },
+  setLocation: (location: LocationData | null) => {
+    set({ location });
+  },
+  setCurrentTime: (time: Date) => {
+    set({ currentTime: time });
+  },
 }));
+
 
 
 

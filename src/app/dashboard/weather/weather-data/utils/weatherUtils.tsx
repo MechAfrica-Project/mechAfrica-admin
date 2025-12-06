@@ -20,33 +20,33 @@ export const getWeatherIcon = (
   const className = "";
 
   switch (code) {
-    case "01": // Clear
+    case "01":
       symbol = iconCode.includes("d") ? (
         <Sun className={sizeClass + " text-yellow-400"} />
       ) : (
         <Moon className={sizeClass + " text-yellow-300"} />
       );
       break;
-    case "02": // Few clouds
-    case "03": // Scattered clouds
+    case "02":
+    case "03":
       symbol = <Cloud className={sizeClass + " text-gray-400"} />;
       break;
-    case "04": // Overcast
+    case "04":
       symbol = <Cloud className={sizeClass + " text-gray-500"} />;
       break;
-    case "09": // Shower rain
+    case "09":
       symbol = <CloudDrizzle className={sizeClass + " text-blue-400"} />;
       break;
-    case "10": // Rain
+    case "10":
       symbol = <CloudRain className={sizeClass + " text-blue-500"} />;
       break;
-    case "11": // Thunderstorm
+    case "11":
       symbol = <CloudLightning className={sizeClass + " text-purple-500"} />;
       break;
-    case "13": // Snow
+    case "13":
       symbol = <CloudSnow className={sizeClass + " text-slate-200"} />;
       break;
-    case "50": // Mist
+    case "50":
       symbol = <Droplet className={sizeClass + " text-gray-400"} />;
       break;
     default:
@@ -60,5 +60,3 @@ export const capitalizeFirstLetter = (str: string): string => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
-
-

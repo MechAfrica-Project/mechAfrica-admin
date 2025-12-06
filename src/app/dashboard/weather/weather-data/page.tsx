@@ -15,14 +15,36 @@ export default function WeatherPage() {
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
-  const { location, loading: isLocating, error: locationError } = useGeolocation();
+  const { location: geoLocation, loading: isLocating, error: locationError } = useGeolocation();
   const { setTitle, setFilters } = useHeaderStore();
-  // use weather store
+  
   const {
     data: weatherData,
     error,
     setFromResponse,
+    setLocation,
+    setCurrentTime,
   } = useWeatherStore();
+
+  // Sync geolocation to weather store
+  useEffect(() => {
+    if (geoLocation) {
+      setLocation({
+        lat: geoLocation.lat,
+        lon: geoLocation.lon,
+        name: geoLocation.name,
+        isDefault: geoLocation.isDefault,
+      });
+    }
+  }, [geoLocation, setLocation]);
+
+  // Real-time clock: update store time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [setCurrentTime]);
 
   // Auto-refresh weather every 10 minutes and on location change
   useEffect(() => {
@@ -33,13 +55,13 @@ export default function WeatherPage() {
   // Fetch weather data when location is known or refresh tick increments
   useEffect(() => {
     async function fetchData() {
-      if (!location) return; // Wait for location to be determined
+      if (!geoLocation) return; // Wait for location to be determined
 
       try {
         setIsFetching(true);
         const params = new URLSearchParams({
-          lat: location.lat.toString(),
-          lon: location.lon.toString(),
+          lat: geoLocation.lat.toString(),
+          lon: geoLocation.lon.toString(),
         });
         const res = await fetch(`/api/weather?${params}`);
         const data = await res.json();
@@ -52,7 +74,7 @@ export default function WeatherPage() {
       }
     }
     fetchData();
-  }, [setFromResponse, location, refreshTick]);
+  }, [setFromResponse, geoLocation, refreshTick]);
 
   // Set header title and filters
   useEffect(() => {
@@ -116,14 +138,14 @@ export default function WeatherPage() {
   }
 
   const todayDaily = weatherData.daily[0];
-  const locationDisplay = location?.name || "Unknown Location";
+  const locationDisplay = geoLocation?.name || "Unknown Location";
 
   return (
     <main className="flex justify-center p-6 min-h-screen bg-gray-50">
       <div className="w-full max-w-6xl">
         {/* Location Display */}
         <div className="mb-4 text-sm text-emerald-700">
-          📍 Weather for: <span className="font-semibold">{locationDisplay}</span>
+           Weather for: <span className="font-semibold">{locationDisplay}</span>
           {locationError ? (
             <span className="ml-2 text-xs text-amber-700">
               (Geolocation error: {locationError}. Using fallback.)
