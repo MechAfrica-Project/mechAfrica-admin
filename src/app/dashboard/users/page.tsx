@@ -11,7 +11,7 @@ import { RefreshCcw } from "lucide-react";
 export default function AdminsPage() {
   // Get store state and actions
   const admins = useAdminsStore((s) => s.admins);
-  // const isLoading = useAdminsStore((s) => s.isLoading);
+  const isLoading = useAdminsStore((s) => s.isLoading);
   const error = useAdminsStore((s) => s.error);
   const fetchAdmins = useAdminsStore((s) => s.fetchAdmins);
   const addAdmin = useAdminsStore((s) => s.addAdmin);
@@ -90,20 +90,20 @@ export default function AdminsPage() {
   })();
 
   // Loading state
-  // if (isLoading && admins.length === 0) {
-  //   return (
-  //     <main className="min-h-screen bg-background p-8">
-  //       <div className="mx-auto max-w-6xl">
-  //         <div className="flex items-center justify-center h-64">
-  //           <div className="text-center">
-  //             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00594C] mx-auto mb-4"></div>
-  //             <p className="text-gray-600">Loading...</p>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </main>
-  //   );
-  // }
+  if (isLoading && admins.length === 0) {
+    return (
+      <main className="min-h-screen bg-background p-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00594C] mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   // Error state
   if (error && admins.length === 0) {
