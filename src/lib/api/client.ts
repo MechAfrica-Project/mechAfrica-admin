@@ -391,7 +391,7 @@ class MechAfricaAPIClient {
    */
   async getAdmins(page = 1, limit = 20): Promise<FrontendAdminsResponse> {
     const response = await this.get<BackendPaginatedUsers>(
-      `/admin/users`
+      `/admin/users/limit=${limit}&page=${page}`
     );
     return transformUsersToAdmins(response.data);
   }
