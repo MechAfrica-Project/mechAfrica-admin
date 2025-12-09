@@ -4,6 +4,24 @@ import { api } from "@/lib/api";
 import type { FrontendUser } from "@/lib/api";
 
 // =============================================================================
+// Cookie Utilities
+// =============================================================================
+
+const setCookie = (name: string, value: string, days: number = 7) => {
+  if (typeof window === "undefined") return;
+
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+};
+
+const deleteCookie = (name: string) => {
+  if (typeof window === "undefined") return;
+
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+};
+
+// =============================================================================
 // Auth Store Types
 // =============================================================================
 
@@ -50,6 +68,16 @@ export const useAuthStore = create<AuthState>()(
             // Set token in API client
             api.setToken(token);
 
+            // Store auth state in cookie for middleware
+            const authData = {
+              state: {
+                isAuthenticated: true,
+                token: token,
+                user: user,
+              },
+            };
+            setCookie("mechafrica-auth", JSON.stringify(authData), 7);
+
             set({
               user,
               token,
@@ -85,6 +113,9 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         // Clear API client token
         api.clearToken();
+
+        // Delete auth cookie
+        deleteCookie("mechafrica-auth");
 
         // Reset state
         set({
@@ -122,6 +153,16 @@ export const useAuthStore = create<AuthState>()(
         // When storage is rehydrated, initialize the API client with the token
         if (state?.token) {
           api.setToken(state.token);
+
+          // Also sync cookie with localStorage state
+          const authData = {
+            state: {
+              isAuthenticated: state.isAuthenticated,
+              token: state.token,
+              user: state.user,
+            },
+          };
+          setCookie("mechafrica-auth", JSON.stringify(authData), 7);
         }
       },
     }

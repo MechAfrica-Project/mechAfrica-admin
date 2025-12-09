@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { InputField } from "./InputField";
 import Image from "next/image";
 import { images } from "@/lib/images";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { useAuthStore } from "@/stores/useAuthStore";
 
@@ -35,6 +35,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const login = useAuthStore((state) => state.login);
 
   const {
@@ -54,7 +55,9 @@ export default function LoginForm() {
 
       if (success) {
         toast.success("Login successful!");
-        router.push(ROUTES.dashboard);
+        // Check if there's a redirect parameter
+        const redirectTo = searchParams.get("redirect");
+        router.push(redirectTo || ROUTES.dashboard);
       } else {
         toast.error("Login failed. Please check your credentials.");
       }
