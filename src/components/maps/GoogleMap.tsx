@@ -3,6 +3,10 @@ import { Wrapper, Status } from "@googlemaps/react-wrapper";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { MapMarker, Farmer, ServiceProvider } from "@/lib/dummyData";
 
+// Marker colors
+const FARMER_COLOR = "#00594C";
+const PROVIDER_COLOR = "#3B82F6";
+
 interface MapProps {
   center: { lat: number; lng: number };
   zoom: number;
@@ -16,7 +20,7 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   const [mapError, setMapError] = useState<string | null>(null);
 
   // Use ref to track markers to avoid infinite loops
-  const mapMarkersRef = useRef<(google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[]>([]);
+  const mapMarkersRef = useRef<google.maps.Marker[]>([]);
 
   // Initialize map
   useEffect(() => {
@@ -49,11 +53,7 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
   const clearMarkers = useCallback(() => {
     mapMarkersRef.current.forEach((marker) => {
       try {
-        if ("setMap" in marker && typeof (marker as google.maps.Marker).setMap === "function") {
-          (marker as google.maps.Marker).setMap(null);
-        } else if ("map" in marker) {
-          (marker as google.maps.marker.AdvancedMarkerElement).map = null;
-        }
+        marker.setMap(null);
       } catch {
         // ignore cleanup errors
       }
@@ -69,61 +69,44 @@ const MapComponent = ({ center, zoom, markers, onMarkerClick }: MapProps) => {
     clearMarkers();
 
     const g = (window as unknown as { google?: typeof google }).google;
-    const newMarkers: (google.maps.Marker | google.maps.marker.AdvancedMarkerElement)[] = [];
+    if (!g || !g.maps || typeof g.maps.Marker !== "function") {
+      console.warn("Google Maps Marker API not available");
+      return;
+    }
+
+    const newMarkers: google.maps.Marker[] = [];
 
     markers.forEach((markerData) => {
       try {
-        // Build SVG content for the marker
-        const svgString = markerData.type === "farmer"
-          ? `
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" fill="#00594C" stroke="white" stroke-width="2"/>
-              <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">F</text>
-            </svg>`
-          : `
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" fill="#3B82F6" stroke="white" stroke-width="2"/>
-              <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">S</text>
-            </svg>`;
+        const isFarmer = markerData.type === "farmer";
+        const color = isFarmer ? FARMER_COLOR : PROVIDER_COLOR;
+        const label = isFarmer ? "F" : "S";
+        const title = isFarmer
+          ? (markerData.data as Farmer).name
+          : (markerData.data as ServiceProvider).name;
 
-        let marker: google.maps.Marker | google.maps.marker.AdvancedMarkerElement | null = null;
+        // Create SVG icon
+        const svgString = `
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="2"/>
+            <text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">${label}</text>
+          </svg>`;
 
-        if (g && g.maps && g.maps.marker && typeof g.maps.marker.AdvancedMarkerElement === "function") {
-          const content = document.createElement("div");
-          content.innerHTML = svgString;
-          marker = new g.maps.marker.AdvancedMarkerElement({
-            position: markerData.position,
-            map: map as google.maps.Map,
-            title: markerData.type === "farmer" ? (markerData.data as Farmer).name : (markerData.data as ServiceProvider).name,
-            content,
-          });
-        } else if (g && g.maps && typeof g.maps.Marker === "function") {
-          marker = new g.maps.Marker({
-            position: markerData.position,
-            map: map as google.maps.Map,
-            title: markerData.type === "farmer" ? (markerData.data as Farmer).name : (markerData.data as ServiceProvider).name,
-          });
-        }
+        const marker = new g.maps.Marker({
+          position: markerData.position,
+          map: map as google.maps.Map,
+          title,
+          icon: {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgString)}`,
+            scaledSize: new g.maps.Size(40, 40),
+            anchor: new g.maps.Point(20, 20),
+          },
+        });
 
-        if (marker) {
-          try {
-            if ("addListener" in marker && typeof (marker as google.maps.Marker).addListener === "function") {
-              (marker as google.maps.Marker).addListener("click", () => onMarkerClick?.(markerData));
-            } else if (
-              "addEventListener" in marker &&
-              typeof (marker as unknown as { addEventListener?: (evt: string, cb: () => void) => void }).addEventListener === "function"
-            ) {
-              (marker as unknown as { addEventListener?: (evt: string, cb: () => void) => void }).addEventListener?.(
-                "click",
-                () => onMarkerClick?.(markerData)
-              );
-            }
-          } catch {
-            // ignore attach errors
-          }
+        // Add click listener
+        marker.addListener("click", () => onMarkerClick?.(markerData));
 
-          newMarkers.push(marker);
-        }
+        newMarkers.push(marker);
       } catch (err) {
         console.warn("Failed to create marker", err);
       }
@@ -191,7 +174,7 @@ export default function GoogleMap({ markers, onMarkerClick }: { markers: MapMark
   }
 
   return (
-    <Wrapper apiKey={apiKey} render={render} libraries={["marker"]}>
+    <Wrapper apiKey={apiKey} render={render}>
       <MapComponent
         center={{ lat: 7.9465, lng: -1.0232 }}
         zoom={6}

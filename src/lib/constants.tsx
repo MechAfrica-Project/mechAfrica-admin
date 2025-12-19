@@ -1,4 +1,4 @@
-import { Cloud, Home, ListTodo, Users, Wallet } from "lucide-react";
+import { Cloud, Home, ListTodo, Users, Wallet, Upload } from "lucide-react";
 
 type NavTab = { title: string; path: string };
 type ActionTab = { title: string; type: "action"; action: string };
@@ -18,6 +18,7 @@ export const SidebarTabs = [
     icon: Wallet,
   },
   { title: "Users", url: "/dashboard/users", icon: Users },
+  { title: "Bulk Onboarding", url: "/dashboard/onboarding", icon: Upload },
 ];
 
 export const SECTION_TABS: Record<string, TabItem[]> = {
@@ -57,6 +58,10 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
       type: "action",
       action: "open-agent-modal",
     },
+  ],
+  "/onboarding": [
+    { title: "Upload", path: "/dashboard/onboarding/upload" },
+    { title: "Jobs History", path: "/dashboard/onboarding/jobs" },
   ],
 };
 

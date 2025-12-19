@@ -32,6 +32,8 @@ export default function HeaderTabs() {
     if (pathname.startsWith("/dashboard/finances"))
       return SECTION_TABS["/finances"];
     if (pathname.startsWith("/dashboard/admin")) return SECTION_TABS["/admin"];
+    if (pathname.startsWith("/dashboard/onboarding"))
+      return SECTION_TABS["/onboarding"];
 
     return [];
   };
@@ -72,11 +74,10 @@ export default function HeaderTabs() {
             key={tab.title}
             variant={tab.title === activeTab ? "default" : "outline"}
             size="sm"
-            className={`text-xs sm:text-sm ${
-              tab.title === activeTab
+            className={`text-xs sm:text-sm ${tab.title === activeTab
                 ? "bg-[#00594C] text-white"
                 : "text-gray-600 hover:text-[#00594C]"
-            }`}
+              }`}
             onClick={() => handleTabClick(tab)}
           >
             {tab.title}
@@ -103,11 +104,10 @@ export default function HeaderTabs() {
               <DropdownMenuItem
                 key={tab.title}
                 onClick={() => handleTabClick(tab)}
-                className={`cursor-pointer ${
-                  tab.title === activeTab
+                className={`cursor-pointer ${tab.title === activeTab
                     ? "bg-[#00594C]/10 text-[#00594C] font-medium"
                     : ""
-                }`}
+                  }`}
               >
                 {tab.title}
               </DropdownMenuItem>

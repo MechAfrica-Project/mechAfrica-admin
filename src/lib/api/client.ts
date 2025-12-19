@@ -31,7 +31,24 @@ import type {
   FrontendFinancesResponse,
   FrontendStatisticsResponse,
   FrontendAdmin,
+  BackendOnboardJob,
+  FrontendOnboardJob,
+  OnboardUploadResponse,
+  OnboardProgressResponse,
+  OnboardedRecordsResponse,
+  SkippedRecordsResponse,
+  ProblematicRecordsResponse,
+  OnboardConfirmResponse,
+  OnboardCancelResponse,
+  RoleType,
+  ProblematicRecord,
+  OnboardSummaryResponseData,
+  OnboardResultResponseData,
+  RetryResult,
+  BulkRetryResult,
 } from "./types";
+
+import { ONBOARD_ENDPOINTS } from "./types";
 
 // =============================================================================
 // Configuration
@@ -538,6 +555,423 @@ class MechAfricaAPIClient {
       district: data.district,
       message: data.message,
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bulk Onboarding Endpoints
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Transform backend onboard job to frontend format
+   */
+  private transformOnboardJob(job: BackendOnboardJob): FrontendOnboardJob {
+    return {
+      id: job.id,
+      createdAt: job.created_at,
+      updatedAt: job.updated_at,
+      createdBy: job.created_by,
+      status: job.status,
+      fileName: job.file_name,
+      fileUrl: job.file_url,
+      fileSize: job.file_size,
+      config: job.config,
+      progress: job.progress,
+      result: job.result,
+      resultSummary: job.result_summary,
+      problematicFileUrl: job.problematic_file_url,
+      errorMessage: job.error_message,
+      startedAt: job.started_at,
+      completedAt: job.completed_at,
+      confirmedAt: job.confirmed_at,
+      confirmedBy: job.confirmed_by,
+      finalImportFarmers: job.final_import_farmers,
+      finalImportProviders: job.final_import_providers,
+    };
+  }
+
+  /**
+   * Upload Excel file for bulk onboarding
+   */
+  async uploadBulkOnboard(
+    file: File,
+    options: {
+      dryRun?: boolean;
+      skipDuplicates?: boolean;
+      onboardFarmers?: boolean;
+      onboardProviders?: boolean;
+      onboardMixedRoles?: boolean;
+      mixedRoleAsType?: RoleType;
+    } = {}
+  ): Promise<OnboardUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("dry_run", String(options.dryRun ?? true));
+    formData.append("skip_duplicates", String(options.skipDuplicates ?? true));
+    formData.append("onboard_farmers", String(options.onboardFarmers ?? true));
+    formData.append("onboard_providers", String(options.onboardProviders ?? false));
+    formData.append("onboard_mixed_roles", String(options.onboardMixedRoles ?? true));
+    formData.append("mixed_role_as_type", options.mixedRoleAsType ?? "farmer");
+
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/onboard/upload`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get list of onboarding jobs
+   */
+  async getOnboardJobs(
+    page = 1,
+    limit = 20
+  ): Promise<{ jobs: FrontendOnboardJob[]; total: number; page: number; limit: number; pages: number }> {
+    const response = await this.get<{
+      jobs: BackendOnboardJob[];
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    }>(`/admin/onboard/jobs?page=${page}&limit=${limit}`);
+
+    return {
+      jobs: response.data.jobs.map((job) => this.transformOnboardJob(job)),
+      total: response.data.total,
+      page: response.data.page,
+      limit: response.data.limit,
+      pages: response.data.pages,
+    };
+  }
+
+  /**
+   * Get onboarding job by ID
+   */
+  async getOnboardJob(jobId: string): Promise<FrontendOnboardJob> {
+    const response = await this.get<BackendOnboardJob>(
+      `/admin/onboard/jobs/${jobId}`
+    );
+    return this.transformOnboardJob(response.data);
+  }
+
+  /**
+   * Get job progress (for polling)
+   */
+  async getOnboardJobProgress(jobId: string): Promise<OnboardProgressResponse["data"]> {
+    const response = await this.get<OnboardProgressResponse["data"]>(
+      `/admin/onboard/jobs/${jobId}/progress`
+    );
+    return response.data;
+  }
+
+  /**
+   * Confirm a dry-run job to perform actual import
+   */
+  async confirmOnboardJob(jobId: string): Promise<OnboardConfirmResponse["data"]> {
+    const response = await this.post<OnboardConfirmResponse["data"]>(
+      `/admin/onboard/jobs/${jobId}/confirm`
+    );
+    return response.data;
+  }
+
+  /**
+   * Cancel an onboarding job
+   */
+  async cancelOnboardJob(jobId: string): Promise<OnboardCancelResponse["data"]> {
+    const response = await this.post<OnboardCancelResponse["data"]>(
+      `/admin/onboard/jobs/${jobId}/cancel`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get onboarded records from a job
+   */
+  async getOnboardedRecords(
+    jobId: string,
+    page = 1,
+    limit = 50
+  ): Promise<OnboardedRecordsResponse["data"]> {
+    const response = await this.get<OnboardedRecordsResponse["data"]>(
+      `/admin/onboard/jobs/${jobId}/onboarded?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get skipped records from a job
+   */
+  async getSkippedRecords(
+    jobId: string,
+    page = 1,
+    limit = 50
+  ): Promise<SkippedRecordsResponse["data"]> {
+    const response = await this.get<SkippedRecordsResponse["data"]>(
+      `/admin/onboard/jobs/${jobId}/skipped?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get problematic records from a job
+   */
+  async getProblematicRecords(
+    jobId: string,
+    page = 1,
+    limit = 50
+  ): Promise<ProblematicRecordsResponse["data"]> {
+    const response = await this.get<ProblematicRecordsResponse["data"]>(
+      `/admin/onboard/jobs/${jobId}/problematic?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Download problematic records as Excel file
+   * Uses the download_url from the problematic records response
+   */
+  async downloadProblematicRecords(downloadUrl: string): Promise<void> {
+    // Open the download URL in a new tab/window
+    if (typeof window !== "undefined") {
+      window.open(downloadUrl, "_blank");
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Job Summary & Result Endpoints
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Get job summary with breakdowns (ideal for dashboard display)
+   */
+  async getOnboardJobSummary(jobId: string): Promise<OnboardSummaryResponseData> {
+    const response = await this.get<OnboardSummaryResponseData>(
+      ONBOARD_ENDPOINTS.SUMMARY(jobId)
+    );
+    return response.data;
+  }
+
+  /**
+   * Get complete job result
+   */
+  async getOnboardJobResult(jobId: string): Promise<OnboardResultResponseData> {
+    const response = await this.get<OnboardResultResponseData>(
+      ONBOARD_ENDPOINTS.RESULT(jobId)
+    );
+    return response.data;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Problematic Record Editing Endpoints (matching backend API spec)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Get a single problematic record by row number
+   */
+  async getProblematicRecord(
+    jobId: string,
+    rowNumber: number
+  ): Promise<ProblematicRecord> {
+    const response = await this.get<ProblematicRecord>(
+      ONBOARD_ENDPOINTS.PROBLEMATIC_RECORD(jobId, rowNumber)
+    );
+    return response.data;
+  }
+
+  /**
+   * Update/correct a problematic record with new data
+   * This marks the record as "edited" for later retry
+   */
+  async updateProblematicRecord(
+    jobId: string,
+    rowNumber: number,
+    updatedData: Record<string, string>
+  ): Promise<ProblematicRecord> {
+    const response = await this.put<ProblematicRecord>(
+      ONBOARD_ENDPOINTS.PROBLEMATIC_RECORD(jobId, rowNumber),
+      { updated_data: updatedData }
+    );
+    return response.data;
+  }
+
+  /**
+   * Retry a single problematic record after editing
+   */
+  async retryProblematicRecord(
+    jobId: string,
+    rowNumber: number
+  ): Promise<RetryResult> {
+    const response = await this.post<RetryResult>(
+      ONBOARD_ENDPOINTS.RETRY_RECORD(jobId, rowNumber)
+    );
+    return response.data;
+  }
+
+  /**
+   * Bulk retry multiple problematic records
+   */
+  async bulkRetryRecords(
+    jobId: string,
+    rowNumbers: number[]
+  ): Promise<BulkRetryResult> {
+    const response = await this.post<BulkRetryResult>(
+      ONBOARD_ENDPOINTS.BULK_RETRY(jobId),
+      { row_numbers: rowNumbers }
+    );
+    return response.data;
+  }
+
+  /**
+   * Retry all edited records (records marked with _edited: true)
+   */
+  async retryAllEditedRecords(jobId: string): Promise<BulkRetryResult> {
+    const response = await this.post<BulkRetryResult>(
+      ONBOARD_ENDPOINTS.RETRY_EDITED(jobId)
+    );
+    return response.data;
+  }
+
+  /**
+   * Skip a problematic record (move to skipped list)
+   */
+  async skipProblematicRecord(
+    jobId: string,
+    rowNumber: number,
+    reason?: string
+  ): Promise<void> {
+    await this.post<null>(
+      ONBOARD_ENDPOINTS.SKIP_RECORD(jobId, rowNumber),
+      reason ? { reason } : {}
+    );
+  }
+
+  /**
+   * Delete a problematic record permanently
+   */
+  async deleteProblematicRecord(
+    jobId: string,
+    rowNumber: number
+  ): Promise<void> {
+    await this.delete<null>(
+      ONBOARD_ENDPOINTS.PROBLEMATIC_RECORD(jobId, rowNumber)
+    );
+  }
+
+  /**
+   * Get count of edited records ready for retry
+   */
+  async getEditedRecordsCount(jobId: string): Promise<number> {
+    const response = await this.get<{ count: number }>(
+      ONBOARD_ENDPOINTS.EDITED_COUNT(jobId)
+    );
+    return response.data.count;
+  }
+
+  /**
+   * Export edited records as JSON file
+   * Returns a Blob for download
+   */
+  async exportEditedRecords(jobId: string): Promise<Blob> {
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${ONBOARD_ENDPOINTS.EXPORT_EDITED(jobId)}`,
+      {
+        method: "GET",
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Legacy Methods (kept for backwards compatibility, will be removed)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * @deprecated Use updateProblematicRecord instead
+   */
+  async updateRecord(
+    jobId: string,
+    rowNumber: number,
+    data: Record<string, string | undefined>
+  ): Promise<{ success: boolean; message: string; data: ProblematicRecord }> {
+    // Convert to the new format
+    const cleanData: Record<string, string> = {};
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        // Map frontend field names to backend field names
+        const backendKey = this.mapFieldToBackend(key);
+        cleanData[backendKey] = value;
+      }
+    });
+
+    const record = await this.updateProblematicRecord(jobId, rowNumber, cleanData);
+    return {
+      success: true,
+      message: "Record updated successfully",
+      data: record,
+    };
+  }
+
+  /**
+   * @deprecated Use bulkRetryRecords or retryAllEditedRecords instead
+   */
+  async reprocessRecords(
+    jobId: string,
+    rowNumbers?: number[]
+  ): Promise<{ success: boolean; message: string; data: { success_count: number; still_problematic_count: number } }> {
+    const result = rowNumbers
+      ? await this.bulkRetryRecords(jobId, rowNumbers)
+      : await this.retryAllEditedRecords(jobId);
+
+    return {
+      success: true,
+      message: `Reprocessed ${result.total_attempted} records`,
+      data: {
+        success_count: result.successful,
+        still_problematic_count: result.failed,
+      },
+    };
+  }
+
+  /**
+   * Map frontend field names to backend Excel column names
+   */
+  private mapFieldToBackend(field: string): string {
+    const mapping: Record<string, string> = {
+      full_name: "Name of Participant",
+      phone_number: "Telephone Number",
+      region: "Region/State",
+      district: "District",
+      community: "Community",
+      ghana_card_number: "Ghana Card Number",
+      gender: "Gender",
+      activity: "Activity",
+    };
+    return mapping[field] || field;
   }
 }
 
