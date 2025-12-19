@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { AddAdminDialog } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
@@ -11,6 +11,7 @@ import { RefreshCcw } from "lucide-react";
 export default function AdminsPage() {
   // Get store state and actions
   const admins = useAdminsStore((s) => s.admins);
+  const pagination = useAdminsStore((s) => s.pagination);
   const isLoading = useAdminsStore((s) => s.isLoading);
   const error = useAdminsStore((s) => s.error);
   const fetchAdmins = useAdminsStore((s) => s.fetchAdmins);
@@ -23,13 +24,28 @@ export default function AdminsPage() {
   const selectedAdmins = useTableStore((s) => s.selections["admins"] || []);
   const toggleSelect = useTableStore((s) => s.toggleSelect);
   const clearSelection = useTableStore((s) => s.clearSelection);
+  const page = useTableStore((s) => s.pages["admins"] || 1);
+  const setPage = useTableStore((s) => s.setPage);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Fetch admins on mount
+  // Get selected role filter
+  const selectedRole = selectedFilters["Users"] || "all";
+
+  // Fetch admins when page or filter changes (server-side pagination)
+  const loadAdmins = useCallback(() => {
+    const roleFilter = selectedRole === "all" ? undefined : selectedRole;
+    fetchAdmins(page, 20, roleFilter);
+  }, [fetchAdmins, page, selectedRole]);
+
   useEffect(() => {
-    fetchAdmins();
-  }, [fetchAdmins]);
+    loadAdmins();
+  }, [loadAdmins]);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setPage("admins", 1);
+  }, [selectedRole, setPage]);
 
   // Set page title and filters
   useEffect(() => {
@@ -82,12 +98,17 @@ export default function AdminsPage() {
     clearSelection("admins");
   };
 
-  // Filter admins based on selected filter
-  const filteredAdmins = (() => {
-    const sel = selectedFilters["Users"] || "all";
-    if (sel === "all") return admins;
-    return admins.filter((a) => a.type === sel);
-  })();
+  // Admins are now filtered server-side, no client-side filtering needed
+  const filteredAdmins = admins;
+
+  // Handle page change for server-side pagination
+  const handlePageChange = (newPage: number) => {
+    setPage("admins", newPage);
+  };
+
+  // Get total pages from server pagination
+  const totalPages = pagination?.totalPages || 1;
+  const currentPage = pagination?.page || page;
 
   // Loading state
   if (isLoading && admins.length === 0) {
@@ -149,6 +170,10 @@ export default function AdminsPage() {
           selectedAdmins={selectedAdmins}
           onSelectAdmin={handleSelectAdmin}
           onDeleteAdmin={handleDeleteAdmin}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          isLoading={isLoading}
         />
 
         <AddAdminDialog

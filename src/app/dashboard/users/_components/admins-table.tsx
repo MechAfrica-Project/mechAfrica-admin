@@ -3,7 +3,6 @@
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
-import { useTableStore } from "@/stores/useTableStore";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdminRow } from "./admin-row";
 
@@ -22,6 +21,10 @@ interface AdminsTableProps {
   selectedAdmins: string[];
   onSelectAdmin: (id: string) => void;
   onDeleteAdmin: (id: string) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  isLoading?: boolean;
 }
 
 export function AdminsTable({
@@ -29,13 +32,13 @@ export function AdminsTable({
   selectedAdmins,
   onSelectAdmin,
   onDeleteAdmin,
+  currentPage,
+  totalPages,
+  onPageChange,
+  isLoading = false,
 }: AdminsTableProps) {
-  // Pagination state (centralized)
-  const page = useTableStore((s) => s.pages["admins"] || 1);
-  const setPage = useTableStore((s) => s.setPage);
-  const pageSize = 6;
-  const totalPages = Math.max(1, Math.ceil(admins.length / pageSize));
-  const pagedAdmins = admins.slice((page - 1) * pageSize, page * pageSize);
+  // Server-side pagination - admins are already the current page's data
+  const pagedAdmins = admins;
   const handleSelectAll = (checked?: boolean | "indeterminate") => {
     const shouldSelect = Boolean(checked);
     if (shouldSelect) {
@@ -63,14 +66,19 @@ export function AdminsTable({
       footer={
         totalPages > 1 ? (
           <div className="mt-2">
-            <Pagination current={page} total={totalPages} onChange={(p) => setPage("admins", p)} />
+            <Pagination current={currentPage} total={totalPages} onChange={onPageChange} />
             <div className="mt-3 text-center text-sm text-muted-foreground">
-              Page <span className="font-semibold text-foreground">{String(page).padStart(2, "0")}</span> of <span className="font-semibold text-foreground">{String(totalPages).padStart(2, "0")}</span>
+              Page <span className="font-semibold text-foreground">{String(currentPage).padStart(2, "0")}</span> of <span className="font-semibold text-foreground">{String(totalPages).padStart(2, "0")}</span>
             </div>
           </div>
         ) : null
       }
     >
+      {isLoading && (
+        <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00594C]"></div>
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-card">

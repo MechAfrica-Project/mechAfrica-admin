@@ -405,11 +405,16 @@ class MechAfricaAPIClient {
 
   /**
    * Get admins list
+   * @param page - Page number (1-indexed)
+   * @param limit - Number of items per page
+   * @param role - Optional role filter (e.g., "farmer", "provider", "admin", "agent", "accounting")
    */
-  async getAdmins(page = 1, limit = 20): Promise<FrontendAdminsResponse> {
-    const response = await this.get<BackendPaginatedUsers>(
-      `/admin/users?limit=${limit}&page=${page}`
-    );
+  async getAdmins(page = 1, limit = 20, role?: string): Promise<FrontendAdminsResponse> {
+    let url = `/admin/users?limit=${limit}&page=${page}`;
+    if (role && role !== "all") {
+      url += `&role=${role.toLowerCase()}`;
+    }
+    const response = await this.get<BackendPaginatedUsers>(url);
     return transformUsersToAdmins(response.data);
   }
 
