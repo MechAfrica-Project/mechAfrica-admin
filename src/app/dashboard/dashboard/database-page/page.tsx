@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { useContactsStore } from "@/stores/useContactsStore";
+import { api } from "@/lib/api";
 import type { Contact as StoreContact } from "@/stores/useContactsStore";
 import { Contact } from "@/types/types";
 
@@ -75,13 +76,40 @@ export default function DatabasePage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deletingContactId, setDeletingContactId] = useState<string | null>(null);
+  const [userStats, setUserStats] = useState<{
+    farmers: number;
+    providers: number;
+    agents: number;
+    total: number;
+  } | null>(null);
 
-  // Fetch all contacts on mount
+  // Fetch user stats from dashboard API for accurate metrics
+  const fetchUserStats = useCallback(async () => {
+    try {
+      const response = await api.getDashboard();
+      if (response.success && response.data?.user_stats) {
+        const stats = response.data.user_stats;
+        setUserStats({
+          farmers: stats.farmers?.total || 0,
+          providers: stats.service_providers?.total || 0,
+          agents: stats.agents?.total || 0,
+          total: (stats.farmers?.total || 0) +
+            (stats.service_providers?.total || 0) +
+            (stats.agents?.total || 0),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch user stats:", error);
+    }
+  }, []);
+
+  // Fetch all contacts on mount with higher limit to get all records
   useEffect(() => {
-    fetchFarmers();
-    fetchProviders();
-    fetchAgents();
-  }, [fetchFarmers, fetchProviders, fetchAgents]);
+    fetchFarmers(1, 100);
+    fetchProviders(1, 100);
+    fetchAgents(1, 100);
+    fetchUserStats();
+  }, [fetchFarmers, fetchProviders, fetchAgents, fetchUserStats]);
 
   // Set page title and filters
   useEffect(() => {
@@ -119,11 +147,12 @@ export default function DatabasePage() {
     return allContacts;
   })();
 
-  // Refresh data
+  // Refresh data with higher limit
   const handleRefresh = () => {
-    fetchFarmers();
-    fetchProviders();
-    fetchAgents();
+    fetchFarmers(1, 100);
+    fetchProviders(1, 100);
+    fetchAgents(1, 100);
+    fetchUserStats();
   };
 
   // Handle add contact (local only for now - backend create endpoints may vary)
@@ -226,12 +255,12 @@ export default function DatabasePage() {
           </Button>
         </div>
 
-        {/* Stats summary */}
+        {/* Stats summary - use accurate counts from dashboard API */}
         <div className="mb-4 flex gap-4 text-sm text-gray-600">
-          <span>Total: <strong>{allContacts.length}</strong></span>
-          <span>Farmers: <strong>{typedFarmers.length}</strong></span>
-          <span>Providers: <strong>{typedProviders.length}</strong></span>
-          <span>Agents: <strong>{typedAgents.length}</strong></span>
+          <span>Total: <strong className="text-foreground">{userStats?.total || allContacts.length}</strong></span>
+          <span>Farmers: <strong className="text-foreground">{userStats?.farmers || typedFarmers.length}</strong></span>
+          <span>Providers: <strong className="text-foreground">{userStats?.providers || typedProviders.length}</strong></span>
+          <span>Agents: <strong className="text-foreground">{userStats?.agents || typedAgents.length}</strong></span>
         </div>
 
         {/* Data table */}

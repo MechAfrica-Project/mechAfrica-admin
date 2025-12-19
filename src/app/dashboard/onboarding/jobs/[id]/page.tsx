@@ -157,6 +157,18 @@ export default function JobDetailsPage({ params }: PageProps) {
     setTitle("Job Details");
   }, [setTitle]);
 
+  // Debug logging for progress updates
+  useEffect(() => {
+    if (currentJob) {
+      console.log("[JobDetailsPage] Current job state:", {
+        id: currentJob.id,
+        status: currentJob.status,
+        progress: currentJob.progress,
+        isPolling,
+      });
+    }
+  }, [currentJob, isPolling]);
+
   // Fetch job on mount
   useEffect(() => {
     if (jobId) {
@@ -192,7 +204,15 @@ export default function JobDetailsPage({ params }: PageProps) {
 
   // Start polling if job is processing
   useEffect(() => {
+    console.log("[JobDetailsPage] Checking polling conditions:", {
+      hasCurrentJob: !!currentJob,
+      status: currentJob?.status,
+      isPolling,
+      shouldStartPolling: currentJob && currentJob.status === "processing" && !isPolling,
+    });
+
     if (currentJob && currentJob.status === "processing" && !isPolling) {
+      console.log("[JobDetailsPage] Starting polling for job:", jobId);
       startPolling(jobId, (job) => {
         toast.success(`Job ${job.status === "completed" ? "completed" : "finished"}!`);
       });
@@ -637,12 +657,12 @@ export default function JobDetailsPage({ params }: PageProps) {
         </div>
 
         {/* Progress Section */}
-        {(isProcessing || isPending) && progress && (
+        {(isProcessing || isPending) && (
           <Card className="mb-6 border-blue-200 bg-blue-50/50">
             <CardContent className="p-6">
               <div className="flex items-center gap-6">
                 <ProgressCircle
-                  value={progress.percent_complete || 0}
+                  value={progress?.percent_complete ?? 0}
                   size={100}
                   strokeWidth={8}
                 />
@@ -651,13 +671,19 @@ export default function JobDetailsPage({ params }: PageProps) {
                     {isProcessing ? "Processing..." : "Waiting to start..."}
                   </h3>
                   <p className="text-sm text-gray-600 mb-3">
-                    {progress.current_sheet ? `Processing ${progress.current_sheet}...` : "Processing rows..."}
+                    {progress?.current_sheet ? `Processing ${progress.current_sheet}...` : "Processing rows..."}
                   </p>
-                  <Progress value={progress.percent_complete || 0} className="h-2 mb-2" />
+                  <Progress value={progress?.percent_complete ?? 0} className="h-2 mb-2" />
                   <p className="text-xs text-gray-500">
-                    {(progress.processed_rows ?? 0).toLocaleString()} of{" "}
-                    {(progress.total_rows ?? 0).toLocaleString()} rows processed
+                    {(progress?.processed_rows ?? 0).toLocaleString()} of{" "}
+                    {(progress?.total_rows ?? totalRows ?? 0).toLocaleString()} rows processed
                   </p>
+                  {isPolling && (
+                    <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Polling for updates...
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>

@@ -260,14 +260,49 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
     try {
       const progressData = await api.getOnboardJobProgress(jobId);
 
+      // Debug logging to understand what the backend is returning
+      console.log("[OnboardStore] Progress response:", JSON.stringify(progressData, null, 2));
+
+      // Validate that we got progress data
+      if (!progressData) {
+        console.warn("[OnboardStore] No progress data returned from API");
+        return null;
+      }
+
+      // The progress object might be nested or at the root level
+      // Handle both cases for robustness
+      const progress = progressData.progress || progressData;
+      const status = progressData.status || get().currentJob?.status || "processing";
+
+      console.log("[OnboardStore] Extracted progress:", {
+        processed_rows: progress?.processed_rows,
+        total_rows: progress?.total_rows,
+        percent_complete: progress?.percent_complete,
+        status,
+      });
+
       // Update current job's progress if it matches
       const currentJob = get().currentJob;
       if (currentJob && currentJob.id === jobId) {
+        // Merge with existing progress to preserve any fields
+        const mergedProgress = {
+          ...(currentJob.progress || {}),
+          ...progress,
+          // Ensure we have at least some default values
+          total_rows: progress?.total_rows ?? currentJob.progress?.total_rows ?? 0,
+          processed_rows: progress?.processed_rows ?? currentJob.progress?.processed_rows ?? 0,
+          percent_complete: progress?.percent_complete ?? currentJob.progress?.percent_complete ?? 0,
+          farmers_created: progress?.farmers_created ?? currentJob.progress?.farmers_created ?? 0,
+          providers_created: progress?.providers_created ?? currentJob.progress?.providers_created ?? 0,
+          skipped: progress?.skipped ?? currentJob.progress?.skipped ?? 0,
+          errors: progress?.errors ?? currentJob.progress?.errors ?? 0,
+        };
+
         set({
           currentJob: {
             ...currentJob,
-            progress: progressData.progress,
-            status: progressData.status,
+            progress: mergedProgress,
+            status: status,
           },
         });
       }
@@ -276,14 +311,14 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
       set((state) => ({
         jobs: state.jobs.map((job) =>
           job.id === jobId
-            ? { ...job, progress: progressData.progress, status: progressData.status }
+            ? { ...job, progress: progress, status: status }
             : job
         ),
       }));
 
-      return progressData.progress;
+      return progress;
     } catch (error) {
-      console.error("Failed to fetch job progress:", error);
+      console.error("[OnboardStore] Failed to fetch job progress:", error);
       return null;
     }
   },

@@ -412,7 +412,16 @@ class MechAfricaAPIClient {
   async getAdmins(page = 1, limit = 20, role?: string): Promise<FrontendAdminsResponse> {
     let url = `/admin/users?limit=${limit}&page=${page}`;
     if (role && role !== "all") {
-      url += `&role=${role.toLowerCase()}`;
+      // Map frontend role names to backend role values
+      const roleMapping: Record<string, string> = {
+        "admin": "admin",
+        "farmer": "farmer",
+        "agent": "agent",
+        "provider": "service_provider",
+        "accounting": "accounts",
+      };
+      const backendRole = roleMapping[role.toLowerCase()] || role.toLowerCase();
+      url += `&role=${backendRole}`;
     }
     const response = await this.get<BackendPaginatedUsers>(url);
     return transformUsersToAdmins(response.data);

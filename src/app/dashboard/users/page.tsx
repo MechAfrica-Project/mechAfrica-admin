@@ -6,7 +6,11 @@ import { AddAdminDialog } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
 import { useAdminsStore, Admin } from "@/stores/useAdminsStore";
 import { useTableStore } from "@/stores/useTableStore";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+
+const PAGE_SIZE = 10;
 
 export default function AdminsPage() {
   // Get store state and actions
@@ -28,14 +32,48 @@ export default function AdminsPage() {
   const setPage = useTableStore((s) => s.setPage);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [userStats, setUserStats] = useState<{
+    farmers: number;
+    providers: number;
+    agents: number;
+    admins: number;
+    total: number;
+  } | null>(null);
 
   // Get selected role filter
   const selectedRole = selectedFilters["Users"] || "all";
 
+  // Fetch user stats from dashboard API for accurate metrics
+  const fetchUserStats = useCallback(async () => {
+    try {
+      const response = await api.getDashboard();
+      if (response.success && response.data?.user_stats) {
+        const stats = response.data.user_stats;
+        setUserStats({
+          farmers: stats.farmers?.total || 0,
+          providers: stats.service_providers?.total || 0,
+          agents: stats.agents?.total || 0,
+          admins: stats.admins?.total || 0,
+          total: (stats.farmers?.total || 0) +
+            (stats.service_providers?.total || 0) +
+            (stats.agents?.total || 0) +
+            (stats.admins?.total || 0),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch user stats:", error);
+    }
+  }, []);
+
+  // Fetch user stats on mount
+  useEffect(() => {
+    fetchUserStats();
+  }, [fetchUserStats]);
+
   // Fetch admins when page or filter changes (server-side pagination)
   const loadAdmins = useCallback(() => {
     const roleFilter = selectedRole === "all" ? undefined : selectedRole;
-    fetchAdmins(page, 20, roleFilter);
+    fetchAdmins(page, PAGE_SIZE, roleFilter);
   }, [fetchAdmins, page, selectedRole]);
 
   useEffect(() => {
@@ -106,9 +144,25 @@ export default function AdminsPage() {
     setPage("admins", newPage);
   };
 
+  // Handle refresh
+  const handleRefresh = () => {
+    loadAdmins();
+    fetchUserStats();
+  };
+
   // Get total pages from server pagination
   const totalPages = pagination?.totalPages || 1;
   const currentPage = pagination?.page || page;
+  const totalRecords = pagination?.total || admins.length;
+
+  // Use accurate metrics from dashboard API, fallback to pagination total
+  const metrics = {
+    total: userStats?.total || totalRecords,
+    farmers: userStats?.farmers || 0,
+    providers: userStats?.providers || 0,
+    agents: userStats?.agents || 0,
+    admins: userStats?.admins || 0,
+  };
 
   // Loading state
   if (isLoading && admins.length === 0) {
@@ -164,6 +218,37 @@ export default function AdminsPage() {
             </button>
           </div>
         )}
+
+        {/* Header with Refresh and Add buttons */}
+        <div className="mb-2 flex justify-end items-center gap-2">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="lg"
+            className="cursor-pointer"
+            disabled={isLoading}
+          >
+            <RefreshCcw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            size="lg"
+            className="cursor-pointer bg-green-600 hover:bg-green-700"
+          >
+            <Plus className="h-4 w-4" />
+            Add User
+          </Button>
+        </div>
+
+        {/* Stats summary metrics */}
+        <div className="mb-4 flex flex-wrap gap-4 text-sm text-gray-600">
+          <span>Total: <strong className="text-foreground">{metrics.total}</strong></span>
+          <span>Farmers: <strong className="text-foreground">{metrics.farmers}</strong></span>
+          <span>Providers: <strong className="text-foreground">{metrics.providers}</strong></span>
+          <span>Agents: <strong className="text-foreground">{metrics.agents}</strong></span>
+          <span>Admins: <strong className="text-foreground">{metrics.admins}</strong></span>
+        </div>
 
         <AdminsTable
           admins={filteredAdmins}
