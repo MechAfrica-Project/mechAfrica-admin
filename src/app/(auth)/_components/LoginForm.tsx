@@ -18,6 +18,7 @@ const loginSchema = z.object({
   email: z
     .string()
     .min(1, "Email or phone number is required")
+    .transform((val) => val.replace(/\s/g, ""))
     .refine(
       (val) => {
         // Allow email or phone number format
