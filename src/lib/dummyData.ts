@@ -256,7 +256,7 @@ export const DUMMY_SERVICE_PROVIDERS: ServiceProvider[] = [
 // Generate map markers from farmers and service providers
 export const generateMapMarkers = (): MapMarker[] => {
   const markers: MapMarker[] = [];
-  
+
   // Add farmer markers
   DUMMY_FARMERS.forEach(farmer => {
     markers.push({
@@ -266,7 +266,7 @@ export const generateMapMarkers = (): MapMarker[] => {
       data: farmer
     });
   });
-  
+
   // Add service provider markers
   DUMMY_SERVICE_PROVIDERS.forEach(provider => {
     markers.push({
@@ -276,7 +276,7 @@ export const generateMapMarkers = (): MapMarker[] => {
       data: provider
     });
   });
-  
+
   return markers;
 };
 
@@ -285,7 +285,7 @@ export const getMapStatistics = () => {
   const farmers = DUMMY_FARMERS.filter(f => f.status === 'active');
   const serviceProviders = DUMMY_SERVICE_PROVIDERS.filter(sp => sp.status === 'active');
   const totalAcres = farmers.reduce((sum, farmer) => sum + farmer.acres, 0);
-  
+
   return {
     totalFarmers: farmers.length,
     totalServiceProviders: serviceProviders.length,
