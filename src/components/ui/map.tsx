@@ -906,7 +906,7 @@ function MapClusterLayer({
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [map, isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [map, isLoaded]);
 
     // Effect 2: Update source data in-place — runs on every data change (lightweight)
     useEffect(() => {
@@ -985,7 +985,7 @@ function MapPulseLayer({ data, color = "#00594C" }: MapPulseLayerProps) {
         isSetupRef.current = true;
 
         // Animate the pulse
-        let startTime = performance.now();
+        const startTime = performance.now();
         const animate = (time: number) => {
             if (!map || !isSetupRef.current) return;
 
