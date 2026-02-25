@@ -9,6 +9,7 @@ import type { FrontendContact } from "@/lib/api";
 // ─── Config ─────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 100;
 const CONCURRENCY = 10; // Fetch up to 10 pages in parallel
+const MAX_RETRIES = 2;
 
 // ─── Transform contact → marker ────────────────────────────────────────────
 
@@ -50,10 +51,7 @@ export function useMapData() {
   const hasFetched = useRef(false);
   const abortRef = useRef(false);
 
-  // ── Parallel paginated fetcher ─────────────────────────────────────────
-  // 1. Fetch page 1 to get totalPages
-  // 2. Fire off remaining pages in parallel batches of CONCURRENCY
-  // 3. Update state after EACH batch → progressive rendering
+  // ── Parallel paginated fetcher with retry ──────────────────────────────
   const fetchProgressively = useCallback(async () => {
     if (isFetching) return;
     setIsFetching(true);
@@ -77,42 +75,72 @@ export function useMapData() {
         const totalPages = firstResponse.pagination?.totalPages ?? 1;
         onTotal(total);
 
-        // Render first batch immediately
+        // Render first page immediately
         const firstChunk = firstResponse.data.map((c) => contactToMarker(c, role));
         onChunk(firstChunk);
 
         if (totalPages <= 1 || abortRef.current) return;
 
-        // Step 2: Build list of remaining pages
+        // Step 2: Build remaining page numbers
         const remainingPages = Array.from(
           { length: totalPages - 1 },
           (_, i) => i + 2
         );
 
-        // Step 3: Fetch in parallel batches of CONCURRENCY
-        for (let i = 0; i < remainingPages.length; i += CONCURRENCY) {
+        // Step 3: Fetch in parallel batches with retry for failed pages
+        let pagesToFetch = remainingPages;
+        let retryAttempt = 0;
+
+        while (pagesToFetch.length > 0 && retryAttempt <= MAX_RETRIES) {
           if (abortRef.current) break;
 
-          const batch = remainingPages.slice(i, i + CONCURRENCY);
+          const failedPages: number[] = [];
+          const batchSize = retryAttempt === 0 ? CONCURRENCY : 3;
 
-          const results = await Promise.allSettled(
-            batch.map((page) => fetchFn(page, PAGE_SIZE))
-          );
+          for (let i = 0; i < pagesToFetch.length; i += batchSize) {
+            if (abortRef.current) break;
 
-          // Collect all successful results from this batch
-          const batchMarkers: MapMarkerData[] = [];
-          for (const result of results) {
-            if (result.status === "fulfilled" && result.value.success) {
-              const markers = result.value.data.map((c) =>
-                contactToMarker(c, role)
-              );
-              batchMarkers.push(...markers);
+            const batch = pagesToFetch.slice(i, i + batchSize);
+            const results = await Promise.allSettled(
+              batch.map((page) => fetchFn(page, PAGE_SIZE))
+            );
+
+            const batchMarkers: MapMarkerData[] = [];
+            for (let j = 0; j < results.length; j++) {
+              const result = results[j];
+              if (
+                result.status === "fulfilled" &&
+                result.value.success &&
+                result.value.data.length > 0
+              ) {
+                batchMarkers.push(
+                  ...result.value.data.map((c) => contactToMarker(c, role))
+                );
+              } else {
+                failedPages.push(batch[j]);
+              }
+            }
+
+            if (batchMarkers.length > 0) {
+              onChunk(batchMarkers);
             }
           }
 
-          // Update state once per batch → triggers one re-render per batch
-          if (batchMarkers.length > 0) {
-            onChunk(batchMarkers);
+          // Retry failed pages with a brief delay
+          if (failedPages.length > 0 && retryAttempt < MAX_RETRIES) {
+            console.log(
+              `[MapData] Retrying ${failedPages.length} failed ${role} pages (attempt ${retryAttempt + 1})`
+            );
+            pagesToFetch = failedPages;
+            retryAttempt++;
+            await new Promise((r) => setTimeout(r, 500));
+          } else {
+            if (failedPages.length > 0) {
+              console.warn(
+                `[MapData] ${failedPages.length} ${role} pages failed after ${MAX_RETRIES} retries`
+              );
+            }
+            break;
           }
         }
       } catch (err) {
