@@ -93,20 +93,16 @@ export default function MapCard({
           <div>
             <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Ghana Map</h3>
             <div className="flex items-center gap-3 mt-0.5">
-              {loading ? (
-                <span className="text-xs text-gray-400">Loading...</span>
-              ) : (
-                <>
-                  <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="w-2 h-2 rounded-full" style={{ background: "linear-gradient(135deg, #00594C, #00816E)" }} />
-                    {farmerCount}{totalFarmers > farmerCount ? ` of ${totalFarmers}` : ""} Farmers
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="w-2 h-2 rounded-full" style={{ background: "linear-gradient(135deg, #2563EB, #60A5FA)" }} />
-                    {providerCount}{totalProviders > providerCount ? ` of ${totalProviders}` : ""} Providers
-                  </span>
-                </>
-              )}
+              <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="w-2 h-2 rounded-full" style={{ background: "linear-gradient(135deg, #00594C, #00816E)" }} />
+                {farmerCount.toLocaleString()}{totalFarmers > farmerCount ? ` of ${totalFarmers.toLocaleString()}` : ""} Farmers
+                {loading && farmerCount < totalFarmers && <Loader2 className="w-3 h-3 animate-spin text-gray-400 ml-0.5" />}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="w-2 h-2 rounded-full" style={{ background: "linear-gradient(135deg, #2563EB, #60A5FA)" }} />
+                {providerCount.toLocaleString()}{totalProviders > providerCount ? ` of ${totalProviders.toLocaleString()}` : ""} Providers
+                {loading && providerCount < totalProviders && <Loader2 className="w-3 h-3 animate-spin text-gray-400 ml-0.5" />}
+              </span>
             </div>
           </div>
         </div>
