@@ -1,82 +1,176 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo, useState, useRef } from "react";
 import { useDashboardStore } from "@/stores/useDashboardStore";
-import { useContactsStore } from "@/stores/useContactsStore";
-import { generateMapMarkers, MapMarker } from "@/lib/dummyData";
+import { MapMarkerData, regionToCoordinates } from "@/lib/geoUtils";
+import { api } from "@/lib/api";
+import type { FrontendContact } from "@/lib/api";
 
-interface MapData {
-  farmers: number;
-  serviceProviders: number;
-  totalAcres: number;
-  demandToSupply: string;
-  farmersGrowth: string;
-  providersGrowth: string;
-  acresGrowth: string;
-  farmersOverTime: Array<{ month: string; value: number }>;
-  markers: MapMarker[];
+// ─── Config ─────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 100;
+const CONCURRENCY = 10; // Fetch up to 10 pages in parallel
+
+// ─── Transform contact → marker ────────────────────────────────────────────
+
+function contactToMarker(
+  contact: FrontendContact,
+  type: "farmer" | "service_provider"
+): MapMarkerData {
+  return {
+    id: contact.id,
+    type,
+    position: regionToCoordinates(contact.region, contact.id),
+    name: `${contact.firstName} ${contact.otherNames}`.trim(),
+    region: contact.region || "Unknown",
+    district: contact.district || "",
+    phone: contact.phone,
+    ...(type === "farmer" && {
+      crops: contact.crops ?? [],
+      farmSize: contact.farmSize ?? 0,
+    }),
+    ...(type === "service_provider" && {
+      services: contact.services ?? [],
+    }),
+  };
 }
 
+// ─── Hook ───────────────────────────────────────────────────────────────────
+
 export function useMapData() {
-  // Dashboard store for statistics
   const statistics = useDashboardStore((state) => state.statistics);
   const dashboardLoading = useDashboardStore((state) => state.isLoading);
   const dashboardError = useDashboardStore((state) => state.error);
   const fetchDashboard = useDashboardStore((state) => state.fetchDashboard);
 
-  // Contacts store for user data (can be used for markers in future)
-  const fetchFarmers = useContactsStore((state) => state.fetchFarmers);
-  const fetchProviders = useContactsStore((state) => state.fetchProviders);
-  const contactsLoading = useContactsStore((state) => state.isLoading);
+  const [farmerMarkers, setFarmerMarkers] = useState<MapMarkerData[]>([]);
+  const [providerMarkers, setProviderMarkers] = useState<MapMarkerData[]>([]);
+  const [totalFarmers, setTotalFarmers] = useState(0);
+  const [totalProviders, setTotalProviders] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
+  const hasFetched = useRef(false);
+  const abortRef = useRef(false);
 
-  // Fetch dashboard data on mount
+  // ── Parallel paginated fetcher ─────────────────────────────────────────
+  // 1. Fetch page 1 to get totalPages
+  // 2. Fire off remaining pages in parallel batches of CONCURRENCY
+  // 3. Update state after EACH batch → progressive rendering
+  const fetchProgressively = useCallback(async () => {
+    if (isFetching) return;
+    setIsFetching(true);
+    abortRef.current = false;
+
+    setFarmerMarkers([]);
+    setProviderMarkers([]);
+
+    const fetchRole = async (
+      role: "farmer" | "service_provider",
+      fetchFn: (p: number, l: number) => ReturnType<typeof api.getFarmers>,
+      onChunk: (newMarkers: MapMarkerData[]) => void,
+      onTotal: (total: number) => void
+    ) => {
+      try {
+        // Step 1: Fetch page 1 to discover totalPages
+        const firstResponse = await fetchFn(1, PAGE_SIZE);
+        if (!firstResponse.success || !firstResponse.data.length) return;
+
+        const total = firstResponse.pagination?.total ?? 0;
+        const totalPages = firstResponse.pagination?.totalPages ?? 1;
+        onTotal(total);
+
+        // Render first batch immediately
+        const firstChunk = firstResponse.data.map((c) => contactToMarker(c, role));
+        onChunk(firstChunk);
+
+        if (totalPages <= 1 || abortRef.current) return;
+
+        // Step 2: Build list of remaining pages
+        const remainingPages = Array.from(
+          { length: totalPages - 1 },
+          (_, i) => i + 2
+        );
+
+        // Step 3: Fetch in parallel batches of CONCURRENCY
+        for (let i = 0; i < remainingPages.length; i += CONCURRENCY) {
+          if (abortRef.current) break;
+
+          const batch = remainingPages.slice(i, i + CONCURRENCY);
+
+          const results = await Promise.allSettled(
+            batch.map((page) => fetchFn(page, PAGE_SIZE))
+          );
+
+          // Collect all successful results from this batch
+          const batchMarkers: MapMarkerData[] = [];
+          for (const result of results) {
+            if (result.status === "fulfilled" && result.value.success) {
+              const markers = result.value.data.map((c) =>
+                contactToMarker(c, role)
+              );
+              batchMarkers.push(...markers);
+            }
+          }
+
+          // Update state once per batch → triggers one re-render per batch
+          if (batchMarkers.length > 0) {
+            onChunk(batchMarkers);
+          }
+        }
+      } catch (err) {
+        console.error(`[MapData] Error fetching ${role}:`, err);
+      }
+    };
+
+    // Fetch farmers and providers in parallel
+    await Promise.all([
+      fetchRole(
+        "farmer",
+        (p, l) => api.getFarmers(p, l),
+        (chunk) => setFarmerMarkers((prev) => [...prev, ...chunk]),
+        (total) => setTotalFarmers(total)
+      ),
+      fetchRole(
+        "service_provider",
+        (p, l) => api.getServiceProviders(p, l),
+        (chunk) => setProviderMarkers((prev) => [...prev, ...chunk]),
+        (total) => setTotalProviders(total)
+      ),
+    ]);
+
+    setIsFetching(false);
+    console.log("[MapData] ─── Fetch complete ───");
+  }, [isFetching]);
+
+  // Initial fetch
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchDashboard();
+      fetchProgressively();
+    }
+  }, [fetchDashboard, fetchProgressively]);
 
-  // Compute map data from store
-  const mapData: MapData = {
-    farmers: statistics?.totalFarmers ?? 0,
-    serviceProviders: statistics?.totalServiceProviders ?? 0,
-    totalAcres: statistics?.totalAcres ?? 0,
-    demandToSupply: statistics?.demandToSupply ?? "N/A",
-    farmersGrowth: statistics?.farmersGrowth ?? "+0%",
-    providersGrowth: statistics?.providersGrowth ?? "+0%",
-    acresGrowth: statistics?.acresGrowth ?? "+0%",
-    // Farmers over time not yet implemented in backend - use placeholder
-    farmersOverTime: [
-      { month: "Jan", value: 0 },
-      { month: "Feb", value: 0 },
-      { month: "Mar", value: 0 },
-      { month: "Apr", value: 0 },
-      { month: "May", value: 0 },
-      { month: "Jun", value: 0 },
-      { month: "Jul", value: 0 },
-      { month: "Aug", value: 0 },
-      { month: "Sep", value: 0 },
-      { month: "Oct", value: 0 },
-      { month: "Nov", value: 0 },
-      { month: "Dec", value: 0 },
-    ],
-    // Map markers - using dummy data for now as backend doesn't provide coordinates
-    // TODO: Update when backend provides geolocation data
-    markers: generateMapMarkers(),
-  };
+  // Combined markers
+  const markers = useMemo<MapMarkerData[]>(
+    () => [...farmerMarkers, ...providerMarkers],
+    [farmerMarkers, providerMarkers]
+  );
 
-  const loading = dashboardLoading || contactsLoading;
+  const loading = dashboardLoading || isFetching;
 
   const refreshData = useCallback(async () => {
-    await Promise.all([
-      fetchDashboard(),
-      fetchFarmers(1, 100),
-      fetchProviders(1, 100),
-    ]);
-  }, [fetchDashboard, fetchFarmers, fetchProviders]);
+    hasFetched.current = false;
+    abortRef.current = true;
+    await fetchDashboard();
+    await fetchProgressively();
+  }, [fetchDashboard, fetchProgressively]);
 
   return {
-    mapData,
+    markers,
+    statistics,
     loading,
     error: dashboardError,
     refreshData,
+    totalFarmers,
+    totalProviders,
   };
 }
