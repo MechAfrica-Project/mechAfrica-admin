@@ -98,7 +98,7 @@ export default function RequestDetailsDialog({
     setIsLoadingProviders(true);
     setIsAssigning(true);
     try {
-      const actualId = row.requestId || (row as any).id;
+      const actualId = row.id;
       const res = await api.getEligibleProviders(actualId);
       if (res.success) {
         setProviders(res.data || []);
@@ -117,7 +117,7 @@ export default function RequestDetailsDialog({
     if (!row) return;
     setIsSubmitting(providerId);
     try {
-      const actualId = row.requestId || (row as any).id;
+      const actualId = row.id;
       const res = await api.reassignServiceRequest(actualId, providerId);
       if (res.success) {
         toast.success("Provider successfully assigned!");
