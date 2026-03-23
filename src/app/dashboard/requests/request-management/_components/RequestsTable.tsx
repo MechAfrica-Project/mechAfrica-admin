@@ -14,6 +14,7 @@ import ListCard from '@/components/lists/ListCard';
 import Pagination from '@/components/ui/pagination';
 import { useRequestsStore, RequestsState } from '@/stores/useRequestsStore';
 import { useTableStore, TableStore } from '@/stores/useTableStore';
+import { useEffect } from 'react';
 
 function StatusPill({ status }: { status: RequestItem['status'] }) {
   const color =
@@ -35,13 +36,18 @@ function StatusPill({ status }: { status: RequestItem['status'] }) {
 
 export default function RequestsTable({ filter }: { filter: string }) {
   const allRequests = useRequestsStore((s: RequestsState) => s.requests);
+  const fetchRequests = useRequestsStore((s: RequestsState) => s.fetchRequests);
   const deleteRequest = useRequestsStore((s: RequestsState) => s.deleteRequest);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
   const filtered = React.useMemo(() => {
     if (!filter) return allRequests;
     switch (filter) {
       case 'new':
-        return allRequests.slice(0, 3);
+        return allRequests.filter((r) => r.status === 'Wait' || r.status === 'Offline');
       case 'ongoing':
         return allRequests.filter((r) => r.status === 'Active' || r.status === 'Ongoing');
       case 'completed':
@@ -49,9 +55,9 @@ export default function RequestsTable({ filter }: { filter: string }) {
       case 'cancelled':
         return allRequests.filter((r) => r.status === 'Cancelled');
       case 'provider':
-        return allRequests.slice(2, 6);
+        return allRequests; // Adjust if you have provider-specific logic
       case 'demand':
-        return allRequests.slice(6);
+        return allRequests; 
       default:
         return allRequests;
     }

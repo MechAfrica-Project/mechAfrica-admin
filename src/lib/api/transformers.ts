@@ -33,7 +33,7 @@ import type {
 export function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return "";
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return "";
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return ""; // Handle Go zero dates "0001-01-01"
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const year = date.getFullYear().toString().slice(-2);
@@ -46,7 +46,7 @@ export function formatDate(dateString: string | null | undefined): string {
 export function formatISODate(dateString: string | null | undefined): string {
   if (!dateString) return "";
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return "";
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return ""; // Handle Go zero dates "0001-01-01"
   return date.toISOString().split("T")[0];
 }
 
@@ -280,7 +280,7 @@ export function transformServiceRequest(
     handle,
     status: mapRequestStatus(request.status),
     email: "", // Not provided in service requests
-    date: formatDate(request.start_date || request.created_at),
+    date: formatDate(request.start_date) || formatDate(request.created_at) || "",
     // Extended fields
     requestId: request.request_id || "",
     farmerId: request.farmer_id || "",
