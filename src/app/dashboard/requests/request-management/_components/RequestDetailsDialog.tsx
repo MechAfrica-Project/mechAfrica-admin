@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,15 @@ import {
   Wheat,
   Clock,
   Building2,
+  Loader2,
+  Phone,
+  CheckCircle,
+  ArrowLeft,
+  Star,
 } from "lucide-react";
+import { api } from "@/lib/api/client";
+import { EligibleProviderDTO } from "@/lib/api/types";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -55,7 +63,7 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+      <div className="shrink-0 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
         <Icon className="w-4 h-4 text-gray-600" />
       </div>
       <div className="flex-1 min-w-0">
@@ -73,6 +81,60 @@ export default function RequestDetailsDialog({
   onOpenChange,
   row,
 }: Props) {
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [providers, setProviders] = useState<EligibleProviderDTO[]>([]);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setIsAssigning(false);
+      setProviders([]);
+    }
+  }, [open]);
+
+  const fetchProviders = async () => {
+    if (!row) return;
+    setIsLoadingProviders(true);
+    setIsAssigning(true);
+    try {
+      const actualId = row.requestId || (row as any).id;
+      const res = await api.getEligibleProviders(actualId);
+      if (res.success) {
+        setProviders(res.data || []);
+      } else {
+        toast.error(res.message || "Failed to fetch providers");
+        setProviders([]);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error fetching providers");
+    } finally {
+      setIsLoadingProviders(false);
+    }
+  };
+
+  const handleAssignProvider = async (providerId: string) => {
+    if (!row) return;
+    setIsSubmitting(providerId);
+    try {
+      const actualId = row.requestId || (row as any).id;
+      const res = await api.reassignServiceRequest(actualId, providerId);
+      if (res.success) {
+        toast.success("Provider successfully assigned!");
+        onOpenChange(false);
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      } else {
+        toast.error(res.message || "Failed to assign provider");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error assigning provider");
+    } finally {
+      setIsSubmitting(null);
+    }
+  };
+
   if (!row) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -100,7 +162,9 @@ export default function RequestDetailsDialog({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-xl">Request Details</DialogTitle>
+              <DialogTitle className="text-xl">
+                {isAssigning ? "Assign Service Provider" : "Request Details"}
+              </DialogTitle>
               <DialogDescription className="mt-1">
                 Request ID: {row.requestId || row.handle || row.id}
               </DialogDescription>
@@ -109,7 +173,74 @@ export default function RequestDetailsDialog({
           </div>
         </DialogHeader>
 
-        <div className="mt-4 space-y-6">
+        {isAssigning ? (
+          <div className="mt-4 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAssigning(false)}
+              className="mb-2 text-muted-foreground"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Details
+            </Button>
+            
+            {isLoadingProviders ? (
+              <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                <p>Loading eligible providers...</p>
+              </div>
+            ) : providers.length === 0 ? (
+              <div className="text-center p-8 bg-gray-50 rounded-lg">
+                <p className="text-muted-foreground">No eligible providers found for this request type.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {providers.map((pkg) => (
+                  <div key={pkg.service_provider_id} className="p-4 border rounded-xl bg-white shadow-sm flex items-center justify-between hover:border-blue-200 transition-colors">
+                    <div>
+                      <h4 className="font-semibold text-sm">{pkg.name}</h4>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3" />
+                        {pkg.distance_km != null ? `${pkg.distance_km.toFixed(1)} km away` : "Distance unknown"}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="secondary" className="text-[10px] flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border-yellow-200 border">
+                          <Star className="w-3 h-3 fill-current text-yellow-500" />
+                          {pkg.rating > 0 ? pkg.rating.toFixed(1) : "New"}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px] bg-slate-50">
+                          {pkg.completed_jobs} Jobs
+                        </Badge>
+                        {pkg.has_equipment && (
+                          <Badge className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 border text-[10px]">
+                            <CheckCircle className="w-3 h-3 mr-1" /> Equip Match
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 items-end">
+                      <a href={`tel:${pkg.phone_number}`} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium bg-blue-50 px-2 py-1 rounded-md transition-colors w-full justify-center">
+                        <Phone className="w-3 h-3" />
+                        Call
+                      </a>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleAssignProvider(pkg.service_provider_id)}
+                        disabled={isSubmitting === pkg.service_provider_id}
+                        className="w-full shadow-sm"
+                      >
+                        {isSubmitting === pkg.service_provider_id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assign"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mt-4 space-y-6">
           {/* Farmer Information */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -124,7 +255,7 @@ export default function RequestDetailsDialog({
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Farmer ID</p>
-                  <p className="text-sm font-medium font-mono text-xs">
+                  <p className="text-sm font-medium font-mono">
                     {row.farmerId || "N/A"}
                   </p>
                 </div>
@@ -138,7 +269,7 @@ export default function RequestDetailsDialog({
             </div>
           </div>
 
-          <div className="h-[1px] w-full bg-gray-200 dark:bg-gray-700" />
+          <div className="h-px w-full bg-gray-200 dark:bg-gray-700" />
 
           {/* Service Details */}
           <div>
@@ -170,7 +301,7 @@ export default function RequestDetailsDialog({
             </div>
           </div>
 
-          <div className="h-[1px] w-full bg-gray-200 dark:bg-gray-700" />
+          <div className="h-px w-full bg-gray-200 dark:bg-gray-700" />
 
           {/* Timeline */}
           <div>
@@ -201,13 +332,19 @@ export default function RequestDetailsDialog({
               />
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
-        <div className="flex justify-end mt-6 gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </div>
+        {!isAssigning && (
+          <div className="flex justify-end mt-6 gap-2">
+            {(row.status === "Wait" || !row.providerName || row.providerName === "Unassigned") && (
+              <Button onClick={fetchProviders}>Assign Provider</Button>
+            )}
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

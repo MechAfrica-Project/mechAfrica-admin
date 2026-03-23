@@ -46,6 +46,7 @@ import type {
   OnboardResultResponseData,
   RetryResult,
   BulkRetryResult,
+  EligibleProviderDTO,
 } from "./types";
 
 import { ONBOARD_ENDPOINTS } from "./types";
@@ -488,6 +489,27 @@ class MechAfricaAPIClient {
     requestId: string
   ): Promise<ApiResponse<BackendServiceRequest>> {
     return this.get(`/admin/service-requests/${requestId}`);
+  }
+
+  /**
+   * Get eligible providers for a specific request
+   */
+  async getEligibleProviders(
+    requestId: string
+  ): Promise<ApiResponse<EligibleProviderDTO[]>> {
+    return this.get(`/admin/service-requests/${requestId}/eligible-providers`);
+  }
+
+  /**
+   * Reassign service request
+   */
+  async reassignServiceRequest(
+    requestId: string,
+    providerId: string
+  ): Promise<ApiResponse<unknown>> {
+    return this.put(`/admin/service-requests/${requestId}/reassign`, {
+      new_service_provider_id: providerId,
+    });
   }
 
   // ---------------------------------------------------------------------------

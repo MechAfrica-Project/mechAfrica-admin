@@ -187,6 +187,16 @@ export interface BackendPaginatedServiceRequests {
 // Payment/Finance Types
 // =============================================================================
 
+export interface EligibleProviderDTO {
+  service_provider_id: string;
+  name: string;
+  phone_number: string;
+  distance_km: number | null;
+  rating: number;
+  has_equipment: boolean;
+  completed_jobs: number;
+}
+
 export interface BackendPaymentSummary {
   period: string;
   total_transactions: number;
