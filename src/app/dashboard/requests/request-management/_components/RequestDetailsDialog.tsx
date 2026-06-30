@@ -106,8 +106,9 @@ export default function RequestDetailsDialog({
         toast.error(res.message || "Failed to fetch providers");
         setProviders([]);
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Error fetching providers");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error fetching providers";
+      toast.error(message);
     } finally {
       setIsLoadingProviders(false);
     }
@@ -128,8 +129,9 @@ export default function RequestDetailsDialog({
       } else {
         toast.error(res.message || "Failed to assign provider");
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Error assigning provider");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error assigning provider";
+      toast.error(message);
     } finally {
       setIsSubmitting(null);
     }
