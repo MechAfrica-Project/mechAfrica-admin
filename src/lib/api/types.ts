@@ -87,10 +87,14 @@ export interface BackendUserStats {
 
 export interface BackendServiceStats {
   total_requests: number;
+  total_requests_growth: string;
   pending: number;
+  pending_requests_growth: string;
   in_progress: number;
   completed: number;
+  completed_requests_growth: string;
   cancelled: number;
+  cancelled_requests_growth: string;
   completion_rate: number;
 }
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { useRequestsStore } from "@/stores/useRequestsStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 
 type CardDef = {
   id: string;
@@ -19,72 +19,86 @@ export default function RequestCards({
   selected?: string;
   onSelect?: (id: string) => void;
 }) {
-  const requests = useRequestsStore((state) => state.requests);
-  const isLoading = useRequestsStore((state) => state.isLoading);
-  const fetchRequests = useRequestsStore((state) => state.fetchRequests);
+  const serviceStats = useDashboardStore((state) => state.rawDashboardData?.service_stats);
+  const isLoading = useDashboardStore((state) => state.isLoading);
+  const fetchDashboard = useDashboardStore((state) => state.fetchDashboard);
+  const userStats = useDashboardStore((state) => state.rawDashboardData?.user_stats);
 
-  // Fetch requests on mount
+  // Fetch dashboard data on mount to get service stats
   useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    fetchDashboard();
+  }, [fetchDashboard]);
 
-  // Calculate counts from actual data
-  const newRequests = requests.filter((r) => r.status === "Wait").length;
-  const ongoingRequests = requests.filter((r) => r.status === "Ongoing" || r.status === "Active").length;
-  const completedRequests = requests.filter((r) => r.status === "Completed").length;
-  const cancelledRequests = requests.filter((r) => r.status === "Cancelled").length;
-  const totalRequests = requests.length;
+  // Use actual backend stats (falling back to 0 if not loaded yet)
+  const newRequests = serviceStats?.pending || 0;
+  const newRequestsDelta = serviceStats?.pending_requests_growth || "+0%";
+  
+  const ongoingRequests = serviceStats?.in_progress || 0;
+  // NOTE: the backend only groups "pending, accepted, in_progress" into pending requests, 
+  // so for ongoing we will just use pending_requests_growth or +0% for now.
+  const ongoingRequestsDelta = serviceStats?.pending_requests_growth || "+0%";
+  
+  const completedRequests = serviceStats?.completed || 0;
+  const completedRequestsDelta = serviceStats?.completed_requests_growth || "+0%";
+  
+  const cancelledRequests = serviceStats?.cancelled || 0;
+  const cancelledRequestsDelta = serviceStats?.cancelled_requests_growth || "+0%";
+  
+  const totalRequests = serviceStats?.total_requests || 0;
+  const totalRequestsDelta = serviceStats?.total_requests_growth || "+0%";
 
-  // Calculate demand to supply (placeholder - would need provider data)
-  const demandToSupply = totalRequests > 0 ? Math.round(totalRequests / 10) : 0;
+  // Calculate demand to supply using real provider totals from userStats
+  const totalProviders = userStats?.service_providers?.total || 0;
+  const demandToSupply = totalProviders > 0 ? Math.round(totalRequests / totalProviders) : 0;
+  const demandToSupplyDelta = totalRequestsDelta; // Proxy using total requests growth
 
   const cards: CardDef[] = [
     {
       id: "new",
       title: "New Requests",
       count: newRequests,
-      delta: "+0%",
+      delta: newRequestsDelta,
       bg: "bg-yellow-50",
     },
     {
       id: "ongoing",
       title: "On-going Requests",
       count: ongoingRequests,
-      delta: "+0%",
+      delta: ongoingRequestsDelta,
       bg: "bg-white",
     },
     {
       id: "completed",
       title: "Completed",
       count: completedRequests,
-      delta: "+0%",
+      delta: completedRequestsDelta,
       bg: "bg-white",
     },
     {
       id: "cancelled",
       title: "Cancelled",
       count: cancelledRequests,
-      delta: "+0%",
+      delta: cancelledRequestsDelta,
       bg: "bg-white",
     },
     {
       id: "provider",
       title: "Provider Requests",
       count: totalRequests,
-      delta: "+0%",
+      delta: totalRequestsDelta,
       bg: "bg-white",
     },
     {
       id: "demand",
       title: "Demand to Supply",
       count: demandToSupply,
-      delta: "+0%",
+      delta: demandToSupplyDelta,
       bg: "bg-white",
     },
   ];
 
   // Loading state
-  if (isLoading && requests.length === 0) {
+  if (isLoading && !serviceStats) {
     return (
       <div className="grid grid-cols-3 gap-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
