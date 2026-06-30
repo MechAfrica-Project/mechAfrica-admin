@@ -29,12 +29,12 @@ export default function AssignProviderDialog({ open, onOpenChange, request }: Pr
   const fetchRequests = useRequestsStore((s: RequestsState) => s.fetchRequests);
 
   useEffect(() => {
-    if (open && request?.requestId) {
-      loadProviders(request.requestId);
+    if (open && request?.id) {
+      loadProviders(request.id);
     } else {
       setProviders([]);
     }
-  }, [open, request?.requestId]);
+  }, [open, request?.id]);
 
   const loadProviders = async (reqId: string) => {
     try {
@@ -53,10 +53,10 @@ export default function AssignProviderDialog({ open, onOpenChange, request }: Pr
   };
 
   const handleAssign = async (providerId: string) => {
-    if (!request?.requestId) return;
+    if (!request?.id) return;
     try {
       setAssigningId(providerId);
-      const res = await api.reassignServiceRequest(request.requestId, providerId);
+      const res = await api.reassignServiceRequest(request.id, providerId);
       if (res.success) {
         toast.success("Provider assigned successfully");
         fetchRequests(); // Refresh the global store
