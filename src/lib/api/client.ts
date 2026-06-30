@@ -47,6 +47,7 @@ import type {
   RetryResult,
   BulkRetryResult,
   EligibleProviderDTO,
+  BackendTrendsData,
 } from "./types";
 
 import { ONBOARD_ENDPOINTS } from "./types";
@@ -521,6 +522,11 @@ class MechAfricaAPIClient {
    */
   async getDashboard(): Promise<ApiResponse<BackendDashboardData>> {
     return this.get("/admin/dashboard");
+  }
+
+  async getDashboardTrends(year?: number): Promise<ApiResponse<BackendTrendsData>> {
+    const url = year ? `/admin/dashboard/trends?year=${year}` : "/admin/dashboard/trends";
+    return this.get(url);
   }
 
   /**

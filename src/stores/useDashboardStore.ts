@@ -5,6 +5,7 @@ import type {
   BackendDashboardData,
   BackendRecentActivity,
   BackendTopRegion,
+  BackendTrendsData,
 } from "@/lib/api";
 
 // =============================================================================
@@ -27,12 +28,16 @@ export interface DashboardState {
   recentActivity: BackendRecentActivity[];
   topRegions: BackendTopRegion[];
   rawDashboardData: BackendDashboardData | null;
+  trends: BackendTrendsData | null;
   isLoading: boolean;
+  isTrendsLoading: boolean;
   error: string | null;
+  trendsError: string | null;
 
   // Actions
   fetchDashboard: () => Promise<void>;
   fetchStatistics: () => Promise<void>;
+  fetchTrends: (year?: number) => Promise<void>;
   clearError: () => void;
 }
 
@@ -47,8 +52,11 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   recentActivity: [],
   topRegions: [],
   rawDashboardData: null,
+  trends: null,
   isLoading: false,
+  isTrendsLoading: false,
   error: null,
+  trendsError: null,
 
   // Fetch full dashboard data from API
   fetchDashboard: async () => {
@@ -142,9 +150,38 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     }
   },
 
+  // Fetch trends
+  fetchTrends: async (year?: number) => {
+    set({ isTrendsLoading: true, trendsError: null });
+
+    try {
+      const response = await api.getDashboardTrends(year);
+
+      if (response.success && response.data) {
+        set({
+          trends: response.data,
+          isTrendsLoading: false,
+        });
+      } else {
+        set({
+          isTrendsLoading: false,
+          trendsError: "Failed to fetch dashboard trends",
+        });
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch dashboard trends";
+
+      set({
+        isTrendsLoading: false,
+        trendsError: errorMessage,
+      });
+    }
+  },
+
   // Clear error
   clearError: () => {
-    set({ error: null });
+    set({ error: null, trendsError: null });
   },
 }));
 
@@ -164,5 +201,9 @@ export const useDashboardLoading = () =>
   useDashboardStore((state) => state.isLoading);
 export const useDashboardError = () =>
   useDashboardStore((state) => state.error);
+export const useDashboardTrends = () =>
+  useDashboardStore((state) => state.trends);
+export const useTrendsLoading = () =>
+  useDashboardStore((state) => state.isTrendsLoading);
 
 export default useDashboardStore;

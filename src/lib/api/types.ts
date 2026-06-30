@@ -1248,3 +1248,27 @@ export function groupRetryResults(results: RetryResult[]): {
     failed: results.filter((r) => !r.success),
   };
 }
+
+
+// =============================================================================
+// Dashboard Trends API
+// =============================================================================
+
+export interface BackendTrendItem {
+  month: string;
+  this_year: number | null;
+  last_year: number;
+  forecast: number | null;
+}
+
+export interface BackendTrendsSummary {
+  ytd_requests: number;
+  peak_month: string;
+  avg_per_month: number;
+}
+
+export interface BackendTrendsData {
+  trends: BackendTrendItem[];
+  summary: BackendTrendsSummary;
+}
+
