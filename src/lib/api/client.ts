@@ -586,17 +586,48 @@ class MechAfricaAPIClient {
    * Send weather broadcast
    */
   async sendWeatherBroadcast(data: {
-    aiNotifications: boolean;
-    region: string;
-    district: string;
-    message: string;
+    title: string;
+    body: string;
+    region_id?: string;
+    district_id?: string;
+    community_id?: string;
   }): Promise<ApiResponse<unknown>> {
-    return this.post("/admin/weather-broadcast", {
-      ai_notifications: data.aiNotifications,
-      region: data.region,
-      district: data.district,
-      message: data.message,
-    });
+    return this.post("/admin/push/weather-broadcast", data);
+  }
+
+  /**
+   * Fetch hierarchical locations
+   */
+  async getLocations(): Promise<ApiResponse<any>> {
+    return this.get("/public/locations");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push Notification Endpoints
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Send a push notification to specific users or roles
+   */
+  async sendAdminPushNotification(payload: {
+    title: string;
+    body: string;
+    target_role?: string;
+    user_id?: string;
+    data?: Record<string, string>;
+  }): Promise<ApiResponse<unknown>> {
+    return this.post("/admin/push/send", payload);
+  }
+
+  /**
+   * Broadcast a push notification to all users
+   */
+  async broadcastAdminPushNotification(payload: {
+    title: string;
+    body: string;
+    data?: Record<string, string>;
+  }): Promise<ApiResponse<unknown>> {
+    return this.post("/admin/push/broadcast", payload);
   }
 
   // ---------------------------------------------------------------------------

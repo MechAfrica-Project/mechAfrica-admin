@@ -7,10 +7,11 @@ interface WeatherBroadcastModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSend: (data: {
-    aiNotifications: boolean;
-    region: string;
-    district: string;
-    message: string;
+    title: string;
+    body: string;
+    region_id?: string;
+    district_id?: string;
+    community_id?: string;
   }) => void;
 }
 
@@ -20,10 +21,11 @@ export function WeatherBroadcastModal({
   onSend,
 }: WeatherBroadcastModalProps) {
   const handleSend = (data: {
-    aiNotifications: boolean;
-    region: string;
-    district: string;
-    message: string;
+    title: string;
+    body: string;
+    region_id?: string;
+    district_id?: string;
+    community_id?: string;
   }) => {
     onSend(data);
     onOpenChange(false);
