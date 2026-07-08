@@ -34,22 +34,21 @@ export default function BroadcastForm() {
     try {
       setIsSubmitting(true);
 
-      let response;
       if (targetAudience === "all") {
-        response = await api.broadcastAdminPushNotification({
+        await api.broadcastAdminPushNotification({
           title,
           body,
         });
       } else {
-        const payload: any = {
+        const payload: Parameters<typeof api.sendAdminPushNotification>[0] = {
           title,
           body,
         };
 
         if (targetAudience === "farmers") {
-          payload.role = "farmer";
+          payload.target_role = "farmer";
         } else if (targetAudience === "service_providers") {
-          payload.role = "service_provider";
+          payload.target_role = "service_provider";
         } else if (targetAudience === "specific_user") {
           if (!userId) {
             toast.error("User ID is required for specific user target.");
@@ -59,7 +58,7 @@ export default function BroadcastForm() {
           payload.user_id = userId;
         }
 
-        response = await api.sendAdminPushNotification(payload);
+        await api.sendAdminPushNotification(payload);
       }
 
       toast.success("Push notification sent successfully!");
@@ -67,9 +66,9 @@ export default function BroadcastForm() {
       setBody("");
       setTargetAudience("all");
       setUserId("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to send notification:", error);
-      toast.error(error.message || "Failed to send notification");
+      toast.error(error instanceof Error ? error.message : "Failed to send notification");
     } finally {
       setIsSubmitting(false);
     }

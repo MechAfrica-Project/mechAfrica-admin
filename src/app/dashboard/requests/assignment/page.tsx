@@ -6,7 +6,7 @@ import { useRequestsStore, RequestsState } from "@/stores/useRequestsStore";
 import { FrontendRequestItem } from "@/lib/api/types";
 import AssignProviderDialog from "./_components/AssignProviderDialog";
 import { Button } from "@/components/ui/button";
-import { Calendar, Tractor, Trees, ArrowRight, UserCircle2, Loader2, MapPin } from "lucide-react";
+import { Calendar, Tractor, Trees, ArrowRight, Loader2 } from "lucide-react";
 
 export default function Assignment() {
   const { setTitle } = useHeaderStore();

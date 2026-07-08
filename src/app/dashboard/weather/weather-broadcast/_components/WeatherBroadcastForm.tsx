@@ -38,7 +38,15 @@ interface WeatherBroadcastFormProps {
   onCancel?: () => void;
 }
 
-function generateAiMessage(weather: any, locationStr: string): string {
+interface WeatherData {
+  current?: {
+    temp: number;
+    wind_speed: number;
+    weather?: Array<{ main: string; description: string }>;
+  };
+}
+
+function generateAiMessage(weather: WeatherData, locationStr: string): string {
   if (!weather || !weather.current) return "";
   
   const temp = Math.round(weather.current.temp);
@@ -76,10 +84,11 @@ export function WeatherBroadcastForm({ onSend, onCancel }: WeatherBroadcastFormP
     async function loadLocations() {
       try {
         const res = await api.getLocations();
-        if (res.data?.regions) {
-          setRegions(res.data.regions);
+        const data = res.data as { regions?: RegionNode[] };
+        if (data?.regions) {
+          setRegions(data.regions);
         }
-      } catch (err) {
+      } catch {
         toast.error("Failed to load locations from database.");
       } finally {
         setIsLoadingLocations(false);
@@ -125,7 +134,7 @@ export function WeatherBroadcastForm({ onSend, onCancel }: WeatherBroadcastFormP
     setIsFetchingWeather(true);
     try {
       // In a real app, you might map district to coordinates. We'll use Kumasi coordinates as fallback for demo if real coordinates are missing.
-      const weatherData: any = await api.getWeather(6.6885, -1.6244);
+      const weatherData = await api.getWeather(6.6885, -1.6244) as WeatherData;
       
       const regionName = selectedRegion?.name || "";
       const distName = selectedDistrict?.name || "";
@@ -137,7 +146,7 @@ export function WeatherBroadcastForm({ onSend, onCancel }: WeatherBroadcastFormP
       const aiMsg = generateAiMessage(weatherData, locationStr);
       setMessage(aiMsg);
       toast.success("AI Weather alert generated successfully!");
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch weather data.");
     } finally {
       setIsFetchingWeather(false);
@@ -148,6 +157,7 @@ export function WeatherBroadcastForm({ onSend, onCancel }: WeatherBroadcastFormP
     if (aiNotifications && regionId && districtId) {
       handleFetchWeather();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiNotifications, districtId]);
 
   return (

@@ -45,8 +45,8 @@ export default function AssignProviderDialog({ open, onOpenChange, request }: Pr
       } else {
         toast.error("Failed to load providers");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error fetching providers");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error fetching providers");
     } finally {
       setLoading(false);
     }
@@ -64,8 +64,8 @@ export default function AssignProviderDialog({ open, onOpenChange, request }: Pr
       } else {
         toast.error("Assignment failed");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error assigning provider");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error assigning provider");
     } finally {
       setAssigningId(null);
     }

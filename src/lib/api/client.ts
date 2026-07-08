@@ -598,7 +598,7 @@ class MechAfricaAPIClient {
   /**
    * Fetch hierarchical locations
    */
-  async getLocations(): Promise<ApiResponse<any>> {
+  async getLocations(): Promise<ApiResponse<unknown>> {
     return this.get("/public/locations");
   }
 
