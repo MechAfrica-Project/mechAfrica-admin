@@ -517,12 +517,12 @@ export interface EditedCountResponseData {
 /**
  * Retry result response data (single record)
  */
-export interface RetryResponseData extends RetryResult { }
+export type RetryResponseData = RetryResult;
 
 /**
  * Bulk retry response data
  */
-export interface BulkRetryResponseData extends BulkRetryResult { }
+export type BulkRetryResponseData = BulkRetryResult;
 
 // ============================================================================
 // WEBSOCKET TYPES
