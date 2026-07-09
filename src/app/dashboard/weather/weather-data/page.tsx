@@ -97,10 +97,11 @@ export default function WeatherPage() {
   const handleSendBroadcast = async (data: Record<string, unknown>) => {
     try {
       await api.sendWeatherBroadcast({
-        aiNotifications: data.aiNotifications as boolean,
-        region: data.region as string,
-        district: data.district as string,
-        message: data.message as string,
+        title: data.title as string,
+        body: data.body as string,
+        region_id: data.region_id as string | undefined,
+        district_id: data.district_id as string | undefined,
+        community_id: data.community_id as string | undefined,
       });
       console.log("Weather Broadcast sent:", data);
     } catch (err) {

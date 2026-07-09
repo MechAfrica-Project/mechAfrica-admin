@@ -1,4 +1,4 @@
-import { Cloud, Home, ListTodo, Users, Wallet, Upload } from "lucide-react";
+import { Cloud, Home, ListTodo, Users, Wallet, Upload, Bell } from "lucide-react";
 
 type NavTab = { title: string; path: string };
 type ActionTab = { title: string; type: "action"; action: string };
@@ -19,6 +19,7 @@ export const SidebarTabs = [
   },
   { title: "Users", url: "/dashboard/users", icon: Users },
   { title: "Bulk Onboarding", url: "/dashboard/onboarding", icon: Upload },
+  { title: "Alerts", url: "/dashboard/alerts", icon: Bell },
 ];
 
 export const SECTION_TABS: Record<string, TabItem[]> = {
@@ -62,6 +63,9 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
   "/onboarding": [
     { title: "Upload", path: "/dashboard/onboarding/upload" },
     { title: "Jobs History", path: "/dashboard/onboarding/jobs" },
+  ],
+  "/alerts": [
+    { title: "Broadcast Notifications", path: "/dashboard/alerts/broadcast" },
   ],
 };
 
