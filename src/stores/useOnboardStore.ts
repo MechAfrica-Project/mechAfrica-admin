@@ -3,9 +3,9 @@ import { api } from "@/lib/api";
 import type {
   FrontendOnboardJob,
   OnboardJobProgress,
-  OnboardedRecord,
-  SkippedRecord,
-  ProblematicRecord,
+  OnboardStagedRecord,
+  OnboardSkippedRecord,
+  OnboardProblematicRecord,
   OnboardRecordsPagination,
   RoleType,
   RetryResult,
@@ -29,9 +29,9 @@ export interface OnboardState {
   } | null;
 
   // Records for current job
-  onboardedRecords: OnboardedRecord[];
-  skippedRecords: SkippedRecord[];
-  problematicRecords: ProblematicRecord[];
+  onboardedRecords: OnboardStagedRecord[];
+  skippedRecords: OnboardSkippedRecord[];
+  problematicRecords: OnboardProblematicRecord[];
   recordsPagination: {
     onboarded: OnboardRecordsPagination | null;
     skipped: OnboardRecordsPagination | null;
@@ -91,7 +91,7 @@ export interface OnboardState {
     jobId: string,
     rowNumber: number,
     updatedData: Record<string, string>
-  ) => Promise<ProblematicRecord | null>;
+  ) => Promise<OnboardProblematicRecord | null>;
 
   retryRecord: (jobId: string, rowNumber: number) => Promise<RetryResult | null>;
   bulkRetryRecords: (jobId: string, rowNumbers: number[]) => Promise<BulkRetryResult | null>;
@@ -126,9 +126,9 @@ const initialState = {
     pages: number;
   } | null,
 
-  onboardedRecords: [] as OnboardedRecord[],
-  skippedRecords: [] as SkippedRecord[],
-  problematicRecords: [] as ProblematicRecord[],
+  onboardedRecords: [] as OnboardStagedRecord[],
+  skippedRecords: [] as OnboardSkippedRecord[],
+  problematicRecords: [] as OnboardProblematicRecord[],
   recordsPagination: {
     onboarded: null as OnboardRecordsPagination | null,
     skipped: null as OnboardRecordsPagination | null,

@@ -343,6 +343,8 @@ export function transformUserToAdmin(user: BackendUser): FrontendAdmin {
     type: mapRoleToAdminType(user.role),
     phoneNumber: user.phone_number,
     dateOfRegistration: formatDate(user.created_at),
+    idNumber: user.id_number,
+    communityName: user.community_name,
   };
 }
 

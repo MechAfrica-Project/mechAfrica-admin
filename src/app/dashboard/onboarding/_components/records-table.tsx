@@ -39,9 +39,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
-  OnboardedRecord,
-  SkippedRecord,
-  ProblematicRecord,
+  OnboardStagedRecord,
+  OnboardSkippedRecord,
+  OnboardProblematicRecord,
   OnboardRecordsPagination,
   ParticipantType,
   RoleType,
@@ -51,16 +51,16 @@ import type {
 type RecordType = "onboarded" | "skipped" | "problematic";
 
 interface RecordsTableProps {
-  records: OnboardedRecord[] | SkippedRecord[] | ProblematicRecord[];
+  records: OnboardStagedRecord[] | OnboardSkippedRecord[] | OnboardProblematicRecord[];
   pagination?: OnboardRecordsPagination | null;
   onPageChange?: (page: number) => void;
   onDownload?: () => void;
-  onEditRecord?: (record: ProblematicRecord) => void;
-  onViewRecord?: (record: OnboardedRecord | SkippedRecord) => void;
-  onRetryRecord?: (record: ProblematicRecord) => Promise<void>;
-  onSkipRecord?: (record: ProblematicRecord) => Promise<void>;
-  onDeleteRecord?: (record: ProblematicRecord) => Promise<void>;
-  onBulkRetry?: (records: ProblematicRecord[]) => Promise<void>;
+  onEditRecord?: (record: OnboardProblematicRecord) => void;
+  onViewRecord?: (record: OnboardStagedRecord | OnboardSkippedRecord) => void;
+  onRetryRecord?: (record: OnboardProblematicRecord) => Promise<void>;
+  onSkipRecord?: (record: OnboardProblematicRecord) => Promise<void>;
+  onDeleteRecord?: (record: OnboardProblematicRecord) => Promise<void>;
+  onBulkRetry?: (records: OnboardProblematicRecord[]) => Promise<void>;
   isLoading?: boolean;
   emptyMessage?: string;
   type: RecordType;
@@ -94,15 +94,15 @@ const issueTypeConfig: Record<IssueType, { label: string; color: string }> = {
   validation_error: { label: "Validation Error", color: "text-red-600" },
 };
 
-function isOnboardedRecord(record: OnboardedRecord | SkippedRecord | ProblematicRecord): record is OnboardedRecord {
+function isOnboardedRecord(record: OnboardStagedRecord | OnboardSkippedRecord | OnboardProblematicRecord): record is OnboardStagedRecord {
   return "created_as" in record || "user_id" in record;
 }
 
-function isSkippedRecord(record: OnboardedRecord | SkippedRecord | ProblematicRecord): record is SkippedRecord {
+function isSkippedRecord(record: OnboardStagedRecord | OnboardSkippedRecord | OnboardProblematicRecord): record is OnboardSkippedRecord {
   return "reason" in record && !("issue" in record);
 }
 
-function isProblematicRecord(record: OnboardedRecord | SkippedRecord | ProblematicRecord): record is ProblematicRecord {
+function isProblematicRecord(record: OnboardStagedRecord | OnboardSkippedRecord | OnboardProblematicRecord): record is OnboardProblematicRecord {
   return "issue" in record && "issue_type" in record;
 }
 
@@ -148,7 +148,7 @@ export function RecordsTable({
     }
   };
 
-  const handleRetryRecord = async (record: ProblematicRecord) => {
+  const handleRetryRecord = async (record: OnboardProblematicRecord) => {
     if (!onRetryRecord) return;
     setActionLoading((prev) => ({ ...prev, [record.row_number]: "retry" }));
     try {
@@ -162,7 +162,7 @@ export function RecordsTable({
     }
   };
 
-  const handleSkipRecord = async (record: ProblematicRecord) => {
+  const handleSkipRecord = async (record: OnboardProblematicRecord) => {
     if (!onSkipRecord) return;
     setActionLoading((prev) => ({ ...prev, [record.row_number]: "skip" }));
     try {
@@ -176,7 +176,7 @@ export function RecordsTable({
     }
   };
 
-  const handleDeleteRecord = async (record: ProblematicRecord) => {
+  const handleDeleteRecord = async (record: OnboardProblematicRecord) => {
     if (!onDeleteRecord) return;
     if (!window.confirm("Are you sure you want to permanently delete this record?")) {
       return;
@@ -197,7 +197,7 @@ export function RecordsTable({
     if (!onBulkRetry || selectedRows.size === 0) return;
     const selectedRecords = filteredRecords.filter(
       (r) => selectedRows.has(r.row_number) && isProblematicRecord(r)
-    ) as ProblematicRecord[];
+    ) as OnboardProblematicRecord[];
 
     if (selectedRecords.length === 0) return;
 

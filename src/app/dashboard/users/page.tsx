@@ -4,10 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { AddAdminDialog } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
+import { DataQualityBanner } from "./_components/data-quality-banner";
+import { MissingDataModal } from "./_components/missing-data-modal";
 import { useAdminsStore, Admin } from "@/stores/useAdminsStore";
 import { useTableStore } from "@/stores/useTableStore";
-import { RefreshCcw, Plus } from "lucide-react";
+import { RefreshCcw, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 
 const PAGE_SIZE = 10;
@@ -22,6 +25,8 @@ export default function AdminsPage() {
   const addAdmin = useAdminsStore((s) => s.addAdmin);
   const deleteAdmin = useAdminsStore((s) => s.deleteAdmin);
   const clearError = useAdminsStore((s) => s.clearError);
+  const dataQuality = useAdminsStore((s) => s.dataQuality);
+  const fetchDataQuality = useAdminsStore((s) => s.fetchDataQuality);
 
   const { setTitle, setFilters, selectedFilters } = useHeaderStore();
 
@@ -39,6 +44,21 @@ export default function AdminsPage() {
     admins: number;
     total: number;
   } | null>(null);
+
+  // Missing data modal state
+  const [missingDataFilter, setMissingDataFilter] = useState<string | null>(null);
+
+  // Search state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Get selected role filter
   const selectedRole = selectedFilters["Users"] || "all";
@@ -65,25 +85,27 @@ export default function AdminsPage() {
     }
   }, []);
 
-  // Fetch user stats on mount
+  // Fetch user stats and data quality on mount
   useEffect(() => {
     fetchUserStats();
-  }, [fetchUserStats]);
+    fetchDataQuality();
+  }, [fetchUserStats, fetchDataQuality]);
 
-  // Fetch admins when page or filter changes (server-side pagination)
+  // Fetch admins when page, filter, or search changes (server-side pagination)
   const loadAdmins = useCallback(() => {
     const roleFilter = selectedRole === "all" ? undefined : selectedRole;
-    fetchAdmins(page, PAGE_SIZE, roleFilter);
-  }, [fetchAdmins, page, selectedRole]);
+    const searchParam = debouncedSearch.trim() ? debouncedSearch : undefined;
+    fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam);
+  }, [fetchAdmins, page, selectedRole, debouncedSearch]);
 
   useEffect(() => {
     loadAdmins();
   }, [loadAdmins]);
 
-  // Reset to page 1 when filter changes
+  // Reset to page 1 when filter or search changes
   useEffect(() => {
     setPage("admins", 1);
-  }, [selectedRole, setPage]);
+  }, [selectedRole, debouncedSearch, setPage]);
 
   // Set page title and filters
   useEffect(() => {
@@ -148,6 +170,7 @@ export default function AdminsPage() {
   const handleRefresh = () => {
     loadAdmins();
     fetchUserStats();
+    fetchDataQuality();
   };
 
   // Get total pages from server pagination
@@ -162,6 +185,11 @@ export default function AdminsPage() {
     providers: userStats?.providers || 0,
     agents: userStats?.agents || 0,
     admins: userStats?.admins || 0,
+  };
+
+  const handleDataQualityFilter = (filterType: string) => {
+    // Open the modal for the specific missing data type
+    setMissingDataFilter(filterType);
   };
 
   // Loading state
@@ -190,7 +218,7 @@ export default function AdminsPage() {
               <p className="text-red-600 font-medium mb-2">Failed to load Users</p>
               <p className="text-gray-500 text-sm mb-4">{error}</p>
               <button
-                onClick={() => fetchAdmins()}
+                onClick={() => handleRefresh()}
                 className="px-4 py-2  text-primary rounded-lg hover:bg-[#00594cd4] transition-colors flex"
               >
                 <span><RefreshCcw /></span>
@@ -219,26 +247,42 @@ export default function AdminsPage() {
           </div>
         )}
 
-        {/* Header with Refresh and Add buttons */}
-        <div className="mb-2 flex justify-end items-center gap-2">
-          <Button
-            onClick={handleRefresh}
-            variant="outline"
-            size="lg"
-            className="cursor-pointer"
-            disabled={isLoading}
-          >
-            <RefreshCcw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            size="lg"
-            className="cursor-pointer bg-green-600 hover:bg-green-700"
-          >
-            <Plus className="h-4 w-4" />
-            Add User
-          </Button>
+        <DataQualityBanner 
+          data={dataQuality} 
+          onFilter={handleDataQualityFilter} 
+        />
+
+        {/* Header with Search, Refresh and Add buttons */}
+        <div className="mb-2 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search by name, phone, location, or role..." 
+              className="pl-9 bg-background border-border"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              size="lg"
+              className="cursor-pointer"
+              disabled={isLoading}
+            >
+              <RefreshCcw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              size="lg"
+              className="cursor-pointer bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="h-4 w-4" />
+              Add User
+            </Button>
+          </div>
         </div>
 
         {/* Stats summary metrics */}
@@ -259,12 +303,18 @@ export default function AdminsPage() {
           totalPages={totalPages}
           onPageChange={handlePageChange}
           isLoading={isLoading}
+          onRefresh={loadAdmins}
         />
 
         <AddAdminDialog
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           onAddAdmin={handleAddAdmin}
+        />
+
+        <MissingDataModal 
+          filterType={missingDataFilter} 
+          onClose={() => setMissingDataFilter(null)} 
         />
       </div>
     </main>

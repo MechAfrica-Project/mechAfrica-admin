@@ -3,7 +3,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Info, Trash2 } from "lucide-react";
+import { Info, Trash2, Edit2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AdminTypeBadge } from "./admin-type-badge";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
@@ -18,6 +18,8 @@ interface Admin {
   type: string;
   phoneNumber: string;
   dateOfRegistration: string;
+  idNumber?: string;
+  communityName?: string;
 }
 
 interface AdminRowProps {
@@ -25,6 +27,7 @@ interface AdminRowProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
+  onEdit?: () => void;
 }
 
 export function AdminRow({
@@ -32,6 +35,7 @@ export function AdminRow({
   isSelected,
   onSelect,
   onDelete,
+  onEdit,
 }: AdminRowProps) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -70,6 +74,16 @@ export function AdminRow({
           >
             <Info className="h-4 w-4 text-muted-foreground" />
           </Button>
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onEdit}
+            >
+              <Edit2 className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"

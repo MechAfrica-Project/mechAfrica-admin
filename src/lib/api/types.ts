@@ -29,6 +29,7 @@ export interface BackendUser {
   role: "admin" | "agent" | "farmer" | "service_provider";
   community_name?: string;
   region_name?: string;
+  id_number?: string;
   is_verified: boolean;
   is_active: boolean;
   created_at: string;
@@ -133,6 +134,39 @@ export interface BackendDashboardData {
   service_stats: BackendServiceStats;
   recent_activity: BackendRecentActivity[];
   top_regions: BackendTopRegion[];
+}
+
+export interface DataQualitySummary {
+  total: number;
+  complete: number;
+  incomplete: number;
+  phone_missing: number;
+  name_missing: number;
+  location_missing: number;
+  id_missing: number;
+  completion_pct: number;
+}
+
+// =============================================================================
+// AI Column Analysis Types
+// =============================================================================
+
+export interface ColumnMapping {
+  field_name: string;   // Our internal schema field (e.g. "phone_number")
+  mapped_to: string;    // The raw Excel column header (e.g. "Telephone Number")
+  confidence: number;   // 0.0 - 1.0
+  reasoning: string;    // AI explanation
+}
+
+export interface ColumnAnalysisResult {
+  file_name: string;
+  sheet_name: string;
+  headers: string[];
+  sample_rows: string[][];
+  mappings: ColumnMapping[];
+  unmapped_headers: string[];
+  missing_fields: string[];
+  ai_powered: boolean;
 }
 
 // =============================================================================
@@ -372,6 +406,8 @@ export interface FrontendAdmin {
   type: "Admin" | "Agent" | "Accounting" | "Farmer" | "Provider";
   phoneNumber: string;
   dateOfRegistration: string;
+  idNumber?: string;
+  communityName?: string;
 }
 
 export interface FrontendAdminsResponse {
@@ -528,71 +564,111 @@ export interface OnboardResultSummary {
 }
 
 /**
- * A successfully onboarded record
+ * A successfully staged record (stored in onboard_staged_records table)
  */
-export interface OnboardedRecord {
+export interface OnboardStagedRecord {
+  /** Database ID */
+  ID: number;
+  /** Job this record belongs to */
+  job_id: string;
   /** Original row number in Excel file */
   row_number: number;
-  /** Name of the source Excel file */
   source_file: string;
-  /** Name of the sheet in the Excel file */
   source_sheet: string;
-  /** Full name of the participant */
   full_name: string;
-  /** Formatted phone number (e.g., +233XXXXXXXXX) */
   phone_number: string;
-  /** Region name */
   region: string;
-  /** District name */
   district: string;
-  /** Type of participant */
   participant_type: ParticipantType;
-  /** What they were created as */
   created_as: RoleType;
-  /** UUID of created user (empty string if dry run) */
-  user_id: string;
+  /** UUID of created user (populated after confirm import) */
+  user_id?: string;
 }
 
 /**
- * A skipped record (not an error, intentionally skipped)
+ * A staged problematic record (stored in onboard_problematic_records table)
  */
-export interface SkippedRecord {
-  /** Original row number in Excel file */
+export interface OnboardProblematicRecord {
+  ID: number;
+  job_id: string;
   row_number: number;
-  /** Name of the source Excel file */
   source_file: string;
-  /** Name of the sheet in the Excel file */
   source_sheet: string;
-  /** Full name of the participant */
-  full_name: string;
-  /** Phone number */
-  phone_number: string;
-  /** Why the record was skipped */
-  reason: string;
-  /** Type of participant */
-  participant_type: ParticipantType;
-}
-
-/**
- * A problematic/error record
- */
-export interface ProblematicRecord {
-  /** Original row number in Excel file */
-  row_number: number;
-  /** Name of the source Excel file */
-  source_file: string;
-  /** Name of the sheet in the Excel file */
-  source_sheet: string;
-  /** Description of the issue */
   issue: string;
-  /** Category of issue */
   issue_type: IssueType;
-  /** Original data from Excel row (key-value pairs) */
   raw_data: Record<string, string>;
 }
 
 /**
- * Complete result of an onboarding job
+ * A staged skipped record (stored in onboard_skipped_records table)
+ */
+export interface OnboardSkippedRecord {
+  ID: number;
+  job_id: string;
+  row_number: number;
+  source_file: string;
+  source_sheet: string;
+  full_name: string;
+  phone_number: string;
+  reason: string;
+  participant_type: ParticipantType;
+}
+
+/**
+ * Paginated response for staged records (onboarded, skipped, problematic)
+ */
+export interface StagedRecordsPaginatedResponse<T> {
+  count: number;
+  records: T[];
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+// Legacy types — kept for UI components that still reference them
+/**
+ * A successfully onboarded record (legacy — use OnboardStagedRecord)
+ */
+export interface OnboardedRecord {
+  row_number: number;
+  source_file: string;
+  source_sheet: string;
+  full_name: string;
+  phone_number: string;
+  region: string;
+  district: string;
+  participant_type: ParticipantType;
+  created_as: RoleType;
+  user_id: string;
+}
+
+/**
+ * A skipped record (legacy — use OnboardSkippedRecord)
+ */
+export interface SkippedRecord {
+  row_number: number;
+  source_file: string;
+  source_sheet: string;
+  full_name: string;
+  phone_number: string;
+  reason: string;
+  participant_type: ParticipantType;
+}
+
+/**
+ * A problematic/error record (legacy — use OnboardProblematicRecord)
+ */
+export interface ProblematicRecord {
+  row_number: number;
+  source_file: string;
+  source_sheet: string;
+  issue: string;
+  issue_type: IssueType;
+  raw_data: Record<string, string>;
+}
+
+/**
+ * Complete result of an onboarding job (statistics only — records are in staging tables)
  */
 export interface OnboardJobResult {
   total_rows: number;
@@ -606,9 +682,7 @@ export interface OnboardJobResult {
   error_details?: string[];
   type_breakdown?: Record<ParticipantType, number>;
   region_breakdown?: Record<string, number>;
-  onboarded_records?: OnboardedRecord[];
-  skipped_records?: SkippedRecord[];
-  problematic_records?: ProblematicRecord[];
+  // Note: Individual records are now in staging tables, fetched via separate paginated endpoints
 }
 
 /**
@@ -938,7 +1012,7 @@ export interface UpdateRecordRequest {
 export interface UpdateRecordResponse {
   success: boolean;
   message: string;
-  data: ProblematicRecord;
+  data: OnboardProblematicRecord;
 }
 
 /**
@@ -1276,3 +1350,12 @@ export interface BackendTrendsData {
   summary: BackendTrendsSummary;
 }
 
+
+export interface AdminUpdateUserRequest {
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  id_number?: string;
+  region_name?: string;
+  community_name?: string;
+}

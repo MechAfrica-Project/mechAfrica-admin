@@ -38,14 +38,14 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useOnboardStore } from "@/stores/useOnboardStore";
-import type { ProblematicRecord, IssueType, RetryResult } from "@/lib/api/types";
+import type { OnboardProblematicRecord, IssueType, RetryResult } from "@/lib/api/types";
 
 interface EditRecordDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  record: ProblematicRecord | null;
+  record: OnboardProblematicRecord | null;
   jobId: string;
-  onSave?: (updatedRecord: ProblematicRecord) => void;
+  onSave?: (updatedRecord: OnboardProblematicRecord) => void;
   onRetrySuccess?: (result: RetryResult) => void;
   onSkip?: () => void;
   onDelete?: () => void;

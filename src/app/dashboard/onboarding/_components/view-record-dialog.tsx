@@ -24,8 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type {
-  OnboardedRecord,
-  SkippedRecord,
+  OnboardStagedRecord,
+  OnboardSkippedRecord,
   ParticipantType,
   RoleType,
 } from "@/lib/api/types";
@@ -33,7 +33,7 @@ import type {
 interface ViewRecordDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  record: OnboardedRecord | SkippedRecord | null;
+  record: OnboardStagedRecord | OnboardSkippedRecord | null;
   type: "onboarded" | "skipped";
 }
 
@@ -77,8 +77,8 @@ const roleTypeConfig: Record<RoleType, { label: string; color: string; bgColor: 
 };
 
 function isOnboardedRecord(
-  record: OnboardedRecord | SkippedRecord
-): record is OnboardedRecord {
+  record: OnboardStagedRecord | OnboardSkippedRecord
+): record is OnboardStagedRecord {
   return "created_as" in record || "user_id" in record;
 }
 
