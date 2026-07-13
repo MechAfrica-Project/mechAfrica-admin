@@ -129,6 +129,32 @@ class MechAfricaAPIClient {
     return headers;
   }
 
+  private isRedirecting = false;
+
+  /**
+   * Centralized error handler for API responses
+   */
+  private async handleError(response: Response, defaultMessage: string = `HTTP ${response.status}`) {
+    const error = await response.json().catch(() => ({}));
+    let errorMessage = error.message || defaultMessage;
+
+    // Check for 401 Unauthorized or specific token expiration messages
+    if (response.status === 401 || errorMessage.toLowerCase().includes("invalid or expired token")) {
+      errorMessage = "Your session has expired. Please log in again to continue.";
+      this.clearToken();
+      
+      // Prevent multiple redirects and give time for toasts to display
+      if (typeof window !== "undefined" && !this.isRedirecting) {
+        this.isRedirecting = true;
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
   /**
    * Makes a GET request to the API
    */
@@ -139,8 +165,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -160,8 +185,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -181,8 +205,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -198,8 +221,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -599,8 +621,7 @@ class MechAfricaAPIClient {
     const response = await fetch(`${API_BASE_URL}/weather?${params.toString()}`);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || "Failed to fetch weather data");
+      await this.handleError(response, "Failed to fetch weather data");
     }
 
     return response.json();
@@ -711,8 +732,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     const json = await response.json();
@@ -755,8 +775,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -1029,8 +1048,7 @@ class MechAfricaAPIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.blob();
