@@ -3,11 +3,12 @@ import { DataQualitySummary } from "@/lib/api";
 
 interface DataQualityBannerProps {
   data: DataQualitySummary | null;
-  activeFilter?: string | null;
+  activeFilters?: string[];
   onFilter: (filterType: string) => void;
+  onClearFilters?: () => void;
 }
 
-export function DataQualityBanner({ data, activeFilter, onFilter }: DataQualityBannerProps) {
+export function DataQualityBanner({ data, activeFilters = [], onFilter, onClearFilters }: DataQualityBannerProps) {
   if (!data || data.incomplete === 0) return null;
 
   return (
@@ -28,49 +29,75 @@ export function DataQualityBanner({ data, activeFilter, onFilter }: DataQualityB
             {data.phone_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_phone")}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_phone" 
-                    ? "bg-[#D97706] text-white border-[#B45309]" 
-                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium border shadow-sm transition-all duration-200 ease-in-out ${
+                  activeFilters.includes("missing_phone") 
+                    ? "bg-[#D97706] text-white border-[#B45309] hover:bg-[#B45309] scale-[1.02]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7] hover:border-[#F59E0B]"
                 }`}
               >
+                {activeFilters.includes("missing_phone") && <X className="mr-1.5 h-3.5 w-3.5" />}
                 Missing Phone: {data.phone_missing.toLocaleString()}
               </button>
             )}
-            {data.name_missing > 0 && (
+            {data.first_name_missing > 0 && (
               <button 
-                onClick={() => onFilter("missing_name")}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_name" 
-                    ? "bg-[#D97706] text-white border-[#B45309]" 
-                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                onClick={() => onFilter("missing_first_name")}
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium border shadow-sm transition-all duration-200 ease-in-out ${
+                  activeFilters.includes("missing_first_name") 
+                    ? "bg-[#D97706] text-white border-[#B45309] hover:bg-[#B45309] scale-[1.02]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7] hover:border-[#F59E0B]"
                 }`}
               >
-                Missing Name: {data.name_missing.toLocaleString()}
+                {activeFilters.includes("missing_first_name") && <X className="mr-1.5 h-3.5 w-3.5" />}
+                Missing First Name: {data.first_name_missing.toLocaleString()}
+              </button>
+            )}
+            {data.last_name_missing > 0 && (
+              <button 
+                onClick={() => onFilter("missing_last_name")}
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium border shadow-sm transition-all duration-200 ease-in-out ${
+                  activeFilters.includes("missing_last_name") 
+                    ? "bg-[#D97706] text-white border-[#B45309] hover:bg-[#B45309] scale-[1.02]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7] hover:border-[#F59E0B]"
+                }`}
+              >
+                {activeFilters.includes("missing_last_name") && <X className="mr-1.5 h-3.5 w-3.5" />}
+                Missing Last Name: {data.last_name_missing.toLocaleString()}
               </button>
             )}
             {data.location_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_location")}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_location" 
-                    ? "bg-[#D97706] text-white border-[#B45309]" 
-                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium border shadow-sm transition-all duration-200 ease-in-out ${
+                  activeFilters.includes("missing_location") 
+                    ? "bg-[#D97706] text-white border-[#B45309] hover:bg-[#B45309] scale-[1.02]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7] hover:border-[#F59E0B]"
                 }`}
               >
+                {activeFilters.includes("missing_location") && <X className="mr-1.5 h-3.5 w-3.5" />}
                 Missing Geo-coords or Community: {data.location_missing.toLocaleString()}
               </button>
             )}
             {data.id_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_id")}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_id" 
-                    ? "bg-[#D97706] text-white border-[#B45309]" 
-                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium border shadow-sm transition-all duration-200 ease-in-out ${
+                  activeFilters.includes("missing_id") 
+                    ? "bg-[#D97706] text-white border-[#B45309] hover:bg-[#B45309] scale-[1.02]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7] hover:border-[#F59E0B]"
                 }`}
               >
+                {activeFilters.includes("missing_id") && <X className="mr-1.5 h-3.5 w-3.5" />}
                 Missing Ghana Card / ID: {data.id_missing.toLocaleString()}
+              </button>
+            )}
+            
+            {activeFilters.length > 0 && onClearFilters && (
+              <button
+                onClick={onClearFilters}
+                className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium text-[#B45309] hover:text-[#92400E] underline transition-colors decoration-[#FCD34D] hover:decoration-[#D97706] underline-offset-2"
+              >
+                Clear All Filters
               </button>
             )}
           </div>
