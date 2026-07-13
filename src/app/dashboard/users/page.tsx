@@ -45,7 +45,7 @@ export default function AdminsPage() {
   } | null>(null);
 
   // Missing data modal state
-  const [missingDataFilter, setMissingDataFilter] = useState<string | null>(null);
+  const [missingDataFilters, setMissingDataFilters] = useState<string[]>([]);
 
   // Search state
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,18 +94,18 @@ export default function AdminsPage() {
   const loadAdmins = useCallback(() => {
     const roleFilter = selectedRole === "all" ? undefined : selectedRole;
     const searchParam = debouncedSearch.trim() ? debouncedSearch : undefined;
-    const missingParam = missingDataFilter || undefined;
+    const missingParam = missingDataFilters.length > 0 ? missingDataFilters.join(",") : undefined;
     fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam, missingParam);
-  }, [fetchAdmins, page, selectedRole, debouncedSearch, missingDataFilter]);
+  }, [fetchAdmins, page, selectedRole, debouncedSearch, missingDataFilters]);
 
   useEffect(() => {
     loadAdmins();
   }, [loadAdmins]);
 
-  // Reset to page 1 when filter or search changes
+  // Reset to page 1 when filter, search, or missing data filter changes
   useEffect(() => {
     setPage("admins", 1);
-  }, [selectedRole, debouncedSearch, missingDataFilter, setPage]);
+  }, [selectedRole, debouncedSearch, missingDataFilters, setPage]);
 
   // Set page title and filters
   useEffect(() => {
@@ -188,11 +188,13 @@ export default function AdminsPage() {
   };
 
   const handleDataQualityFilter = (filterType: string) => {
-    if (missingDataFilter === filterType) {
-      setMissingDataFilter(null);
-    } else {
-      setMissingDataFilter(filterType);
-    }
+    setMissingDataFilters(prev => {
+      if (prev.includes(filterType)) {
+        return prev.filter(f => f !== filterType);
+      } else {
+        return [...prev, filterType];
+      }
+    });
   };
 
   // Loading state
@@ -252,7 +254,7 @@ export default function AdminsPage() {
 
         <DataQualityBanner 
           data={dataQuality} 
-          activeFilter={missingDataFilter}
+          activeFilters={missingDataFilters}
           onFilter={handleDataQualityFilter} 
         />
 

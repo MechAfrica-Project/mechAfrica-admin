@@ -141,7 +141,8 @@ export interface DataQualitySummary {
   complete: number;
   incomplete: number;
   phone_missing: number;
-  name_missing: number;
+  first_name_missing: number;
+  last_name_missing: number;
   location_missing: number;
   id_missing: number;
   completion_pct: number;

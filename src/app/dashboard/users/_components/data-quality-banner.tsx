@@ -3,11 +3,11 @@ import { DataQualitySummary } from "@/lib/api";
 
 interface DataQualityBannerProps {
   data: DataQualitySummary | null;
-  activeFilter?: string | null;
+  activeFilters?: string[];
   onFilter: (filterType: string) => void;
 }
 
-export function DataQualityBanner({ data, activeFilter, onFilter }: DataQualityBannerProps) {
+export function DataQualityBanner({ data, activeFilters = [], onFilter }: DataQualityBannerProps) {
   if (!data || data.incomplete === 0) return null;
 
   return (
@@ -29,7 +29,7 @@ export function DataQualityBanner({ data, activeFilter, onFilter }: DataQualityB
               <button 
                 onClick={() => onFilter("missing_phone")}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_phone" 
+                  activeFilters.includes("missing_phone") 
                     ? "bg-[#D97706] text-white border-[#B45309]" 
                     : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
                 }`}
@@ -37,23 +37,35 @@ export function DataQualityBanner({ data, activeFilter, onFilter }: DataQualityB
                 Missing Phone: {data.phone_missing.toLocaleString()}
               </button>
             )}
-            {data.name_missing > 0 && (
+            {data.first_name_missing > 0 && (
               <button 
-                onClick={() => onFilter("missing_name")}
+                onClick={() => onFilter("missing_first_name")}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_name" 
+                  activeFilters.includes("missing_first_name") 
                     ? "bg-[#D97706] text-white border-[#B45309]" 
                     : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
                 }`}
               >
-                Missing Name: {data.name_missing.toLocaleString()}
+                Missing First Name: {data.first_name_missing.toLocaleString()}
+              </button>
+            )}
+            {data.last_name_missing > 0 && (
+              <button 
+                onClick={() => onFilter("missing_last_name")}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
+                  activeFilters.includes("missing_last_name") 
+                    ? "bg-[#D97706] text-white border-[#B45309]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                }`}
+              >
+                Missing Last Name: {data.last_name_missing.toLocaleString()}
               </button>
             )}
             {data.location_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_location")}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_location" 
+                  activeFilters.includes("missing_location") 
                     ? "bg-[#D97706] text-white border-[#B45309]" 
                     : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
                 }`}
@@ -65,7 +77,7 @@ export function DataQualityBanner({ data, activeFilter, onFilter }: DataQualityB
               <button 
                 onClick={() => onFilter("missing_id")}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
-                  activeFilter === "missing_id" 
+                  activeFilters.includes("missing_id") 
                     ? "bg-[#D97706] text-white border-[#B45309]" 
                     : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
                 }`}
