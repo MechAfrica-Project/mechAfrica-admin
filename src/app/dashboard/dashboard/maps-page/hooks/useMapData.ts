@@ -82,10 +82,29 @@ export function useMapData() {
         if (totalPages <= 1 || abortRef.current) return;
 
         // Step 2: Build remaining page numbers
-        const remainingPages = Array.from(
-          { length: totalPages - 1 },
-          (_, i) => i + 2
-        );
+        // OPTIMIZATION: Instead of fetching all pages, we fetch a representative sample:
+        // First 3 pages, the middle page, and the last 5 pages.
+        const pagesSet = new Set<number>();
+        
+        // First 3 pages (page 2 and 3, since page 1 is already fetched)
+        if (totalPages >= 2) pagesSet.add(2);
+        if (totalPages >= 3) pagesSet.add(3);
+        
+        // Middle page
+        const middle = Math.floor(totalPages / 2);
+        if (middle > 3 && middle < totalPages - 4) {
+          pagesSet.add(middle);
+        }
+        
+        // Last 5 pages
+        for (let i = 0; i < 5; i++) {
+          const p = totalPages - i;
+          if (p > 3 && p <= totalPages) {
+            pagesSet.add(p);
+          }
+        }
+
+        const remainingPages = Array.from(pagesSet).sort((a, b) => a - b);
 
         // Step 3: Fetch in parallel batches with retry for failed pages
         let pagesToFetch = remainingPages;
