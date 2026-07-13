@@ -1,4 +1,4 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { DataQualitySummary } from "@/lib/api";
 
 interface DataQualityBannerProps {
