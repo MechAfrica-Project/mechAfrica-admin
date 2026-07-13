@@ -5,6 +5,10 @@ import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdminRow } from "./admin-row";
+import { EditUserDialog } from "./edit-user-dialog";
+import { useState } from "react";
+import { api } from "@/lib/api";
+import type { AdminUpdateUserRequest } from "@/lib/api";
 
 interface Admin {
   id: string;
@@ -14,6 +18,8 @@ interface Admin {
   type: string;
   phoneNumber: string;
   dateOfRegistration: string;
+  idNumber?: string;
+  communityName?: string;
 }
 
 interface AdminsTableProps {
@@ -21,6 +27,7 @@ interface AdminsTableProps {
   selectedAdmins: string[];
   onSelectAdmin: (id: string) => void;
   onDeleteAdmin: (id: string) => void;
+  onRefresh?: () => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -36,7 +43,21 @@ export function AdminsTable({
   totalPages,
   onPageChange,
   isLoading = false,
+  onRefresh,
 }: AdminsTableProps) {
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
+
+  const handleSaveUser = async (userId: string, data: AdminUpdateUserRequest): Promise<boolean> => {
+    try {
+      await api.updateUserByAdmin(userId, data);
+      onRefresh?.();
+      return true;
+    } catch (err) {
+      console.error("Failed to update user:", err);
+      return false;
+    }
+  };
+
   // Server-side pagination - admins are already the current page's data
   const pagedAdmins = admins;
   const handleSelectAll = (checked?: boolean | "indeterminate") => {
@@ -62,6 +83,7 @@ export function AdminsTable({
   const someSelected = pagedAdmins.some((a) => selectedAdmins.includes(a.id)) && !allSelected;
 
   return (
+    <>
     <ListCard
       footer={
         totalPages > 1 ? (
@@ -108,10 +130,27 @@ export function AdminsTable({
               isSelected={selectedAdmins.includes(admin.id)}
               onSelect={() => onSelectAdmin(admin.id)}
               onDelete={() => onDeleteAdmin(admin.id)}
+              onEdit={() => setEditingAdmin(admin)}
             />
           ))}
         </TableBody>
       </Table>
     </ListCard>
+
+    {editingAdmin && (
+      <EditUserDialog
+        isOpen={!!editingAdmin}
+        onOpenChange={(open) => !open && setEditingAdmin(null)}
+        userId={editingAdmin.id}
+        initialData={{
+          name: editingAdmin.name,
+          phoneNumber: editingAdmin.phoneNumber,
+          idNumber: editingAdmin.idNumber,
+          communityName: editingAdmin.communityName,
+        }}
+        onSave={handleSaveUser}
+      />
+    )}
+  </>
   );
 }

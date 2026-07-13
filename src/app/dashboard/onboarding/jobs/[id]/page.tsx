@@ -36,7 +36,12 @@ import { cn } from "@/lib/utils";
 import { RecordsTable } from "../../_components/records-table";
 import { EditRecordDialog } from "../../_components/edit-record-dialog";
 import { ViewRecordDialog } from "../../_components/view-record-dialog";
-import type { OnboardJobStatus, ProblematicRecord, OnboardedRecord, SkippedRecord } from "@/lib/api/types";
+import type { 
+  OnboardJobStatus, 
+  OnboardProblematicRecord, 
+  OnboardStagedRecord, 
+  OnboardSkippedRecord 
+} from "@/lib/api/types";
 
 type TabType = "onboarded" | "skipped" | "problematic";
 
@@ -137,9 +142,9 @@ export default function JobDetailsPage({ params }: PageProps) {
 
   // Local state
   const [activeTab, setActiveTab] = useState<TabType>("onboarded");
-  const [editingRecord, setEditingRecord] = useState<ProblematicRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<OnboardProblematicRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [viewingRecord, setViewingRecord] = useState<OnboardedRecord | SkippedRecord | null>(null);
+  const [viewingRecord, setViewingRecord] = useState<OnboardStagedRecord | OnboardSkippedRecord | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [viewRecordType, setViewRecordType] = useState<"onboarded" | "skipped">("onboarded");
   const [editedCount, setEditedCount] = useState(0);
@@ -268,12 +273,12 @@ export default function JobDetailsPage({ params }: PageProps) {
     fetchJob(jobId);
   };
 
-  const handleEditRecord = (record: ProblematicRecord) => {
+  const handleEditRecord = (record: OnboardProblematicRecord) => {
     setEditingRecord(record);
     setIsEditDialogOpen(true);
   };
 
-  const handleViewRecord = (record: OnboardedRecord | SkippedRecord) => {
+  const handleViewRecord = (record: OnboardStagedRecord | OnboardSkippedRecord) => {
     setViewingRecord(record);
     setViewRecordType("reason" in record ? "skipped" : "onboarded");
     setIsViewDialogOpen(true);
@@ -309,7 +314,7 @@ export default function JobDetailsPage({ params }: PageProps) {
   };
 
   // Handlers for inline actions from table
-  const handleRetryRecordFromTable = async (record: ProblematicRecord) => {
+  const handleRetryRecordFromTable = async (record: OnboardProblematicRecord) => {
     const result = await retryRecord(jobId, record.row_number);
     if (result) {
       if (result.success) {
@@ -321,7 +326,7 @@ export default function JobDetailsPage({ params }: PageProps) {
     }
   };
 
-  const handleSkipRecordFromTable = async (record: ProblematicRecord) => {
+  const handleSkipRecordFromTable = async (record: OnboardProblematicRecord) => {
     const success = await skipRecord(jobId, record.row_number, "Skipped by admin");
     if (success) {
       toast.success(`Record ${record.row_number} moved to skipped list`);
@@ -329,7 +334,7 @@ export default function JobDetailsPage({ params }: PageProps) {
     }
   };
 
-  const handleDeleteRecordFromTable = async (record: ProblematicRecord) => {
+  const handleDeleteRecordFromTable = async (record: OnboardProblematicRecord) => {
     const success = await deleteRecord(jobId, record.row_number);
     if (success) {
       toast.success(`Record ${record.row_number} deleted`);
@@ -337,7 +342,7 @@ export default function JobDetailsPage({ params }: PageProps) {
     }
   };
 
-  const handleBulkRetry = async (records: ProblematicRecord[]) => {
+  const handleBulkRetry = async (records: OnboardProblematicRecord[]) => {
     const rowNumbers = records.map((r) => r.row_number);
     const result = await bulkRetryRecords(jobId, rowNumbers);
     if (result) {

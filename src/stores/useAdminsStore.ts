@@ -14,11 +14,13 @@ export interface AdminsState {
   // State
   admins: Admin[];
   pagination: FrontendPagination | null;
+  dataQuality: import("@/lib/api").DataQualitySummary | null;
   isLoading: boolean;
   error: string | null;
 
   // Actions
-  fetchAdmins: (page?: number, limit?: number, role?: string) => Promise<void>;
+  fetchAdmins: (page?: number, limit?: number, role?: string, search?: string, missingData?: string) => Promise<void>;
+  fetchDataQuality: () => Promise<void>;
   setAdmins: (admins: Admin[]) => void;
   addAdmin: (
     admin: Omit<Admin, "id"> & {
@@ -42,15 +44,28 @@ export const useAdminsStore = create<AdminsState>((set, get) => ({
   // Initial state
   admins: [],
   pagination: null,
+  dataQuality: null,
   isLoading: false,
   error: null,
 
+  // Fetch data quality summary
+  fetchDataQuality: async () => {
+    try {
+      const response = await api.getDataQuality();
+      if (response.success && response.data) {
+        set({ dataQuality: response.data });
+      }
+    } catch (error) {
+      console.error("Failed to fetch data quality summary:", error);
+    }
+  },
+
   // Fetch admins from API
-  fetchAdmins: async (page = 1, limit = 50, role?: string) => {
+  fetchAdmins: async (page = 1, limit = 50, role?: string, search?: string, missingData?: string) => {
     set({ isLoading: true, error: null });
 
     try {
-      const response = await api.getAdmins(page, limit, role);
+      const response = await api.getAdmins(page, limit, role, search, missingData);
 
       if (response.success) {
         set({
@@ -59,6 +74,7 @@ export const useAdminsStore = create<AdminsState>((set, get) => ({
           isLoading: false,
         });
       } else {
+
         set({
           isLoading: false,
           error: "Failed to fetch admins",

@@ -23,7 +23,9 @@ import type {
   BackendPaymentSummary,
   BackendRegisterRequest,
   BackendManageUserRequest,
+  DataQualitySummary,
   BackendUpdateProfileRequest,
+  AdminUpdateUserRequest,
   FrontendLoginResponse,
   FrontendContactsResponse,
   FrontendAdminsResponse,
@@ -35,9 +37,6 @@ import type {
   FrontendOnboardJob,
   OnboardUploadResponse,
   OnboardProgressResponse,
-  OnboardedRecordsResponse,
-  SkippedRecordsResponse,
-  ProblematicRecordsResponse,
   OnboardConfirmResponse,
   OnboardCancelResponse,
   RoleType,
@@ -48,6 +47,11 @@ import type {
   BulkRetryResult,
   EligibleProviderDTO,
   BackendTrendsData,
+  ColumnAnalysisResult,
+  // Staging table types (Phase 3)
+  OnboardStagedRecord,
+  OnboardProblematicRecord,
+  OnboardSkippedRecord,
 } from "./types";
 
 import { ONBOARD_ENDPOINTS } from "./types";
@@ -125,6 +129,43 @@ class MechAfricaAPIClient {
     return headers;
   }
 
+  private isRedirecting = false;
+
+  /**
+   * Centralized error handler for API responses
+   */
+  private async handleError(response: Response, defaultMessage: string = `HTTP ${response.status}`) {
+    const error = await response.json().catch(() => ({}));
+    let errorMessage = error.message || defaultMessage;
+
+    // Check for 401 Unauthorized or specific token expiration messages
+    if (response.status === 401 || errorMessage.toLowerCase().includes("invalid or expired token")) {
+      errorMessage = "Your session has expired. Please log in again to continue.";
+      this.clearToken();
+
+      if (typeof window !== "undefined") {
+        // Clear Zustand state and cookies using the store to prevent middleware redirect loops.
+        // We use dynamic import to avoid circular dependency since useAuthStore imports this file.
+        import("@/stores/useAuthStore").then(({ useAuthStore }) => {
+          useAuthStore.getState().logout();
+        }).catch(() => {
+          document.cookie = "mechafrica-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          localStorage.removeItem("mechafrica-auth");
+        });
+      }
+      
+      // Prevent multiple redirects and give time for toasts to display
+      if (typeof window !== "undefined" && !this.isRedirecting) {
+        this.isRedirecting = true;
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
   /**
    * Makes a GET request to the API
    */
@@ -135,8 +176,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -156,8 +196,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -177,8 +216,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -194,8 +232,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -406,12 +443,10 @@ class MechAfricaAPIClient {
   // ---------------------------------------------------------------------------
 
   /**
-   * Get admins list
-   * @param page - Page number (1-indexed)
-   * @param limit - Number of items per page
-   * @param role - Optional role filter (e.g., "farmer", "provider", "admin", "agent", "accounting")
+   * Get paginated list of admins (all dashboard users)
+   * This is a unified endpoint for all users in the system, filterable by role
    */
-  async getAdmins(page = 1, limit = 20, role?: string): Promise<FrontendAdminsResponse> {
+  async getAdmins(page = 1, limit = 20, role?: string, search?: string, missingData?: string): Promise<FrontendAdminsResponse> {
     let url = `/admin/users?limit=${limit}&page=${page}`;
     if (role && role !== "all") {
       // Map frontend role names to backend role values
@@ -422,8 +457,17 @@ class MechAfricaAPIClient {
         "provider": "service_provider",
         "accounting": "accounts",
       };
+      
       const backendRole = roleMapping[role.toLowerCase()] || role.toLowerCase();
       url += `&role=${backendRole}`;
+    }
+
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+
+    if (missingData) {
+      url += `&missing_data=${encodeURIComponent(missingData)}`;
     }
     const response = await this.get<BackendPaginatedUsers>(url);
     return transformUsersToAdmins(response.data);
@@ -447,6 +491,16 @@ class MechAfricaAPIClient {
       payload as unknown as Record<string, unknown>
     );
     return transformLoginResponse(response.data);
+  }
+
+  /**
+   * Update a specific user's details (admin only)
+   */
+  async updateUserByAdmin(
+    userId: string,
+    data: AdminUpdateUserRequest
+  ): Promise<void> {
+    await this.put(`/admin/update-user/${userId}`, data as unknown as Record<string, unknown>);
   }
 
   /**
@@ -524,6 +578,13 @@ class MechAfricaAPIClient {
     return this.get("/admin/dashboard");
   }
 
+  /**
+   * Get data quality summary
+   */
+  async getDataQuality(): Promise<ApiResponse<DataQualitySummary>> {
+    return this.get("/admin/users/data-quality");
+  }
+
   async getDashboardTrends(year?: number): Promise<ApiResponse<BackendTrendsData>> {
     const url = year ? `/admin/dashboard/trends?year=${year}` : "/admin/dashboard/trends";
     return this.get(url);
@@ -571,8 +632,7 @@ class MechAfricaAPIClient {
     const response = await fetch(`${API_BASE_URL}/weather?${params.toString()}`);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || "Failed to fetch weather data");
+      await this.handleError(response, "Failed to fetch weather data");
     }
 
     return response.json();
@@ -663,6 +723,34 @@ class MechAfricaAPIClient {
   }
 
   /**
+   * Analyze Excel file columns using AI before full upload
+   * POST /admin/onboard/analyze-columns
+   */
+  async analyzeColumns(file: File): Promise<ColumnAnalysisResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/onboard/analyze-columns`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      await this.handleError(response);
+    }
+
+    const json = await response.json();
+    return json.data as ColumnAnalysisResult;
+  }
+
+  /**
    * Upload Excel file for bulk onboarding
    */
   async uploadBulkOnboard(
@@ -698,8 +786,7 @@ class MechAfricaAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.json();
@@ -770,42 +857,42 @@ class MechAfricaAPIClient {
   }
 
   /**
-   * Get onboarded records from a job
+   * Get onboarded (staged) records from a job — paginated from onboard_staged_records table
    */
   async getOnboardedRecords(
     jobId: string,
     page = 1,
     limit = 50
-  ): Promise<OnboardedRecordsResponse["data"]> {
-    const response = await this.get<OnboardedRecordsResponse["data"]>(
+  ): Promise<{ count: number; records: OnboardStagedRecord[]; page: number; limit: number; pages: number; by_type?: Record<string, number>; by_region?: Record<string, number> }> {
+    const response = await this.get<{ count: number; records: OnboardStagedRecord[]; page: number; limit: number; pages: number; by_type?: Record<string, number>; by_region?: Record<string, number> }>(
       `/admin/onboard/jobs/${jobId}/onboarded?page=${page}&limit=${limit}`
     );
     return response.data;
   }
 
   /**
-   * Get skipped records from a job
+   * Get skipped records from a job — paginated from onboard_skipped_records table
    */
   async getSkippedRecords(
     jobId: string,
     page = 1,
     limit = 50
-  ): Promise<SkippedRecordsResponse["data"]> {
-    const response = await this.get<SkippedRecordsResponse["data"]>(
+  ): Promise<{ count: number; records: OnboardSkippedRecord[]; page: number; limit: number; pages: number; by_reason?: Record<string, number> }> {
+    const response = await this.get<{ count: number; records: OnboardSkippedRecord[]; page: number; limit: number; pages: number; by_reason?: Record<string, number> }>(
       `/admin/onboard/jobs/${jobId}/skipped?page=${page}&limit=${limit}`
     );
     return response.data;
   }
 
   /**
-   * Get problematic records from a job
+   * Get problematic records from a job — paginated from onboard_problematic_records table
    */
   async getProblematicRecords(
     jobId: string,
     page = 1,
     limit = 50
-  ): Promise<ProblematicRecordsResponse["data"]> {
-    const response = await this.get<ProblematicRecordsResponse["data"]>(
+  ): Promise<{ count: number; records: OnboardProblematicRecord[]; page: number; limit: number; pages: number; by_type?: Record<string, number>; download_url?: string }> {
+    const response = await this.get<{ count: number; records: OnboardProblematicRecord[]; page: number; limit: number; pages: number; by_type?: Record<string, number>; download_url?: string }>(
       `/admin/onboard/jobs/${jobId}/problematic?page=${page}&limit=${limit}`
     );
     return response.data;
@@ -856,11 +943,11 @@ class MechAfricaAPIClient {
   async getProblematicRecord(
     jobId: string,
     rowNumber: number
-  ): Promise<ProblematicRecord> {
-    const response = await this.get<ProblematicRecord>(
+  ): Promise<OnboardProblematicRecord> {
+    const response = await this.get<{ data: OnboardProblematicRecord }>(
       ONBOARD_ENDPOINTS.PROBLEMATIC_RECORD(jobId, rowNumber)
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -871,12 +958,12 @@ class MechAfricaAPIClient {
     jobId: string,
     rowNumber: number,
     updatedData: Record<string, string>
-  ): Promise<ProblematicRecord> {
-    const response = await this.put<ProblematicRecord>(
+  ): Promise<OnboardProblematicRecord> {
+    const response = await this.put<{ data: OnboardProblematicRecord }>(
       ONBOARD_ENDPOINTS.PROBLEMATIC_RECORD(jobId, rowNumber),
       { updated_data: updatedData }
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -972,8 +1059,7 @@ class MechAfricaAPIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      await this.handleError(response);
     }
 
     return response.blob();
