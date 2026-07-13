@@ -256,6 +256,7 @@ export default function AdminsPage() {
           data={dataQuality} 
           activeFilters={missingDataFilters}
           onFilter={handleDataQualityFilter} 
+          onClearFilters={() => setMissingDataFilters([])}
         />
 
         {/* Header with Search, Refresh and Add buttons */}
