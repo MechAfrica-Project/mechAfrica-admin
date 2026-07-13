@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useCatalogStore, CropCatalog } from "@/stores/useCatalogStore";
-import { Plus, Edit2, Trash2, Image as ImageIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, Image as ImageIcon, X } from "lucide-react";
 
 export default function CropsPage() {
   const { crops, isLoading, fetchCrops, createCrop, updateCrop, deleteCrop, uploadImage } = useCatalogStore();
@@ -156,7 +156,7 @@ export default function CropsPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                 >
-                  <Trash2 size={16} /> {/* Approximate X icon */}
+                  <X size={16} />
                 </button>
               </div>
               

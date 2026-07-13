@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useCatalogStore, ServiceCatalog } from "@/stores/useCatalogStore";
-import { Plus, Edit2, Trash2, Image as ImageIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, Image as ImageIcon, X } from "lucide-react";
 
 export default function ServicesPage() {
   const { services, isLoading, fetchServices, createService, updateService, deleteService, uploadImage } = useCatalogStore();
@@ -161,7 +161,7 @@ export default function ServicesPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                 >
-                  <Trash2 size={16} /> {/* Should be X icon really, but just using it roughly */}
+                  <X size={16} />
                 </button>
               </div>
               
