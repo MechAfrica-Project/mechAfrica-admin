@@ -142,6 +142,17 @@ class MechAfricaAPIClient {
     if (response.status === 401 || errorMessage.toLowerCase().includes("invalid or expired token")) {
       errorMessage = "Your session has expired. Please log in again to continue.";
       this.clearToken();
+
+      if (typeof window !== "undefined") {
+        // Clear Zustand state and cookies using the store to prevent middleware redirect loops.
+        // We use dynamic import to avoid circular dependency since useAuthStore imports this file.
+        import("@/stores/useAuthStore").then(({ useAuthStore }) => {
+          useAuthStore.getState().logout();
+        }).catch(() => {
+          document.cookie = "mechafrica-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          localStorage.removeItem("mechafrica-auth");
+        });
+      }
       
       // Prevent multiple redirects and give time for toasts to display
       if (typeof window !== "undefined" && !this.isRedirecting) {
