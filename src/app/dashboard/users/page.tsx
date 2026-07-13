@@ -5,7 +5,6 @@ import { useHeaderStore } from "@/stores/useHeaderStore";
 import { AddAdminDialog } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
 import { DataQualityBanner } from "./_components/data-quality-banner";
-import { MissingDataModal } from "./_components/missing-data-modal";
 import { useAdminsStore, Admin } from "@/stores/useAdminsStore";
 import { useTableStore } from "@/stores/useTableStore";
 import { RefreshCcw, Plus, Search } from "lucide-react";
@@ -95,8 +94,9 @@ export default function AdminsPage() {
   const loadAdmins = useCallback(() => {
     const roleFilter = selectedRole === "all" ? undefined : selectedRole;
     const searchParam = debouncedSearch.trim() ? debouncedSearch : undefined;
-    fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam);
-  }, [fetchAdmins, page, selectedRole, debouncedSearch]);
+    const missingParam = missingDataFilter || undefined;
+    fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam, missingParam);
+  }, [fetchAdmins, page, selectedRole, debouncedSearch, missingDataFilter]);
 
   useEffect(() => {
     loadAdmins();
@@ -105,7 +105,7 @@ export default function AdminsPage() {
   // Reset to page 1 when filter or search changes
   useEffect(() => {
     setPage("admins", 1);
-  }, [selectedRole, debouncedSearch, setPage]);
+  }, [selectedRole, debouncedSearch, missingDataFilter, setPage]);
 
   // Set page title and filters
   useEffect(() => {
@@ -188,8 +188,11 @@ export default function AdminsPage() {
   };
 
   const handleDataQualityFilter = (filterType: string) => {
-    // Open the modal for the specific missing data type
-    setMissingDataFilter(filterType);
+    if (missingDataFilter === filterType) {
+      setMissingDataFilter(null);
+    } else {
+      setMissingDataFilter(filterType);
+    }
   };
 
   // Loading state
@@ -249,6 +252,7 @@ export default function AdminsPage() {
 
         <DataQualityBanner 
           data={dataQuality} 
+          activeFilter={missingDataFilter}
           onFilter={handleDataQualityFilter} 
         />
 
@@ -312,10 +316,6 @@ export default function AdminsPage() {
           onAddAdmin={handleAddAdmin}
         />
 
-        <MissingDataModal 
-          filterType={missingDataFilter} 
-          onClose={() => setMissingDataFilter(null)} 
-        />
       </div>
     </main>
   );
