@@ -50,7 +50,9 @@ export default function UploadPage() {
   const [step, setStep] = useState<WizardStep>("select");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [analysisResult, setAnalysisResult] = useState<ColumnAnalysisResult | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [confirmedMappings, setConfirmedMappings] = useState<ColumnMapping[] | null>(null);
   const [options, setOptions] = useState<UploadOptions>({
     dryRun: true,
@@ -365,9 +367,9 @@ export default function UploadPage() {
                         AI-Assisted Import
                       </p>
                       <p className="text-xs text-gray-600 mt-0.5">
-                        Click <strong>"Analyze with AI"</strong> to let Gemini
-                        automatically map your file's columns to the correct
-                        database fields, even if your headers don't match our
+                        Click <strong>&quot;Analyze with AI&quot;</strong> to let Gemini
+                        automatically map your file&apos;s columns to the correct
+                        database fields, even if your headers don&apos;t match our
                         template exactly. Zero data loss guaranteed.
                       </p>
                     </div>

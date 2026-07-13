@@ -37,6 +37,7 @@ export function MissingDataModal({ filterType, onClose }: MissingDataModalProps)
       setPage(1);
       setTotalPages(1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterType]);
 
   const loadUsers = async (targetPage: number) => {

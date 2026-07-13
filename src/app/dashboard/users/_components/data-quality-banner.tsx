@@ -20,7 +20,7 @@ export function DataQualityBanner({ data, onFilter }: DataQualityBannerProps) {
             Data Quality Alert: {data.incomplete.toLocaleString()} Profiles Require Attention
           </h3>
           <p className="mt-1 text-sm text-[#B45309]">
-            We've identified user profiles with missing critical information. Please update them to ensure seamless operations and avoid data loss.
+            We&apos;ve identified user profiles with missing critical information. Please update them to ensure seamless operations and avoid data loss.
           </p>
           
           <div className="mt-4 flex flex-wrap gap-2">

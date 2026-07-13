@@ -5,7 +5,6 @@ import {
   Brain,
   CheckCircle2,
   AlertTriangle,
-  ChevronDown,
   Sparkles,
   Info,
   XCircle,

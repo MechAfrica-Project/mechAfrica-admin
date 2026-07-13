@@ -86,7 +86,7 @@ export function EditUserDialog({
         <DialogHeader>
           <DialogTitle>Edit User Details</DialogTitle>
           <DialogDescription>
-            Update the user's basic information to correct any missing or invalid data.
+            Update the user&apos;s basic information to correct any missing or invalid data.
           </DialogDescription>
         </DialogHeader>
 
