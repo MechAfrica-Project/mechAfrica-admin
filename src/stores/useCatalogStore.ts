@@ -57,7 +57,9 @@ export const useCatalogStore = create<CatalogState>((set) => ({
       });
       const data = await res.json();
       if (res.ok) {
-        set({ services: data.data || [], isLoading: false });
+        // Backend returns an array directly, so we check if it's an array, otherwise fallback to data.data
+        const servicesArray = Array.isArray(data) ? data : data.data || [];
+        set({ services: servicesArray, isLoading: false });
       } else {
         throw new Error(data.error || "Failed to fetch services");
       }
@@ -143,7 +145,9 @@ export const useCatalogStore = create<CatalogState>((set) => ({
       });
       const data = await res.json();
       if (res.ok) {
-        set({ crops: data.data || [], isLoading: false });
+        // Backend returns an array directly, so we check if it's an array, otherwise fallback to data.data
+        const cropsArray = Array.isArray(data) ? data : data.data || [];
+        set({ crops: cropsArray, isLoading: false });
       } else {
         throw new Error(data.error || "Failed to fetch crops");
       }
