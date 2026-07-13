@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useCatalogStore, ServiceCatalog } from "@/stores/useCatalogStore";
-import { Plus, Edit2, Trash2, Image as ImageIcon, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Image as ImageIcon, X, UploadCloud } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ServicesPage() {
   const { services, isLoading, fetchServices, createService, updateService, deleteService, uploadImage } = useCatalogStore();
@@ -149,73 +150,107 @@ export default function ServicesPage() {
       </div>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/50">
-          <div className="relative p-4 w-full max-w-md max-h-full">
-            <div className="relative bg-white rounded-lg shadow">
-              <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                <h3 className="text-xl font-semibold text-gray-900">
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 pt-6 pb-4">
+                <h3 className="text-xl font-semibold text-gray-900 tracking-tight">
                   {editingService ? "Edit Service" : "Add Service"}
                 </h3>
                 <button
+                  type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <X size={16} />
                 </button>
               </div>
               
-              <form className="p-4 md:p-5" onSubmit={handleSubmit}>
-                <div className="grid gap-4 mb-4 grid-cols-2">
-                  <div className="col-span-2">
-                    <label className="block mb-2 text-sm font-medium text-gray-900">Name</label>
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#00594C] focus:border-[#00594C] block w-full p-2.5" />
+              <form className="px-6 pb-6" onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00594C]/20 focus:border-[#00594C] transition-all" placeholder="e.g. Tractor Plowing" />
                   </div>
                   
-                  <div className="col-span-2">
-                    <label className="block mb-2 text-sm font-medium text-gray-900">Description</label>
-                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} required rows={3} className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-[#00594C] focus:border-[#00594C]"></textarea>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} required rows={3} className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00594C]/20 focus:border-[#00594C] transition-all resize-none" placeholder="Provide a brief description of the service..."></textarea>
                   </div>
                   
-                  <div className="col-span-1">
-                    <label className="block mb-2 text-sm font-medium text-gray-900">Default Rating</label>
-                    <input type="number" step="0.1" value={rating} onChange={(e) => setRating(parseFloat(e.target.value))} required className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#00594C] focus:border-[#00594C] block w-full p-2.5" />
-                  </div>
-                  
-                  <div className="col-span-1 flex items-center mt-6">
-                    <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="w-4 h-4 text-[#00594C] bg-gray-100 border-gray-300 rounded focus:ring-[#00594C]" />
-                    <label className="ml-2 text-sm font-medium text-gray-900">Is Active</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Default Rating</label>
+                      <input type="number" step="0.1" value={rating} onChange={(e) => setRating(parseFloat(e.target.value))} required className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00594C]/20 focus:border-[#00594C] transition-all" placeholder="5.0" />
+                    </div>
+                    
+                    <div className="flex flex-col justify-center">
+                      <div className="flex items-center justify-between pt-6">
+                        <span className="text-sm font-medium text-gray-700">Status</span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+                          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#00594C] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                          <span className="ml-3 text-sm font-medium text-gray-900">{isActive ? "Active" : "Inactive"}</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="col-span-2">
-                    <label className="block mb-2 text-sm font-medium text-gray-900">Image</label>
-                    <div className="flex items-center gap-4">
-                      {imageUrl && (
-                        <img src={imageUrl} alt="Preview" className="h-16 w-16 object-cover rounded" />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Image</label>
+                    <div className="relative group mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-[#00594C] transition-colors bg-gray-50/30 overflow-hidden">
+                      {imageUrl ? (
+                        <div className="relative z-10 flex flex-col items-center">
+                          <img src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg shadow-sm border border-gray-200" />
+                          <div className="mt-3 flex text-sm text-[#00594C] font-medium bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
+                            <ImageIcon className="w-4 h-4 mr-1.5" />
+                            Change Photo
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 text-center z-10">
+                          <div className="mx-auto h-12 w-12 bg-[#00594C]/5 rounded-full flex items-center justify-center">
+                            <UploadCloud className="h-6 w-6 text-[#00594C]" />
+                          </div>
+                          <div className="flex justify-center text-sm text-gray-600">
+                            <span className="relative font-medium text-[#00594C] hover:text-[#004a3f]">
+                              Upload a file
+                            </span>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 5MB</p>
+                        </div>
                       )}
                       <input 
                         type="file" 
                         accept="image/*"
                         onChange={handleImageUpload}
-                        className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
                       />
                     </div>
-                    {isUploading && <p className="text-sm text-blue-500 mt-1">Uploading...</p>}
+                    {isUploading && <p className="text-sm text-[#00594C] font-medium mt-2 animate-pulse flex items-center gap-2"><div className="w-4 h-4 border-2 border-[#00594C] border-t-transparent rounded-full animate-spin"></div> Uploading image...</p>}
                   </div>
                 </div>
                 
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="text-white inline-flex w-full justify-center bg-[#00594C] hover:bg-[#004a3f] focus:ring-4 focus:outline-none focus:ring-[#00594C]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                  className="w-full mt-8 py-3.5 px-4 bg-[#00594C] hover:bg-[#004a3f] text-white rounded-xl font-medium text-sm transition-transform active:scale-[0.98] flex justify-center items-center shadow-md shadow-[#00594C]/20 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
-                  {editingService ? "Update" : "Create"}
+                  {editingService ? "Save Changes" : "Add Service"}
                 </button>
               </form>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
