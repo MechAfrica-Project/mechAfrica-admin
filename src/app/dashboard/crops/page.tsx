@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useCatalogStore, CropCatalog } from "@/stores/useCatalogStore";
 import { Plus, Edit2, Trash2, Image as ImageIcon, X, UploadCloud } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -111,7 +112,9 @@ export default function CropsPage() {
                 <tr key={crop.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {crop.image_url ? (
-                      <img src={crop.image_url} alt={crop.name} className="h-10 w-10 rounded-full object-cover" />
+                      <div className="relative h-10 w-10 overflow-hidden rounded-full border border-gray-200">
+                        <Image src={crop.image_url} alt={crop.name} fill className="object-cover" sizes="40px" />
+                      </div>
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                         <ImageIcon className="text-gray-400" size={20} />
@@ -194,7 +197,7 @@ export default function CropsPage() {
                     <div className="relative group mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-[#00594C] transition-colors bg-gray-50/30 overflow-hidden">
                       {imageUrl ? (
                         <div className="relative z-10 flex flex-col items-center">
-                          <img src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg shadow-sm border border-gray-200" />
+                          <Image src={imageUrl} alt="Preview" width={96} height={96} className="h-24 w-24 object-cover rounded-lg shadow-sm border border-gray-200" />
                           <div className="mt-3 flex text-sm text-[#00594C] font-medium bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
                             <ImageIcon className="w-4 h-4 mr-1.5" />
                             Change Photo
