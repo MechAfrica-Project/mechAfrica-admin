@@ -3,10 +3,11 @@ import { DataQualitySummary } from "@/lib/api";
 
 interface DataQualityBannerProps {
   data: DataQualitySummary | null;
+  activeFilter?: string | null;
   onFilter: (filterType: string) => void;
 }
 
-export function DataQualityBanner({ data, onFilter }: DataQualityBannerProps) {
+export function DataQualityBanner({ data, activeFilter, onFilter }: DataQualityBannerProps) {
   if (!data || data.incomplete === 0) return null;
 
   return (
@@ -27,7 +28,11 @@ export function DataQualityBanner({ data, onFilter }: DataQualityBannerProps) {
             {data.phone_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_phone")}
-                className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-[#B45309] border border-[#FCD34D] shadow-sm hover:bg-[#FEF3C7] transition-colors"
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
+                  activeFilter === "missing_phone" 
+                    ? "bg-[#D97706] text-white border-[#B45309]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                }`}
               >
                 Missing Phone: {data.phone_missing.toLocaleString()}
               </button>
@@ -35,7 +40,11 @@ export function DataQualityBanner({ data, onFilter }: DataQualityBannerProps) {
             {data.name_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_name")}
-                className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-[#B45309] border border-[#FCD34D] shadow-sm hover:bg-[#FEF3C7] transition-colors"
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
+                  activeFilter === "missing_name" 
+                    ? "bg-[#D97706] text-white border-[#B45309]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                }`}
               >
                 Missing Name: {data.name_missing.toLocaleString()}
               </button>
@@ -43,17 +52,25 @@ export function DataQualityBanner({ data, onFilter }: DataQualityBannerProps) {
             {data.location_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_location")}
-                className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-[#B45309] border border-[#FCD34D] shadow-sm hover:bg-[#FEF3C7] transition-colors"
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
+                  activeFilter === "missing_location" 
+                    ? "bg-[#D97706] text-white border-[#B45309]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                }`}
               >
-                Missing Location: {data.location_missing.toLocaleString()}
+                Missing Geo-coords or Community: {data.location_missing.toLocaleString()}
               </button>
             )}
             {data.id_missing > 0 && (
               <button 
                 onClick={() => onFilter("missing_id")}
-                className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-[#B45309] border border-[#FCD34D] shadow-sm hover:bg-[#FEF3C7] transition-colors"
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border shadow-sm transition-colors ${
+                  activeFilter === "missing_id" 
+                    ? "bg-[#D97706] text-white border-[#B45309]" 
+                    : "bg-white text-[#B45309] border-[#FCD34D] hover:bg-[#FEF3C7]"
+                }`}
               >
-                Missing ID Number: {data.id_missing.toLocaleString()}
+                Missing Ghana Card / ID: {data.id_missing.toLocaleString()}
               </button>
             )}
           </div>
