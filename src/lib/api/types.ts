@@ -189,7 +189,15 @@ export interface BackendServiceRequestFarmer {
   user: {
     first_name: string;
     last_name: string;
+    phone_number?: string;
   }
+}
+
+export interface BackendServiceRequestFarm {
+  id: string;
+  farm_name: string;
+  region_name: string;
+  district_name: string;
 }
 
 export interface BackendServiceRequestProvider {
@@ -209,6 +217,8 @@ export interface BackendServiceRequest {
   end_date: string;
   status: BackendRequestStatus;
   farmer?: BackendServiceRequestFarmer;
+  farm?: BackendServiceRequestFarm;
+  farm_name?: string;
   service_provider?: BackendServiceRequestProvider;
   created_at: string;
   updated_at: string;
@@ -389,6 +399,9 @@ export interface FrontendRequestItem {
   providerName: string;
   farmerFirstName: string;
   farmerLastName: string;
+  farmerPhoneNumber?: string;
+  farmLocation?: string;
+  isASAP?: boolean;
   createdAt: string;
   updatedAt: string;
 }

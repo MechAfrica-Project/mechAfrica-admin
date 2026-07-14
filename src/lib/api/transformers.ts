@@ -274,6 +274,19 @@ export function transformServiceRequest(
       ? `@${request.id.slice(0, 8)}`
       : "@unknown";
 
+  // Check if request is ASAP (starts within 48h of creation)
+  const isASAP = request.start_date && request.created_at
+    ? (new Date(request.start_date).getTime() - new Date(request.created_at).getTime()) < 48 * 60 * 60 * 1000
+    : false;
+
+  const farmLocation = [
+    request.farm?.district_name,
+    request.farm?.region_name,
+    request.farm?.farm_name || request.farm_name,
+  ]
+    .filter(Boolean)
+    .join(", ") || "Unknown Location";
+
   return {
     id: request.id || "",
     name: farmerName,
@@ -293,6 +306,9 @@ export function transformServiceRequest(
     providerName,
     farmerFirstName,
     farmerLastName,
+    farmerPhoneNumber: request.farmer?.user?.phone_number,
+    farmLocation,
+    isASAP,
     createdAt: formatDate(request.created_at),
     updatedAt: formatDate(request.updated_at),
   };
