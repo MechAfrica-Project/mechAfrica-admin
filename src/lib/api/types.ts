@@ -224,6 +224,19 @@ export interface BackendServiceRequest {
   updated_at: string;
 }
 
+// Notification delivery log per provider per service request
+export interface BackendNotificationLog {
+  id: string;
+  service_request_id: string;
+  provider_id: string;
+  provider_name: string;
+  phone_number: string;
+  channel: "sms" | "push" | "in_app" | "email" | "skipped";
+  status: "sent" | "failed" | "skipped";
+  error_message: string;
+  created_at: string;
+}
+
 export interface BackendPaginatedServiceRequests {
   requests: BackendServiceRequest[];
   total: number;
