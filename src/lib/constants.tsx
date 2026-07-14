@@ -47,6 +47,7 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
       title: "Request Management",
       path: "/dashboard/requests/request-management",
     },
+    { title: "All Requests", path: "/dashboard/requests/list" },
     { title: "Assignment", path: "/dashboard/requests/assignment" },
   ],
   "/finances": [

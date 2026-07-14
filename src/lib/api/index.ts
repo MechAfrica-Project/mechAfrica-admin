@@ -24,6 +24,7 @@ export type {
   BackendRecentActivity,
   BackendTopRegion,
   BackendServiceRequest,
+  BackendNotificationLog,
   BackendRequestStatus,
   BackendServiceRequestFarmer,
   BackendServiceRequestProvider,

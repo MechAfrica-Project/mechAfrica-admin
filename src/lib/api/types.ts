@@ -189,7 +189,15 @@ export interface BackendServiceRequestFarmer {
   user: {
     first_name: string;
     last_name: string;
+    phone_number?: string;
   }
+}
+
+export interface BackendServiceRequestFarm {
+  id: string;
+  farm_name: string;
+  region_name: string;
+  district_name: string;
 }
 
 export interface BackendServiceRequestProvider {
@@ -209,9 +217,24 @@ export interface BackendServiceRequest {
   end_date: string;
   status: BackendRequestStatus;
   farmer?: BackendServiceRequestFarmer;
+  farm?: BackendServiceRequestFarm;
+  farm_name?: string;
   service_provider?: BackendServiceRequestProvider;
   created_at: string;
   updated_at: string;
+}
+
+// Notification delivery log per provider per service request
+export interface BackendNotificationLog {
+  id: string;
+  service_request_id: string;
+  provider_id: string;
+  provider_name: string;
+  phone_number: string;
+  channel: "sms" | "push" | "in_app" | "email" | "skipped";
+  status: "sent" | "failed" | "skipped";
+  error_message: string;
+  created_at: string;
 }
 
 export interface BackendPaginatedServiceRequests {
@@ -389,6 +412,9 @@ export interface FrontendRequestItem {
   providerName: string;
   farmerFirstName: string;
   farmerLastName: string;
+  farmerPhoneNumber?: string;
+  farmLocation?: string;
+  isASAP?: boolean;
   createdAt: string;
   updatedAt: string;
 }

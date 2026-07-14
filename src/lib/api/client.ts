@@ -52,6 +52,7 @@ import type {
   OnboardStagedRecord,
   OnboardProblematicRecord,
   OnboardSkippedRecord,
+  BackendNotificationLog,
 } from "./types";
 
 import { ONBOARD_ENDPOINTS } from "./types";
@@ -565,6 +566,15 @@ class MechAfricaAPIClient {
     return this.put(`/admin/service-requests/${requestId}/reassign`, {
       new_service_provider_id: providerId,
     });
+  }
+
+  /**
+   * Get notification delivery logs for a specific service request
+   */
+  async getRequestNotificationLogs(
+    requestId: string
+  ): Promise<ApiResponse<BackendNotificationLog[]>> {
+    return this.get(`/admin/service-requests/${requestId}/notification-logs`);
   }
 
   // ---------------------------------------------------------------------------
