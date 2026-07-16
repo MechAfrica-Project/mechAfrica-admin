@@ -58,7 +58,7 @@ export default function UploadPage() {
     dryRun: true,
     skipDuplicates: true,
     onboardFarmers: true,
-    onboardProviders: false,
+    onboardProviders: true,
     onboardMixedRoles: true,
     mixedRoleAsType: "farmer",
   });
@@ -111,6 +111,7 @@ export default function UploadPage() {
       onboardProviders: options.onboardProviders,
       onboardMixedRoles: options.onboardMixedRoles,
       mixedRoleAsType: options.mixedRoleAsType,
+      columnMappings: mappings,
     });
 
     if (jobId) {

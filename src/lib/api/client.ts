@@ -48,6 +48,7 @@ import type {
   EligibleProviderDTO,
   BackendTrendsData,
   ColumnAnalysisResult,
+  ColumnMapping,
   // Staging table types (Phase 3)
   OnboardStagedRecord,
   OnboardProblematicRecord,
@@ -772,6 +773,7 @@ class MechAfricaAPIClient {
       onboardProviders?: boolean;
       onboardMixedRoles?: boolean;
       mixedRoleAsType?: RoleType;
+      columnMappings?: ColumnMapping[];
     } = {}
   ): Promise<OnboardUploadResponse> {
     const formData = new FormData();
@@ -779,9 +781,12 @@ class MechAfricaAPIClient {
     formData.append("dry_run", String(options.dryRun ?? true));
     formData.append("skip_duplicates", String(options.skipDuplicates ?? true));
     formData.append("onboard_farmers", String(options.onboardFarmers ?? true));
-    formData.append("onboard_providers", String(options.onboardProviders ?? false));
+    formData.append("onboard_providers", String(options.onboardProviders ?? true));
     formData.append("onboard_mixed_roles", String(options.onboardMixedRoles ?? true));
     formData.append("mixed_role_as_type", options.mixedRoleAsType ?? "farmer");
+    if (options.columnMappings && options.columnMappings.length > 0) {
+      formData.append("column_mappings", JSON.stringify(options.columnMappings));
+    }
 
     const token = this.getToken();
     const headers: HeadersInit = {};
@@ -1130,15 +1135,16 @@ class MechAfricaAPIClient {
    * Map frontend field names to backend Excel column names
    */
   private mapFieldToBackend(field: string): string {
+    // Prefer normalized keys; retry/edit paths also accept AGRA header variants
     const mapping: Record<string, string> = {
-      full_name: "Name of Participant",
-      phone_number: "Telephone Number",
-      region: "Region/State",
-      district: "District",
-      community: "Community",
-      ghana_card_number: "Ghana Card Number",
-      gender: "Gender",
-      activity: "Activity",
+      full_name: "full_name",
+      phone_number: "phone_number",
+      region: "region",
+      district: "district",
+      community: "community",
+      ghana_card_number: "id_number",
+      gender: "gender",
+      activity: "activity",
     };
     return mapping[field] || field;
   }

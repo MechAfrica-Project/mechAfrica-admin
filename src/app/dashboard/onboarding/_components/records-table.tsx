@@ -106,6 +106,68 @@ function isProblematicRecord(record: OnboardStagedRecord | OnboardSkippedRecord 
   return "issue" in record && "issue_type" in record;
 }
 
+function firstRawValue(
+  raw: Record<string, string> | undefined,
+  keys: string[]
+): string {
+  if (!raw) return "";
+  for (const key of keys) {
+    const val = raw[key]?.trim();
+    if (val) return val;
+  }
+  // Keyword fallback for AGRA/Kobo header variants
+  const lowerKeys = keys.map((k) => k.toLowerCase());
+  for (const [col, val] of Object.entries(raw)) {
+    const colLower = col.toLowerCase();
+    if (!val?.trim()) continue;
+    if (lowerKeys.some((k) => colLower.includes(k) || k.includes(colLower))) {
+      return val.trim();
+    }
+  }
+  return "";
+}
+
+function getRecordDisplayFields(
+  record: OnboardStagedRecord | OnboardSkippedRecord | OnboardProblematicRecord
+) {
+  const raw = "raw_data" in record ? record.raw_data : undefined;
+  const fullName =
+    ("full_name" in record && record.full_name) ||
+    firstRawValue(raw, [
+      "full_name",
+      "name",
+      "Name of Service Provider",
+      "Name of Owner / Service Provider",
+      "Name of Participant",
+      "Full Name",
+    ]) ||
+    "";
+  const phoneNumber =
+    ("phone_number" in record && record.phone_number) ||
+    firstRawValue(raw, [
+      "phone_number",
+      "phone",
+      "Telephone Number",
+      "Phone Number",
+      "Mobile",
+    ]) ||
+    "";
+  const region =
+    ("region" in record && record.region) ||
+    firstRawValue(raw, ["region", "Region", "Region/State"]) ||
+    "";
+  const district =
+    ("district" in record && record.district) ||
+    firstRawValue(raw, ["district", "District"]) ||
+    "";
+  const participantType =
+    ("participant_type" in record && record.participant_type) ||
+    (raw?.participant_type as ParticipantType | undefined) ||
+    "unknown";
+
+  return { fullName, phoneNumber, region, district, participantType };
+}
+
 export function RecordsTable({
   records,
   pagination,
@@ -212,11 +274,10 @@ export function RecordsTable({
 
   const filteredRecords = searchQuery
     ? records.filter((record) => {
-      const name = "full_name" in record ? record.full_name : "";
-      const phone = "phone_number" in record ? record.phone_number : "";
+      const { fullName, phoneNumber } = getRecordDisplayFields(record);
       return (
-        name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        phone?.includes(searchQuery)
+        fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        phoneNumber?.includes(searchQuery)
       );
     })
     : records;
@@ -365,11 +426,8 @@ export function RecordsTable({
             <TableBody>
               {filteredRecords.map((record, index) => {
                 const rowNumber = record.row_number;
-                const fullName = "full_name" in record ? record.full_name : "";
-                const phoneNumber = "phone_number" in record ? record.phone_number : "";
-                const participantType = "participant_type" in record ? record.participant_type : "unknown";
-                const region = "region" in record ? record.region : "";
-                const district = "district" in record ? record.district : "";
+                const { fullName, phoneNumber, region, district, participantType } =
+                  getRecordDisplayFields(record);
                 const sourceFile = "source_file" in record ? record.source_file : "";
                 const sourceSheet = "source_sheet" in record ? record.source_sheet : "";
 
