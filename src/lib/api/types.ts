@@ -548,6 +548,10 @@ export interface OnboardJobConfig {
   onboard_mixed_roles: boolean;
   /** Create mixed roles as this type */
   mixed_role_as_type: RoleType;
+  /** If true, require AI provider success */
+  strict_ai?: boolean;
+  /** Admin-confirmed Excel column → schema field mappings */
+  column_mappings?: ColumnMapping[];
 }
 
 /**
@@ -616,13 +620,19 @@ export interface OnboardStagedRecord {
  * A staged problematic record (stored in onboard_problematic_records table)
  */
 export interface OnboardProblematicRecord {
-  ID: number;
-  job_id: string;
+  ID?: number;
+  job_id?: string;
   row_number: number;
   source_file: string;
   source_sheet: string;
   issue: string;
   issue_type: IssueType;
+  /** Enriched by API for table display */
+  full_name?: string;
+  phone_number?: string;
+  region?: string;
+  district?: string;
+  participant_type?: ParticipantType;
   raw_data: Record<string, string>;
 }
 

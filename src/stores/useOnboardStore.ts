@@ -11,6 +11,7 @@ import type {
   RetryResult,
   BulkRetryResult,
   OnboardSummaryResponseData,
+  ColumnMapping,
 } from "@/lib/api";
 
 // =============================================================================
@@ -67,6 +68,7 @@ export interface OnboardState {
       onboardProviders?: boolean;
       onboardMixedRoles?: boolean;
       mixedRoleAsType?: RoleType;
+      columnMappings?: ColumnMapping[];
     }
   ) => Promise<string | null>;
 

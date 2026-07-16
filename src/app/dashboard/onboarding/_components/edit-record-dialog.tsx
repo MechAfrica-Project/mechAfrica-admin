@@ -81,17 +81,32 @@ const GHANA_REGIONS = [
   "Western North",
 ];
 
-// Map form fields to Excel column names (backend expects these)
-const FIELD_TO_EXCEL_COLUMN: Record<string, string> = {
-  full_name: "Name of Participant",
-  phone_number: "Telephone Number",
-  region: "Region/State",
-  district: "District",
-  community: "Community",
-  ghana_card_number: "Ghana Card Number",
-  gender: "Gender",
-  activity: "Activity",
+// Prefer writing normalized keys; also update original Excel headers present in raw_data
+const FIELD_CANDIDATE_KEYS: Record<keyof FormData, string[]> = {
+  full_name: [
+    "full_name",
+    "name",
+    "Name of Service Provider",
+    "Name of Owner / Service Provider",
+    "Name of Participant",
+    "Full Name",
+  ],
+  phone_number: ["phone_number", "phone", "Telephone Number", "Phone Number", "Mobile"],
+  region: ["region", "Region", "Region/State"],
+  district: ["district", "District"],
+  community: ["community", "Community", "Town", "Village"],
+  ghana_card_number: ["id_number", "ghana_card_number", "Ghana Card Number", "National ID"],
+  gender: ["gender", "Gender", "Sex"],
+  activity: ["activity", "Activity", "Services Provided", "Value Chains"],
 };
+
+function pickFromRaw(raw: Record<string, string>, keys: string[]): string {
+  for (const key of keys) {
+    const val = raw[key]?.trim();
+    if (val) return val;
+  }
+  return "";
+}
 
 interface FormData {
   full_name: string;
@@ -137,14 +152,23 @@ export function EditRecordDialog({
     if (record) {
       const rawData = record.raw_data || {};
       setFormData({
-        full_name: rawData["Name of Participant"] || rawData["full_name"] || "",
-        phone_number: rawData["Telephone Number"] || rawData["phone_number"] || "",
-        region: rawData["Region/State"] || rawData["region"] || "",
-        district: rawData["District"] || rawData["district"] || "",
-        community: rawData["Community"] || rawData["community"] || "",
-        ghana_card_number: rawData["Ghana Card Number"] || rawData["ghana_card_number"] || "",
-        gender: rawData["Gender"] || rawData["gender"] || "",
-        activity: rawData["Activity"] || rawData["activity"] || "",
+        full_name:
+          record.full_name ||
+          pickFromRaw(rawData, FIELD_CANDIDATE_KEYS.full_name),
+        phone_number:
+          record.phone_number ||
+          pickFromRaw(rawData, FIELD_CANDIDATE_KEYS.phone_number),
+        region:
+          record.region || pickFromRaw(rawData, FIELD_CANDIDATE_KEYS.region),
+        district:
+          record.district || pickFromRaw(rawData, FIELD_CANDIDATE_KEYS.district),
+        community: pickFromRaw(rawData, FIELD_CANDIDATE_KEYS.community),
+        ghana_card_number: pickFromRaw(
+          rawData,
+          FIELD_CANDIDATE_KEYS.ghana_card_number
+        ),
+        gender: pickFromRaw(rawData, FIELD_CANDIDATE_KEYS.gender),
+        activity: pickFromRaw(rawData, FIELD_CANDIDATE_KEYS.activity),
       });
       setValidationErrors({});
     }
@@ -183,14 +207,23 @@ export function EditRecordDialog({
     return Object.keys(errors).length === 0;
   };
 
-  // Convert form data to backend format (Excel column names)
+  // Convert form data to backend format (normalized + original Excel keys present in the row)
   const formDataToBackendFormat = (): Record<string, string> => {
     const backendData: Record<string, string> = {};
+    const rawData = record?.raw_data || {};
 
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value) {
-        const backendKey = FIELD_TO_EXCEL_COLUMN[key] || key;
-        backendData[backendKey] = value;
+    (Object.keys(formData) as (keyof FormData)[]).forEach((key) => {
+      const value = formData[key];
+      if (!value) return;
+
+      const candidates = FIELD_CANDIDATE_KEYS[key];
+      // Always write normalized key first
+      backendData[candidates[0]] = value;
+      // Also update any original Excel headers that already exist on this row
+      for (const candidate of candidates) {
+        if (candidate in rawData) {
+          backendData[candidate] = value;
+        }
       }
     });
 
