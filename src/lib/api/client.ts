@@ -914,14 +914,79 @@ class MechAfricaAPIClient {
   }
 
   /**
-   * Download problematic records as Excel file
-   * Uses the download_url from the problematic records response
+   * Download problematic records as Excel file via authenticated API stream
+   */
+  async downloadProblematicExcel(jobId: string): Promise<void> {
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${ONBOARD_ENDPOINTS.PROBLEMATIC_DOWNLOAD(jobId)}`,
+      { method: "GET", headers }
+    );
+
+    if (!response.ok) {
+      await this.handleError(response, "Failed to download errors file");
+    }
+
+    const blob = await response.blob();
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const match = disposition.match(/filename=([^;]+)/i);
+    const filename = match?.[1]?.replace(/"/g, "") || `onboard_errors_${jobId.slice(0, 8)}.xlsx`;
+
+    if (typeof window !== "undefined") {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+  }
+
+  /**
+   * @deprecated Prefer downloadProblematicExcel(jobId) for authenticated download
    */
   async downloadProblematicRecords(downloadUrl: string): Promise<void> {
-    // Open the download URL in a new tab/window
     if (typeof window !== "undefined") {
       window.open(downloadUrl, "_blank");
     }
+  }
+
+  /**
+   * Upload an offline-corrected Errors Excel back into the same job
+   */
+  async uploadProblematicCorrections(
+    jobId: string,
+    file: File,
+    autoRetry = true
+  ): Promise<import("./types").CorrectionsApplyResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("auto_retry", String(autoRetry));
+
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${ONBOARD_ENDPOINTS.PROBLEMATIC_UPLOAD_CORRECTIONS(jobId)}`,
+      { method: "POST", headers, body: formData }
+    );
+
+    if (!response.ok) {
+      await this.handleError(response, "Failed to upload corrections");
+    }
+
+    const json = await response.json();
+    return json.data as import("./types").CorrectionsApplyResult;
   }
 
   // ---------------------------------------------------------------------------
