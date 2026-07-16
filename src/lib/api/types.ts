@@ -627,6 +627,9 @@ export interface OnboardProblematicRecord {
   source_sheet: string;
   issue: string;
   issue_type: IssueType;
+  /** open | edited | skipped | resolved */
+  resolution_status?: "open" | "edited" | "skipped" | "resolved" | string;
+  edited_at?: string;
   /** Enriched by API for table display */
   full_name?: string;
   phone_number?: string;
@@ -634,6 +637,20 @@ export interface OnboardProblematicRecord {
   district?: string;
   participant_type?: ParticipantType;
   raw_data: Record<string, string>;
+}
+
+/**
+ * Result of uploading an offline corrections Excel into a job
+ */
+export interface CorrectionsApplyResult {
+  total_rows_in_file: number;
+  matched: number;
+  updated: number;
+  unmatched_rows?: number[];
+  auto_retried: number;
+  retry_successful: number;
+  retry_failed: number;
+  retry_results?: RetryResult[];
 }
 
 /**
@@ -1264,6 +1281,10 @@ export const ONBOARD_ENDPOINTS = {
   ONBOARDED: (jobId: string) => `/admin/onboard/jobs/${jobId}/onboarded`,
   SKIPPED: (jobId: string) => `/admin/onboard/jobs/${jobId}/skipped`,
   PROBLEMATIC: (jobId: string) => `/admin/onboard/jobs/${jobId}/problematic`,
+  PROBLEMATIC_DOWNLOAD: (jobId: string) =>
+    `/admin/onboard/jobs/${jobId}/problematic/download`,
+  PROBLEMATIC_UPLOAD_CORRECTIONS: (jobId: string) =>
+    `/admin/onboard/jobs/${jobId}/problematic/upload-corrections`,
   PROBLEMATIC_RECORD: (jobId: string, rowNumber: number) =>
     `/admin/onboard/jobs/${jobId}/problematic/${rowNumber}`,
   RETRY_RECORD: (jobId: string, rowNumber: number) =>

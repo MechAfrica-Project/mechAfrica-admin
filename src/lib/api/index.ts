@@ -75,6 +75,7 @@ export type {
   // New staging table types (Phase 3)
   OnboardStagedRecord,
   OnboardProblematicRecord,
+  CorrectionsApplyResult,
   OnboardSkippedRecord,
   StagedRecordsPaginatedResponse,
   OnboardUploadResponseData,

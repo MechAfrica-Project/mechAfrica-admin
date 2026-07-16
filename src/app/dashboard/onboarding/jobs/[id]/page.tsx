@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Users,
   Download,
+  Upload,
   Play,
   Square,
   RefreshCcw,
@@ -129,7 +130,8 @@ export default function JobDetailsPage({ params }: PageProps) {
   const fetchOnboardedRecords = useOnboardStore((s) => s.fetchOnboardedRecords);
   const fetchSkippedRecords = useOnboardStore((s) => s.fetchSkippedRecords);
   const fetchProblematicRecords = useOnboardStore((s) => s.fetchProblematicRecords);
-  const downloadProblematicFile = useOnboardStore((s) => s.downloadProblematicFile);
+  const downloadProblematicExcel = useOnboardStore((s) => s.downloadProblematicExcel);
+  const uploadProblematicCorrections = useOnboardStore((s) => s.uploadProblematicCorrections);
   const clearError = useOnboardStore((s) => s.clearError);
   const retryRecord = useOnboardStore((s) => s.retryRecord);
   const skipRecord = useOnboardStore((s) => s.skipRecord);
@@ -148,6 +150,9 @@ export default function JobDetailsPage({ params }: PageProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [viewRecordType, setViewRecordType] = useState<"onboarded" | "skipped">("onboarded");
   const [editedCount, setEditedCount] = useState(0);
+  const [isDownloadingErrors, setIsDownloadingErrors] = useState(false);
+  const [isUploadingCorrections, setIsUploadingCorrections] = useState(false);
+  const correctionsInputRef = React.useRef<HTMLInputElement>(null);
   const [isRetryingAll, setIsRetryingAll] = useState(false);
   const [jobSummary, setJobSummary] = useState<{
     onboardedCount: number;
@@ -262,10 +267,45 @@ export default function JobDetailsPage({ params }: PageProps) {
     }
   };
 
-  const handleDownload = () => {
-    const downloadUrl = currentJob?.problematicFileUrl;
-    if (downloadUrl) {
-      downloadProblematicFile(downloadUrl);
+  const handleDownload = async () => {
+    setIsDownloadingErrors(true);
+    try {
+      const ok = await downloadProblematicExcel(jobId);
+      if (ok) {
+        toast.success("Errors Excel downloaded");
+      } else {
+        toast.error("Failed to download errors file");
+      }
+    } finally {
+      setIsDownloadingErrors(false);
+    }
+  };
+
+  const handleUploadCorrectionsClick = () => {
+    correctionsInputRef.current?.click();
+  };
+
+  const handleCorrectionsFileSelected = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setIsUploadingCorrections(true);
+    try {
+      const result = await uploadProblematicCorrections(jobId, file, true);
+      if (!result) {
+        toast.error("Failed to apply corrections");
+        return;
+      }
+      toast.success(
+        `Updated ${result.updated} row(s). Retry: ${result.retry_successful} ok, ${result.retry_failed} still failing.`
+      );
+      setEditedCount(await getEditedCount(jobId));
+      await fetchJobSummary(jobId);
+    } finally {
+      setIsUploadingCorrections(false);
     }
   };
 
@@ -766,7 +806,8 @@ export default function JobDetailsPage({ params }: PageProps) {
                 <p className="text-sm text-amber-700 mt-1">
                   Review the results above and click &quot;Confirm Import&quot; to perform
                   the actual import. This will create {totalCreated.toLocaleString()} new users
-                  ({(progress?.farmers_created ?? 0).toLocaleString()} farmers, {(progress?.providers_created ?? 0).toLocaleString()} providers).
+                  ({displayFarmersCreated.toLocaleString()} farmers, {displayProvidersCreated.toLocaleString()} providers).
+                  Unresolved errors stay in this job until fixed, skipped, or deleted.
                 </p>
               </div>
             </CardContent>
@@ -802,16 +843,44 @@ export default function JobDetailsPage({ params }: PageProps) {
                     View details of processed records
                   </CardDescription>
                 </div>
-                {activeTab === "problematic" && (progress?.errors ?? 0) > 0 && currentJob.problematicFileUrl && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownload}
-                    className="gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download Errors
-                  </Button>
+                {activeTab === "problematic" && displayErrors > 0 && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={correctionsInputRef}
+                      type="file"
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={handleCorrectionsFileSelected}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownload}
+                      disabled={isDownloadingErrors}
+                      className="gap-2"
+                    >
+                      {isDownloadingErrors ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                      Download Errors
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleUploadCorrectionsClick}
+                      disabled={isUploadingCorrections}
+                      className="gap-2"
+                    >
+                      {isUploadingCorrections ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
+                      Upload Corrections
+                    </Button>
+                  </div>
                 )}
               </div>
 
@@ -849,6 +918,16 @@ export default function JobDetailsPage({ params }: PageProps) {
               </div>
             </CardHeader>
             <CardContent className="pt-6">
+              {activeTab === "problematic" && displayErrors > 0 && (
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                  <p className="font-medium">Hybrid error resolution</p>
+                  <p className="mt-1 text-amber-700">
+                    Edit rows in the table, or download the Errors Excel, fix phones offline,
+                    then upload corrections back into this same job. Confirm Import only creates
+                    successful rows — unresolved errors remain here until resolved or skipped.
+                  </p>
+                </div>
+              )}
               {/* Retry All Edited Button for Problematic Tab */}
               {activeTab === "problematic" && editedCount > 0 && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
@@ -884,7 +963,7 @@ export default function JobDetailsPage({ params }: PageProps) {
                     records={records}
                     pagination={pagination}
                     onPageChange={handlePageChange}
-                    onDownload={activeTab === "problematic" && currentJob.problematicFileUrl ? handleDownload : undefined}
+                    onDownload={activeTab === "problematic" && displayErrors > 0 ? handleDownload : undefined}
                     onEditRecord={activeTab === "problematic" ? handleEditRecord : undefined}
                     onViewRecord={(activeTab === "onboarded" || activeTab === "skipped") ? handleViewRecord : undefined}
                     onRetryRecord={activeTab === "problematic" ? handleRetryRecordFromTable : undefined}

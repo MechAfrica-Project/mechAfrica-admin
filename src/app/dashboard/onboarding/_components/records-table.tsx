@@ -94,6 +94,13 @@ const issueTypeConfig: Record<IssueType, { label: string; color: string }> = {
   validation_error: { label: "Validation Error", color: "text-red-600" },
 };
 
+const resolutionStatusConfig: Record<string, { label: string; className: string }> = {
+  open: { label: "Open", className: "bg-red-50 text-red-700 border-red-200" },
+  edited: { label: "Edited", className: "bg-blue-50 text-blue-700 border-blue-200" },
+  skipped: { label: "Skipped", className: "bg-gray-50 text-gray-600 border-gray-200" },
+  resolved: { label: "Resolved", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+};
+
 function isOnboardedRecord(record: OnboardStagedRecord | OnboardSkippedRecord | OnboardProblematicRecord): record is OnboardStagedRecord {
   return "created_as" in record || "user_id" in record;
 }
@@ -419,6 +426,7 @@ export function RecordsTable({
                 {type === "onboarded" && <TableHead>Created As</TableHead>}
                 {type === "skipped" && <TableHead>Reason</TableHead>}
                 {type === "problematic" && <TableHead>Issue</TableHead>}
+                {type === "problematic" && <TableHead>Status</TableHead>}
                 <TableHead>Source</TableHead>
                 <TableHead className="w-24">Action</TableHead>
               </TableRow>
@@ -431,7 +439,13 @@ export function RecordsTable({
                 const sourceFile = "source_file" in record ? record.source_file : "";
                 const sourceSheet = "source_sheet" in record ? record.source_sheet : "";
 
-                const isRecordEdited = isProblematicRecord(record) && record.raw_data?.["_edited"] === "true";
+                const isRecordEdited = isProblematicRecord(record) && (
+                  record.resolution_status === "edited" ||
+                  record.raw_data?.["_edited"] === "true"
+                );
+                const resolutionStatus = isProblematicRecord(record)
+                  ? (record.resolution_status || (isRecordEdited ? "edited" : "open"))
+                  : "open";
                 const recordAction = actionLoading[rowNumber];
 
                 return (
@@ -516,6 +530,22 @@ export function RecordsTable({
                             {record.issue}
                           </p>
                         </div>
+                      </TableCell>
+                    )}
+
+                    {type === "problematic" && isProblematicRecord(record) && (
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "border text-xs",
+                            (resolutionStatusConfig[resolutionStatus] ||
+                              resolutionStatusConfig.open).className
+                          )}
+                        >
+                          {(resolutionStatusConfig[resolutionStatus] ||
+                            resolutionStatusConfig.open).label}
+                        </Badge>
                       </TableCell>
                     )}
 

@@ -83,7 +83,14 @@ export interface OnboardState {
   fetchSkippedRecords: (jobId: string, page?: number, limit?: number) => Promise<void>;
   fetchProblematicRecords: (jobId: string, page?: number, limit?: number) => Promise<void>;
 
+  // Download problematic records file (legacy URL opener)
   downloadProblematicFile: (downloadUrl: string) => void;
+  downloadProblematicExcel: (jobId: string) => Promise<boolean>;
+  uploadProblematicCorrections: (
+    jobId: string,
+    file: File,
+    autoRetry?: boolean
+  ) => Promise<import("@/lib/api").CorrectionsApplyResult | null>;
 
   // Summary & Result
   fetchJobSummary: (jobId: string) => Promise<OnboardSummaryResponseData | null>;
@@ -476,9 +483,38 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
     }
   },
 
-  // Download problematic records file
+  // Download problematic records file (legacy storage URL)
   downloadProblematicFile: (downloadUrl: string) => {
     api.downloadProblematicRecords(downloadUrl);
+  },
+
+  // Authenticated Excel download of error rows
+  downloadProblematicExcel: async (jobId) => {
+    try {
+      await api.downloadProblematicExcel(jobId);
+      return true;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to download errors file";
+      set({ error: errorMessage });
+      return false;
+    }
+  },
+
+  // Upload offline corrections Excel into the same job
+  uploadProblematicCorrections: async (jobId, file, autoRetry = true) => {
+    try {
+      const result = await api.uploadProblematicCorrections(jobId, file, autoRetry);
+      await get().fetchProblematicRecords(jobId);
+      await get().fetchOnboardedRecords(jobId);
+      await get().fetchJob(jobId);
+      return result;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload corrections";
+      set({ error: errorMessage });
+      return null;
+    }
   },
 
   // Fetch job summary with breakdowns
