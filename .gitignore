@@ -42,7 +42,6 @@ next-env.d.ts
 temp_auto_push.bat
 temp_interactive_push.bat
 branch_structure.json
-bun.lock
 admin_dashbaord_api_doc.md
 BACKEND_TRENDS_API_SPEC.md
 AGRA_SAMA_Mechanization_Service_Providers_Profiling_and_Mapping_-_Tractor_Operators_-_all_versions_-_labels_-_2026-07-09-17-51-22.xlsx
