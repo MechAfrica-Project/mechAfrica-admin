@@ -19,7 +19,7 @@ export interface AdminsState {
   error: string | null;
 
   // Actions
-  fetchAdmins: (page?: number, limit?: number, role?: string, search?: string, missingData?: string) => Promise<void>;
+  fetchAdmins: (page?: number, limit?: number, role?: string, search?: string, missingData?: string, gender?: string) => Promise<void>;
   fetchDataQuality: () => Promise<void>;
   setAdmins: (admins: Admin[]) => void;
   addAdmin: (
@@ -61,11 +61,11 @@ export const useAdminsStore = create<AdminsState>((set, get) => ({
   },
 
   // Fetch admins from API
-  fetchAdmins: async (page = 1, limit = 50, role?: string, search?: string, missingData?: string) => {
+  fetchAdmins: async (page = 1, limit = 50, role?: string, search?: string, missingData?: string, gender?: string) => {
     set({ isLoading: true, error: null });
 
     try {
-      const response = await api.getAdmins(page, limit, role, search, missingData);
+      const response = await api.getAdmins(page, limit, role, search, missingData, gender);
 
       if (response.success) {
         set({

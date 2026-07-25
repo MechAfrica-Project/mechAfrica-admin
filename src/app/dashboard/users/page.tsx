@@ -7,9 +7,16 @@ import { AdminsTable } from "./_components/admins-table";
 import { DataQualityBanner } from "./_components/data-quality-banner";
 import { useAdminsStore, Admin } from "@/stores/useAdminsStore";
 import { useTableStore } from "@/stores/useTableStore";
-import { RefreshCcw, Plus, Search } from "lucide-react";
+import { RefreshCcw, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 
 const PAGE_SIZE = 10;
@@ -27,7 +34,7 @@ export default function AdminsPage() {
   const dataQuality = useAdminsStore((s) => s.dataQuality);
   const fetchDataQuality = useAdminsStore((s) => s.fetchDataQuality);
 
-  const { setTitle, setFilters, selectedFilters } = useHeaderStore();
+  const { setTitle, setFilters } = useHeaderStore();
 
   const selectedAdmins = useTableStore((s) => s.selections["admins"] || []);
   const toggleSelect = useTableStore((s) => s.toggleSelect);
@@ -47,6 +54,10 @@ export default function AdminsPage() {
   // Missing data modal state
   const [missingDataFilters, setMissingDataFilters] = useState<string[]>([]);
 
+  // Filter state (in-page dropdowns)
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [selectedGender, setSelectedGender] = useState("all");
+
   // Search state
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -59,8 +70,7 @@ export default function AdminsPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Get selected role filter
-  const selectedRole = selectedFilters["Users"] || "all";
+
 
   // Fetch user stats from dashboard API for accurate metrics
   const fetchUserStats = useCallback(async () => {
@@ -93,10 +103,11 @@ export default function AdminsPage() {
   // Fetch admins when page, filter, or search changes (server-side pagination)
   const loadAdmins = useCallback(() => {
     const roleFilter = selectedRole === "all" ? undefined : selectedRole;
+    const genderFilter = selectedGender === "all" ? undefined : selectedGender;
     const searchParam = debouncedSearch.trim() ? debouncedSearch : undefined;
     const missingParam = missingDataFilters.length > 0 ? missingDataFilters.join(",") : undefined;
-    fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam, missingParam);
-  }, [fetchAdmins, page, selectedRole, debouncedSearch, missingDataFilters]);
+    fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam, missingParam, genderFilter);
+  }, [fetchAdmins, page, selectedRole, selectedGender, debouncedSearch, missingDataFilters]);
 
   useEffect(() => {
     loadAdmins();
@@ -105,21 +116,12 @@ export default function AdminsPage() {
   // Reset to page 1 when filter, search, or missing data filter changes
   useEffect(() => {
     setPage("admins", 1);
-  }, [selectedRole, debouncedSearch, missingDataFilters, setPage]);
+  }, [selectedRole, selectedGender, debouncedSearch, missingDataFilters, setPage]);
 
   // Set page title and filters
   useEffect(() => {
     setTitle("Admin");
-    setFilters({
-      Users: [
-        { label: "All Users", value: "all" },
-        { label: "Admin", value: "Admin" },
-        { label: "Farmer", value: "Farmer" },
-        { label: "Agent", value: "Agent" },
-        { label: "Provider", value: "Provider" },
-        { label: "Accounting", value: "Accounting" },
-      ],
-    });
+    setFilters({});
   }, [setTitle, setFilters]);
 
   // Listen for action tab events from HeaderTabs
@@ -259,36 +261,87 @@ export default function AdminsPage() {
           onClearFilters={() => setMissingDataFilters([])}
         />
 
-        {/* Header with Search, Refresh and Add buttons */}
-        <div className="mb-2 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by name, phone, location, or role..." 
-              className="pl-9 bg-background border-border"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        {/* Header with Search, Filters, Refresh and Add buttons */}
+        <div className="mb-2 flex flex-col gap-4">
+          {/* Row 1: Search + Action buttons */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search by name, phone, location..." 
+                className="pl-9 bg-background border-border"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="lg"
+                className="cursor-pointer"
+                disabled={isLoading}
+              >
+                <RefreshCcw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                size="lg"
+                className="cursor-pointer bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="h-4 w-4" />
+                Add User
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              size="lg"
-              className="cursor-pointer"
-              disabled={isLoading}
-            >
-              <RefreshCcw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              size="lg"
-              className="cursor-pointer bg-green-600 hover:bg-green-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add User
-            </Button>
+
+          {/* Row 2: Filter dropdowns */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span className="font-medium">Filters:</span>
+            </div>
+
+            {/* Role Filter */}
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger className="w-[150px] h-9 text-sm bg-background">
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Farmer">Farmer</SelectItem>
+                <SelectItem value="Agent">Agent</SelectItem>
+                <SelectItem value="Provider">Provider</SelectItem>
+                <SelectItem value="Accounting">Accounting</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Gender Filter */}
+            <Select value={selectedGender} onValueChange={setSelectedGender}>
+              <SelectTrigger className="w-[150px] h-9 text-sm bg-background">
+                <SelectValue placeholder="Gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Genders</SelectItem>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Active filter indicators */}
+            {(selectedRole !== "all" || selectedGender !== "all") && (
+              <button
+                onClick={() => {
+                  setSelectedRole("all");
+                  setSelectedGender("all");
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         </div>
 
