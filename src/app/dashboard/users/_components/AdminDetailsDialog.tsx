@@ -85,7 +85,7 @@ export default function AdminDetailsDialog({ open, onOpenChange, user }: Props) 
         const resp = await api.getUserDetails(user.id);
         if (active && resp?.data) {
           setExtras({
-            farms: (resp.data.farms || []) as FarmDetail[],
+            farms: (resp.data.farms || []) as AdminFarmDetail[],
             servicesOffered: resp.data.services_offered || [],
             equipment: resp.data.equipment || [],
           });
