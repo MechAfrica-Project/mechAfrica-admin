@@ -15,7 +15,7 @@ const labelMap: Record<string, string> = {
 export default async function RequestsByCategory({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
   const title = labelMap[id] ?? "Requests";
