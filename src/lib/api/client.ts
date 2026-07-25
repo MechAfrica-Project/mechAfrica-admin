@@ -26,6 +26,7 @@ import type {
   DataQualitySummary,
   BackendUpdateProfileRequest,
   AdminUpdateUserRequest,
+  AdminUserDetailsResponse,
   FrontendLoginResponse,
   FrontendContactsResponse,
   FrontendAdminsResponse,
@@ -503,6 +504,14 @@ class MechAfricaAPIClient {
     data: AdminUpdateUserRequest
   ): Promise<void> {
     await this.put(`/admin/update-user/${userId}`, data as unknown as Record<string, unknown>);
+  }
+
+  /**
+   * Get specific user's extended details including farms/services
+   */
+  async getUserDetails(userId: string): Promise<AdminUserDetailsResponse> {
+    const response = await this.get<AdminUserDetailsResponse>(`/admin/users/${userId}/details`);
+    return response.data;
   }
 
   /**

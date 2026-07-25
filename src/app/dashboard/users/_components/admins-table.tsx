@@ -147,6 +147,7 @@ export function AdminsTable({
           phoneNumber: editingAdmin.phoneNumber,
           idNumber: editingAdmin.idNumber,
           communityName: editingAdmin.communityName,
+          type: editingAdmin.type,
         }}
         onSave={handleSaveUser}
       />

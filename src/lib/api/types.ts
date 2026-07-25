@@ -1416,4 +1416,62 @@ export interface AdminUpdateUserRequest {
   id_number?: string;
   region_name?: string;
   community_name?: string;
+
+  // Extra fields for Farmers
+  farm_name?: string;
+  farm_latitude?: number;
+  farm_longitude?: number;
+  farm_size?: number;
+  crop_types?: string[];
+  main_crop?: string;
+
+  // Extra fields for Service Providers
+  services_offered?: string[];
+}
+
+export interface BackendUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  id_number?: string;
+  region_id?: string;
+  community_id?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface AdminFarmDetail {
+  id: string;
+  farmName: string;
+  farmSize: number;
+  farmSizeUnit: string;
+  cropTypes?: string[];
+  latitude?: number;
+  longitude?: number;
+  region?: string;
+  district?: string;
+  mainCrop?: string;
+}
+
+export interface AdminEquipmentDetail {
+  name?: string;
+  type?: string;
+  quantity?: number;
+}
+
+export interface AdminUserDetailsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: BackendUser;
+    farms?: AdminFarmDetail[];
+    services_offered?: string[];
+    equipment?: AdminEquipmentDetail[];
+  };
 }
