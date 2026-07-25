@@ -76,12 +76,12 @@ export function EditUserDialog({
             lastName: user.last_name || "",
             phoneNumber: user.phone_number || "",
             idNumber: user.id_number || "",
-            communityName: user.community_id || "", 
-            farmName: primaryFarm?.farm_name || "",
+            communityName: user.community_name || "",
+            farmName: primaryFarm?.farmName || "",
             farmLatitude: primaryFarm?.latitude?.toString() || "",
             farmLongitude: primaryFarm?.longitude?.toString() || "",
-            farmSize: primaryFarm?.farm_size?.toString() || "",
-            cropTypes: primaryFarm?.crop_types?.join(", ") || "",
+            farmSize: primaryFarm?.farmSize?.toString() || "",
+            cropTypes: primaryFarm?.cropTypes?.join(", ") || "",
             servicesOffered: services.join(", ") || "",
           });
         }

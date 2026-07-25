@@ -1429,23 +1429,6 @@ export interface AdminUpdateUserRequest {
   services_offered?: string[];
 }
 
-export interface BackendUser {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number: string;
-  role: string;
-  is_active: boolean;
-  is_verified: boolean;
-  created_at: string;
-  id_number?: string;
-  region_id?: string;
-  community_id?: string;
-  latitude?: number;
-  longitude?: number;
-}
-
 export interface AdminFarmDetail {
   id: string;
   farmName: string;
