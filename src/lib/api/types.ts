@@ -34,6 +34,7 @@ export interface BackendUser {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  account_created_via?: string;
 }
 
 export interface BackendLoginResponse {
@@ -439,6 +440,7 @@ export interface FrontendAdmin {
   dateOfRegistration: string;
   idNumber?: string;
   communityName?: string;
+  accountCreatedVia?: string;
 }
 
 export interface FrontendAdminsResponse {

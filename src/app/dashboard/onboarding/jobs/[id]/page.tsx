@@ -817,17 +817,27 @@ export default function JobDetailsPage({ params }: PageProps) {
         {/* Confirmed Notice */}
         {isConfirmed && (
           <Card className="mb-6 border-emerald-200 bg-emerald-50">
-            <CardContent className="p-4 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-emerald-800">
-                  Import confirmed and completed
-                </p>
-                <p className="text-sm text-emerald-700 mt-1">
-                  Successfully created {(currentJob.finalImportFarmers ?? 0).toLocaleString()} farmers
-                  and {(currentJob.finalImportProviders ?? 0).toLocaleString()} service providers.
-                </p>
+            <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-emerald-800">
+                    Import confirmed and completed
+                  </p>
+                  <p className="text-sm text-emerald-700 mt-1">
+                    Successfully created {(currentJob.finalImportFarmers ?? 0).toLocaleString()} farmers
+                    and {(currentJob.finalImportProviders ?? 0).toLocaleString()} service providers.
+                  </p>
+                </div>
               </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.push("/dashboard/users?source=bulk_import")}
+                className="bg-white border-emerald-300 text-emerald-800 hover:bg-emerald-100 whitespace-nowrap"
+              >
+                View Imported Users
+              </Button>
             </CardContent>
           </Card>
         )}

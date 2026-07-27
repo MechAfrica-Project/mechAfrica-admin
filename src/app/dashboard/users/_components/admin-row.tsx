@@ -20,6 +20,7 @@ interface Admin {
   dateOfRegistration: string;
   idNumber?: string;
   communityName?: string;
+  accountCreatedVia?: string;
 }
 
 interface AdminRowProps {
@@ -58,7 +59,14 @@ export function AdminRow({
         </div>
       </TableCell>
       <TableCell>
-        <AdminTypeBadge type={admin.type} />
+        <div className="flex flex-col gap-1 items-start">
+          <AdminTypeBadge type={admin.type} />
+          {admin.accountCreatedVia === "bulk_import" && (
+            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
+              Bulk Import
+            </span>
+          )}
+        </div>
       </TableCell>
       <TableCell className="text-foreground">{admin.phoneNumber}</TableCell>
       <TableCell className="text-foreground">

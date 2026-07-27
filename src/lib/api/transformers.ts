@@ -361,6 +361,7 @@ export function transformUserToAdmin(user: BackendUser): FrontendAdmin {
     dateOfRegistration: formatDate(user.created_at),
     idNumber: user.id_number,
     communityName: user.community_name,
+    accountCreatedVia: user.account_created_via,
   };
 }
 

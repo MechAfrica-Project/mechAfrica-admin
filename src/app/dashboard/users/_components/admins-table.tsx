@@ -20,6 +20,7 @@ interface Admin {
   dateOfRegistration: string;
   idNumber?: string;
   communityName?: string;
+  accountCreatedVia?: string;
 }
 
 interface AdminsTableProps {

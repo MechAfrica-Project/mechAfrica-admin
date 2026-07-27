@@ -35,6 +35,7 @@ interface AdminUser {
   dateOfRegistration: string;
   idNumber?: string;
   communityName?: string;
+  accountCreatedVia?: string;
 }
 
 interface UserExtras {

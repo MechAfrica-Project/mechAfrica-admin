@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { AddAdminDialog } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
@@ -21,7 +22,11 @@ import { api } from "@/lib/api";
 
 const PAGE_SIZE = 10;
 
-export default function AdminsPage() {
+function AdminsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const sourceParam = searchParams.get("source") || undefined;
+
   // Get store state and actions
   const admins = useAdminsStore((s) => s.admins);
   const pagination = useAdminsStore((s) => s.pagination);
@@ -106,8 +111,8 @@ export default function AdminsPage() {
     const genderFilter = selectedGender === "all" ? undefined : selectedGender;
     const searchParam = debouncedSearch.trim() ? debouncedSearch : undefined;
     const missingParam = missingDataFilters.length > 0 ? missingDataFilters.join(",") : undefined;
-    fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam, missingParam, genderFilter);
-  }, [fetchAdmins, page, selectedRole, selectedGender, debouncedSearch, missingDataFilters]);
+    fetchAdmins(page, PAGE_SIZE, roleFilter, searchParam, missingParam, genderFilter, sourceParam);
+  }, [fetchAdmins, page, selectedRole, selectedGender, debouncedSearch, missingDataFilters, sourceParam]);
 
   useEffect(() => {
     loadAdmins();
@@ -254,6 +259,26 @@ export default function AdminsPage() {
           </div>
         )}
 
+        {sourceParam === "bulk_import" && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-purple-600 animate-pulse" />
+              <div>
+                <p className="font-semibold text-purple-900 text-sm">Filtered by: Bulk Onboarding Import</p>
+                <p className="text-xs text-purple-700">Showing users created automatically from staged Excel imports.</p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => router.push("/dashboard/users")} 
+              className="text-purple-800 border-purple-300 hover:bg-purple-100 text-xs h-8"
+            >
+              Clear Filter
+            </Button>
+          </div>
+        )}
+
         <DataQualityBanner 
           data={dataQuality} 
           activeFilters={missingDataFilters}
@@ -374,5 +399,13 @@ export default function AdminsPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function AdminsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background p-8 text-muted-foreground">Loading users...</div>}>
+      <AdminsPageContent />
+    </Suspense>
   );
 }

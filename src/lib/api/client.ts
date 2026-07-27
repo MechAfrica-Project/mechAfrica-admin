@@ -449,7 +449,7 @@ class MechAfricaAPIClient {
    * Get paginated list of admins (all dashboard users)
    * This is a unified endpoint for all users in the system, filterable by role
    */
-  async getAdmins(page = 1, limit = 20, role?: string, search?: string, missingData?: string, gender?: string): Promise<FrontendAdminsResponse> {
+  async getAdmins(page = 1, limit = 20, role?: string, search?: string, missingData?: string, gender?: string, accountCreatedVia?: string): Promise<FrontendAdminsResponse> {
     let url = `/admin/users?limit=${limit}&page=${page}`;
     if (role && role !== "all") {
       // Map frontend role names to backend role values
@@ -475,6 +475,10 @@ class MechAfricaAPIClient {
 
     if (gender && gender !== "all") {
       url += `&gender=${encodeURIComponent(gender)}`;
+    }
+
+    if (accountCreatedVia && accountCreatedVia !== "all") {
+      url += `&account_created_via=${encodeURIComponent(accountCreatedVia)}`;
     }
     const response = await this.get<BackendPaginatedUsers>(url);
     return transformUsersToAdmins(response.data);
