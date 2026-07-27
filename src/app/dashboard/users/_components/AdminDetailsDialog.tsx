@@ -84,11 +84,11 @@ export default function AdminDetailsDialog({ open, onOpenChange, user }: Props) 
       setExtras(null);
       try {
         const resp = await api.getUserDetails(user.id);
-        if (active && resp?.data) {
+        if (active && resp) {
           setExtras({
-            farms: (resp.data.farms || []) as AdminFarmDetail[],
-            servicesOffered: resp.data.services_offered || [],
-            equipment: resp.data.equipment || [],
+            farms: (resp.farms || []) as AdminFarmDetail[],
+            servicesOffered: resp.services_offered || [],
+            equipment: resp.equipment || [],
           });
         }
       } catch {
