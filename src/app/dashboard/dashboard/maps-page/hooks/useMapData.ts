@@ -7,8 +7,8 @@ import { api } from "@/lib/api";
 import type { FrontendContact } from "@/lib/api";
 
 // ─── Config ─────────────────────────────────────────────────────────────────
-const PAGE_SIZE = 100;
-const CONCURRENCY = 10; // Fetch up to 10 pages in parallel
+const PAGE_SIZE = 1000;
+const CONCURRENCY = 5; // Fetch up to 5 large pages in parallel
 const MAX_RETRIES = 2;
 
 // ─── Transform contact → marker ────────────────────────────────────────────
@@ -81,30 +81,11 @@ export function useMapData() {
 
         if (totalPages <= 1 || abortRef.current) return;
 
-        // Step 2: Build remaining page numbers
-        // OPTIMIZATION: Instead of fetching all pages, we fetch a representative sample:
-        // First 3 pages, the middle page, and the last 5 pages.
-        const pagesSet = new Set<number>();
-        
-        // First 3 pages (page 2 and 3, since page 1 is already fetched)
-        if (totalPages >= 2) pagesSet.add(2);
-        if (totalPages >= 3) pagesSet.add(3);
-        
-        // Middle page
-        const middle = Math.floor(totalPages / 2);
-        if (middle > 3 && middle < totalPages - 4) {
-          pagesSet.add(middle);
+        // Step 2: Build remaining page numbers to fetch all pages progressively
+        const remainingPages: number[] = [];
+        for (let p = 2; p <= totalPages; p++) {
+          remainingPages.push(p);
         }
-        
-        // Last 5 pages
-        for (let i = 0; i < 5; i++) {
-          const p = totalPages - i;
-          if (p > 3 && p <= totalPages) {
-            pagesSet.add(p);
-          }
-        }
-
-        const remainingPages = Array.from(pagesSet).sort((a, b) => a - b);
 
         // Step 3: Fetch in parallel batches with retry for failed pages
         let pagesToFetch = remainingPages;

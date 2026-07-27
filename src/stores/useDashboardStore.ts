@@ -86,14 +86,14 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         const statistics: FrontendStatistics = {
           totalFarmers,
           totalServiceProviders,
-          totalAcres: 0, // Not tracked in backend
+          totalAcres: userStats?.total_acres || 0,
           demandToSupply:
             totalServiceProviders > 0
               ? `${(totalFarmers / totalServiceProviders).toFixed(1)} : 1`
               : "N/A",
-          farmersGrowth: "+0%", // Not tracked in backend yet
-          providersGrowth: "+0%",
-          acresGrowth: "+0%",
+          farmersGrowth: userStats?.farmers_growth || "+0%",
+          providersGrowth: userStats?.providers_growth || "+0%",
+          acresGrowth: userStats?.acres_growth || "+0%",
         };
 
         set({

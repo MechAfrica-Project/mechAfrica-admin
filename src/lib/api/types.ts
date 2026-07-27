@@ -130,6 +130,10 @@ export interface BackendDashboardData {
     service_providers: BackendUserStats;
     agents: BackendUserStats;
     admins: BackendUserStats;
+    total_acres?: number;
+    farmers_growth?: string;
+    providers_growth?: string;
+    acres_growth?: string;
   };
   service_stats: BackendServiceStats;
   recent_activity: BackendRecentActivity[];

@@ -435,14 +435,14 @@ export function transformDashboardToStatistics(
     data: {
       totalFarmers,
       totalServiceProviders,
-      totalAcres: 0, // Not tracked in backend
+      totalAcres: user_stats?.total_acres || 0,
       demandToSupply: calculateDemandSupplyRatio(
         totalFarmers,
         totalServiceProviders
       ),
-      farmersGrowth: "+0%", // Not tracked in backend
-      providersGrowth: "+0%", // Not tracked in backend
-      acresGrowth: "+0%", // Not tracked in backend
+      farmersGrowth: user_stats?.farmers_growth || "+0%",
+      providersGrowth: user_stats?.providers_growth || "+0%",
+      acresGrowth: user_stats?.acres_growth || "+0%",
     },
   };
 }
