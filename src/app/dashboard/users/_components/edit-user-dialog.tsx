@@ -8,10 +8,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AdminUpdateUserRequest } from "@/lib/api/types";
+import { AdminUpdateUserRequest, AdminFarmDetail } from "@/lib/api/types";
 import { api } from "@/lib/api/client";
 import { Loader2 } from "lucide-react";
 
@@ -53,6 +60,8 @@ export function EditUserDialog({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [farmsList, setFarmsList] = useState<AdminFarmDetail[]>([]);
+  const [selectedFarmId, setSelectedFarmId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let mounted = true;
@@ -70,6 +79,9 @@ export function EditUserDialog({
           const farms = details.farms || [];
           const primaryFarm = farms.length > 0 ? farms[0] : null;
           const services = details.services_offered || [];
+          
+          setFarmsList(farms);
+          if (primaryFarm) setSelectedFarmId(primaryFarm.id);
           
           setFormData({
             firstName: user.first_name || "",
@@ -125,6 +137,7 @@ export function EditUserDialog({
     };
 
     if (initialData.type === "Farmer") {
+      if (selectedFarmId) updateData.farm_id = selectedFarmId;
       if (formData.farmName) updateData.farm_name = formData.farmName;
       if (formData.farmLatitude) updateData.farm_latitude = parseFloat(formData.farmLatitude);
       if (formData.farmLongitude) updateData.farm_longitude = parseFloat(formData.farmLongitude);
@@ -212,7 +225,39 @@ export function EditUserDialog({
             {/* Farmer Specific Section */}
             {initialData.type === "Farmer" && (
               <div className="space-y-4 pt-2">
-                <h4 className="text-sm font-medium text-[#00594C] border-b pb-2 uppercase tracking-wider">Farm Details</h4>
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h4 className="text-sm font-medium text-[#00594C] uppercase tracking-wider">Farm Details</h4>
+                  {farmsList.length > 1 && (
+                    <Select
+                      value={selectedFarmId}
+                      onValueChange={(val) => {
+                        setSelectedFarmId(val);
+                        const selected = farmsList.find((f) => f.id === val);
+                        if (selected) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            farmName: selected.farmName || "",
+                            farmLatitude: selected.latitude?.toString() || "",
+                            farmLongitude: selected.longitude?.toString() || "",
+                            farmSize: selected.farmSize?.toString() || "",
+                            cropTypes: selected.cropTypes?.join(", ") || "",
+                          }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px] h-8 text-xs">
+                        <SelectValue placeholder="Select Farm to Edit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {farmsList.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            {f.farmName} ({f.farmSize} {f.farmSizeUnit})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="farmName">Farm Name</Label>

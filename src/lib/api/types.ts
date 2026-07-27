@@ -28,6 +28,7 @@ export interface BackendUser {
   email?: string;
   role: "admin" | "agent" | "farmer" | "service_provider";
   community_name?: string;
+  district_name?: string;
   region_name?: string;
   id_number?: string;
   is_verified: boolean;
@@ -440,6 +441,7 @@ export interface FrontendAdmin {
   dateOfRegistration: string;
   idNumber?: string;
   communityName?: string;
+  districtName?: string;
   accountCreatedVia?: string;
 }
 
@@ -1424,6 +1426,7 @@ export interface AdminUpdateUserRequest {
   community_name?: string;
 
   // Extra fields for Farmers
+  farm_id?: string;
   farm_name?: string;
   farm_latitude?: number;
   farm_longitude?: number;
