@@ -1455,12 +1455,8 @@ export interface AdminEquipmentDetail {
 }
 
 export interface AdminUserDetailsResponse {
-  success: boolean;
-  message: string;
-  data: {
-    user: BackendUser;
-    farms?: AdminFarmDetail[];
-    services_offered?: string[];
-    equipment?: AdminEquipmentDetail[];
-  };
+  user: BackendUser;
+  farms?: AdminFarmDetail[];
+  services_offered?: string[];
+  equipment?: AdminEquipmentDetail[];
 }

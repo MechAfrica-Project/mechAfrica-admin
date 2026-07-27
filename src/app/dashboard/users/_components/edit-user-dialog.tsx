@@ -66,10 +66,10 @@ export function EditUserDialog({
       try {
         const details = await api.getUserDetails(userId);
         if (mounted && details) {
-          const user = details.data.user;
-          const farms = details.data.farms || [];
+          const user = details.user;
+          const farms = details.farms || [];
           const primaryFarm = farms.length > 0 ? farms[0] : null;
-          const services = details.data.services_offered || [];
+          const services = details.services_offered || [];
           
           setFormData({
             firstName: user.first_name || "",
