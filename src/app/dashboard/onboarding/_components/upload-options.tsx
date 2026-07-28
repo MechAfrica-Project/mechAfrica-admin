@@ -4,13 +4,6 @@ import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -199,41 +192,18 @@ export function UploadOptionsForm({
           </div>
         </div>
 
-        {/* Mixed Role Type Selection */}
+        {/* Mixed Role Info */}
         {options.onboardMixedRoles && (
-          <div className="space-y-2 pl-7">
-            <Label className="text-sm font-medium text-gray-700">
-              Create mixed roles as:
-            </Label>
-            <Select
-              value={options.mixedRoleAsType}
-              onValueChange={(value) =>
-                handleChange("mixedRoleAsType", value as RoleType)
-              }
-              disabled={disabled}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select role type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="farmer">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    Farmer
-                  </div>
-                </SelectItem>
-                <SelectItem value="provider">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    Service Provider
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">
-              When a record has activities indicating both farmer and provider roles,
-              create them as this type.
-            </p>
+          <div className="pl-7">
+            <div className="p-3 bg-purple-50 border border-purple-200 rounded-md space-y-1">
+              <p className="text-xs font-semibold text-purple-900 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                Automatic Dual-Role Creation
+              </p>
+              <p className="text-xs text-purple-700 leading-relaxed">
+                When a record indicates both farmer and provider activities, the user will automatically be created with both a Farmer profile and a Service Provider profile without any conflicts.
+              </p>
+            </div>
           </div>
         )}
       </CardContent>
