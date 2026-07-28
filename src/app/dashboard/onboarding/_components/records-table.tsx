@@ -78,9 +78,10 @@ const participantTypeConfig: Record<
   unknown: { label: "Unknown", color: "bg-gray-100 text-gray-700" },
 };
 
-const roleTypeConfig: Record<RoleType, { label: string; color: string }> = {
+const roleTypeConfig: Record<string, { label: string; color: string }> = {
   farmer: { label: "Farmer", color: "bg-green-100 text-green-700" },
   provider: { label: "Provider", color: "bg-blue-100 text-blue-700" },
+  farmer_and_provider: { label: "Both", color: "bg-purple-100 text-purple-700" },
 };
 
 const issueTypeConfig: Record<IssueType, { label: string; color: string }> = {

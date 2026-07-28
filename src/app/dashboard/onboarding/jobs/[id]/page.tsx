@@ -825,8 +825,8 @@ export default function JobDetailsPage({ params }: PageProps) {
                     Import confirmed and completed
                   </p>
                   <p className="text-sm text-emerald-700 mt-1">
-                    Successfully created {(currentJob.finalImportFarmers ?? 0).toLocaleString()} farmers
-                    and {(currentJob.finalImportProviders ?? 0).toLocaleString()} service providers.
+                    Successfully created {(currentJob.finalImportFarmers || displayFarmersCreated || 0).toLocaleString()} farmers
+                    and {(currentJob.finalImportProviders || displayProvidersCreated || 0).toLocaleString()} service providers.
                   </p>
                 </div>
               </div>
