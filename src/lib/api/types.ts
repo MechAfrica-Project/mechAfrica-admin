@@ -937,7 +937,7 @@ export interface ProblematicRecordsResponseData {
   page: number;
   limit: number;
   pages: number;
-  records: ProblematicRecord[];
+  records: OnboardProblematicRecord[];
   by_type?: Record<IssueType, number>;
   download_url?: string;
 }
@@ -1310,6 +1310,12 @@ export const ONBOARD_ENDPOINTS = {
   RETRY_EDITED: (jobId: string) => `/admin/onboard/jobs/${jobId}/problematic/retry-edited`,
   EDITED_COUNT: (jobId: string) => `/admin/onboard/jobs/${jobId}/problematic/edited-count`,
   EXPORT_EDITED: (jobId: string) => `/admin/onboard/jobs/${jobId}/problematic/export-edited`,
+  
+  // Global Problematic Records & Template
+  GLOBAL_PROBLEMATIC: "/admin/onboard/problematic-records/all",
+  GLOBAL_PROBLEMATIC_DOWNLOAD: "/admin/onboard/problematic-records/all/export",
+  GLOBAL_PROBLEMATIC_UPLOAD: "/admin/onboard/problematic-records/all/upload",
+  AGENT_TEMPLATE: "/admin/onboard/template",
 } as const;
 
 // =============================================================================

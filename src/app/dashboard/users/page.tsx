@@ -132,8 +132,12 @@ function AdminsPageContent() {
   // Listen for action tab events from HeaderTabs
   useEffect(() => {
     const handleOpenModal = () => setIsDialogOpen(true);
+    
     window.addEventListener("open-agent-modal", handleOpenModal);
-    return () => window.removeEventListener("open-agent-modal", handleOpenModal);
+    
+    return () => {
+      window.removeEventListener("open-agent-modal", handleOpenModal);
+    };
   }, []);
 
   // Clear error on unmount

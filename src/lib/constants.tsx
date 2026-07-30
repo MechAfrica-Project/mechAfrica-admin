@@ -63,6 +63,9 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
       action: "open-agent-modal",
     },
   ],
+  "/users": [
+    { title: "Users List", path: "/dashboard/users" },
+  ],
   "/onboarding": [
     { title: "Upload", path: "/dashboard/onboarding/upload" },
     { title: "Jobs History", path: "/dashboard/onboarding/jobs" },

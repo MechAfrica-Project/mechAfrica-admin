@@ -176,6 +176,7 @@ class MechAfricaAPIClient {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "GET",
       headers: this.getHeaders(),
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -1001,6 +1002,126 @@ class MechAfricaAPIClient {
 
     if (!response.ok) {
       await this.handleError(response, "Failed to upload corrections");
+    }
+
+    const json = await response.json();
+    return json.data as import("./types").CorrectionsApplyResult;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Global Problematic Records & Template Endpoints
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Get all problematic records across all jobs
+   */
+  async getAllProblematicRecords(
+    page = 1,
+    limit = 50
+  ): Promise<import("./types").ProblematicRecordsResponseData> {
+    const response = await this.get<import("./types").ProblematicRecordsResponseData>(
+      `${ONBOARD_ENDPOINTS.GLOBAL_PROBLEMATIC}?page=${page}&limit=${limit}`
+    );
+    console.log("getAllProblematicRecords raw response:", response);
+    return response.data;
+  }
+
+  /**
+   * Download all problematic records as Excel file
+   */
+  async downloadAllProblematicExcel(): Promise<void> {
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${ONBOARD_ENDPOINTS.GLOBAL_PROBLEMATIC_DOWNLOAD}`,
+      { method: "GET", headers }
+    );
+
+    if (!response.ok) {
+      await this.handleError(response, "Failed to download global errors file");
+    }
+
+    const blob = await response.blob();
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const match = disposition.match(/filename=([^;]+)/i);
+    const filename = match?.[1]?.replace(/"/g, "") || `all_onboard_errors.xlsx`;
+
+    if (typeof window !== "undefined") {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+  }
+
+  /**
+   * Download agent template as Excel file
+   */
+  async downloadAgentTemplate(): Promise<void> {
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${ONBOARD_ENDPOINTS.AGENT_TEMPLATE}`,
+      { method: "GET", headers }
+    );
+
+    if (!response.ok) {
+      await this.handleError(response, "Failed to download agent template");
+    }
+
+    const blob = await response.blob();
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const match = disposition.match(/filename=([^;]+)/i);
+    const filename = match?.[1]?.replace(/"/g, "") || `MechAfrica_Agent_Template.xlsx`;
+
+    if (typeof window !== "undefined") {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+  }
+
+  /**
+   * Upload an offline-corrected Errors Excel globally across all jobs
+   */
+  async uploadGlobalCorrections(
+    file: File,
+    autoRetry = true
+  ): Promise<import("./types").CorrectionsApplyResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("auto_retry", String(autoRetry));
+
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${ONBOARD_ENDPOINTS.GLOBAL_PROBLEMATIC_UPLOAD}`,
+      { method: "POST", headers, body: formData }
+    );
+
+    if (!response.ok) {
+      await this.handleError(response, "Failed to upload global corrections");
     }
 
     const json = await response.json();

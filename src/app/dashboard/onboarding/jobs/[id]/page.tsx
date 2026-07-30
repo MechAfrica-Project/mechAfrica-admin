@@ -19,6 +19,7 @@ import {
   RefreshCcw,
   Calendar,
   Timer,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -161,6 +162,7 @@ export default function JobDetailsPage({ params }: PageProps) {
     farmersCreated: number;
     providersCreated: number;
   } | null>(null);
+  const [isAutoFixing, setIsAutoFixing] = useState(false);
 
   // Set page title
   useEffect(() => {
@@ -278,6 +280,34 @@ export default function JobDetailsPage({ params }: PageProps) {
       }
     } finally {
       setIsDownloadingErrors(false);
+    }
+  };
+
+  const handleAutoFixSystemErrors = async () => {
+    const systemResolvableRecords = problematicRecords.filter(
+        (r) => r.issue_type === 'creation_error' || r.issue_type === 'validation_error'
+    );
+    
+    if (systemResolvableRecords.length === 0) {
+      toast.info("No system-resolvable errors found. Other errors require manual correction.");
+      return;
+    }
+    
+    setIsAutoFixing(true);
+    toast.info(`Attempting to auto-resolve ${systemResolvableRecords.length} system error(s)...`);
+    
+    try {
+      const rowNumbers = systemResolvableRecords.map(r => r.row_number);
+      const result = await bulkRetryRecords(jobId, rowNumbers);
+      
+      if (result) {
+          toast.success(`Auto-fix finished! ${result.successful} successfully resolved.`);
+          handleRetrySuccess();
+      } else {
+          toast.error("Failed to perform bulk retry.");
+      }
+    } finally {
+      setIsAutoFixing(false);
     }
   };
 
@@ -880,7 +910,7 @@ export default function JobDetailsPage({ params }: PageProps) {
                       variant="outline"
                       size="sm"
                       onClick={handleUploadCorrectionsClick}
-                      disabled={isUploadingCorrections}
+                      disabled={isUploadingCorrections || isAutoFixing}
                       className="gap-2"
                     >
                       {isUploadingCorrections ? (
@@ -890,6 +920,22 @@ export default function JobDetailsPage({ params }: PageProps) {
                       )}
                       Upload Corrections
                     </Button>
+                    {problematicRecords.some(r => r.issue_type === 'creation_error' || r.issue_type === 'validation_error') && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleAutoFixSystemErrors}
+                        disabled={isAutoFixing}
+                        className="gap-2 bg-[#00594C] hover:bg-[#004a40]"
+                      >
+                        {isAutoFixing ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-4 h-4" />
+                        )}
+                        Auto-Fix System Errors
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
