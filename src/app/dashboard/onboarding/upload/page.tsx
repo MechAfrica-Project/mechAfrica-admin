@@ -238,7 +238,20 @@ export default function UploadPage() {
             Gemini is reading your column headers and suggesting the best
             mappings to our database schema
           </p>
-          <Progress value={undefined} className="h-1.5 [&>div]:animate-pulse" />
+          <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full w-1/3 bg-[#00594C] rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite]"
+              style={{
+                animation: "indeterminate 1.5s ease-in-out infinite",
+              }}
+            />
+            <style>{`
+              @keyframes indeterminate {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(400%); }
+              }
+            `}</style>
+          </div>
           <p className="text-xs text-gray-400 mt-2">
             {selectedFile?.name}
           </p>
