@@ -1,4 +1,4 @@
-import { BookOpenCheck, Shield, ShieldCheck } from "lucide-react";
+import { BookOpenCheck, Merge, Shield, ShieldCheck } from "lucide-react";
 
 interface AdminTypeBadgeProps {
   type: string;
@@ -17,6 +17,8 @@ export function AdminTypeBadge({ type }: AdminTypeBadgeProps) {
         return "bg-primary/20 text-primary dark:bg-blue-900 dark:text-blue-200";
       case "Provider":
         return "bg-primary/20 text-primary dark:bg-purple-900 dark:text-purple-200";
+      case "Farmer & Provider":
+        return "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200";
       default:
         return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200";
     }
@@ -34,6 +36,8 @@ export function AdminTypeBadge({ type }: AdminTypeBadgeProps) {
         return "bg-primary";
       case "Provider":
         return "bg-primary";
+      case "Farmer & Provider":
+        return "bg-purple-500";
       default:
         return "bg-gray-500";
     }
@@ -46,6 +50,6 @@ export function AdminTypeBadge({ type }: AdminTypeBadgeProps) {
       )}`}
     >
       <span className={`h-2 w-2 rounded-full ${getDotColor(type)}`} />
-      {type} {type === "Admin" ? <ShieldCheck className="w-4 h-4" /> : type === "Agent" ? <Shield className="w-4 h-4" /> : type === "Accounting" ? <BookOpenCheck className="w-4 h-4" /> : ""}    </div>
+      {type} {type === "Admin" ? <ShieldCheck className="w-4 h-4" /> : type === "Agent" ? <Shield className="w-4 h-4" /> : type === "Accounting" ? <BookOpenCheck className="w-4 h-4" /> : type === "Farmer & Provider" ? <Merge className="w-4 h-4" /> : ""}    </div>
   );
 }

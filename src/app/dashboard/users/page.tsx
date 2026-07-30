@@ -339,6 +339,7 @@ function AdminsPageContent() {
                 <SelectItem value="Farmer">Farmer</SelectItem>
                 <SelectItem value="Agent">Agent</SelectItem>
                 <SelectItem value="Provider">Provider</SelectItem>
+                <SelectItem value="Farmer & Provider">Farmer & Provider</SelectItem>
                 <SelectItem value="Accounting">Accounting</SelectItem>
               </SelectContent>
             </Select>

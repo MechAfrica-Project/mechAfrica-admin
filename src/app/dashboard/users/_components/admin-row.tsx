@@ -51,7 +51,31 @@ export function AdminRow({
             <AvatarFallback>{admin.avatar}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-medium text-foreground">{admin.name}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-foreground">{admin.name}</span>
+              
+              {/* Registration Source Badges */}
+              {admin.accountCreatedVia === "bulk_import" && (
+                <span className="inline-flex items-center rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
+                  Imported
+                </span>
+              )}
+              {admin.accountCreatedVia === "mobile" && (
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                  App
+                </span>
+              )}
+              {admin.accountCreatedVia === "web" && (
+                <span className="inline-flex items-center rounded-md bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+                  Web
+                </span>
+              )}
+              {admin.accountCreatedVia === "agent" && (
+                <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                  Agent
+                </span>
+              )}
+            </div>
             <span className="text-sm text-muted-foreground">
               @{admin.email}
             </span>
@@ -59,14 +83,7 @@ export function AdminRow({
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex flex-col gap-1 items-start">
-          <AdminTypeBadge type={admin.type} />
-          {admin.accountCreatedVia === "bulk_import" && (
-            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
-              Bulk Import
-            </span>
-          )}
-        </div>
+        <AdminTypeBadge type={admin.type} />
       </TableCell>
       <TableCell className="text-foreground">{admin.phoneNumber}</TableCell>
       <TableCell className="text-foreground">

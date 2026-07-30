@@ -26,7 +26,7 @@ export interface BackendUser {
   last_name: string;
   phone_number: string;
   email?: string;
-  role: "admin" | "agent" | "farmer" | "service_provider";
+  role: "admin" | "agent" | "farmer" | "service_provider" | "farmer_and_provider";
   community_name?: string;
   district_name?: string;
   region_name?: string;
@@ -36,6 +36,9 @@ export interface BackendUser {
   created_at: string;
   updated_at: string;
   account_created_via?: string;
+  roles?: string[];
+  is_farmer?: boolean;
+  is_provider?: boolean;
 }
 
 export interface BackendLoginResponse {
@@ -48,11 +51,12 @@ export interface BackendRegisterRequest {
   last_name: string;
   phone_number: string;
   email?: string;
-  password: string;
+  password?: string;
   community_name: string;
   id_number: string;
   id_type: "ghana_card" | "passport" | "voter_id" | "drivers_license";
   gender: "male" | "female";
+  account_created_via?: "web" | "mobile" | "agent";
 }
 
 // =============================================================================
@@ -436,13 +440,16 @@ export interface FrontendAdmin {
   name: string;
   email: string;
   avatar: string;
-  type: "Admin" | "Agent" | "Accounting" | "Farmer" | "Provider";
+  type: "Admin" | "Agent" | "Accounting" | "Farmer" | "Provider" | "Farmer & Provider";
   phoneNumber: string;
   dateOfRegistration: string;
   idNumber?: string;
   communityName?: string;
   districtName?: string;
   accountCreatedVia?: string;
+  roles?: string[];
+  isFarmer?: boolean;
+  isProvider?: boolean;
 }
 
 export interface FrontendAdminsResponse {

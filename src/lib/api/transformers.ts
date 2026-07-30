@@ -338,20 +338,21 @@ export function transformServiceRequests(
  */
 function mapRoleToAdminType(
   role: string
-): "Admin" | "Agent" | "Accounting" | "Farmer" | "Provider" {
-  const mapping: Record<string, "Admin" | "Agent" | "Accounting" | "Farmer" | "Provider"> = {
+): "Admin" | "Agent" | "Accounting" | "Farmer" | "Provider" | "Farmer & Provider" {
+  const mapping: Record<string, "Admin" | "Agent" | "Accounting" | "Farmer" | "Provider" | "Farmer & Provider"> = {
     admin: "Admin",
     agent: "Agent",
     accounts: "Accounting",
     accounting: "Accounting",
     farmer: "Farmer",
     service_provider: "Provider",
+    farmer_and_provider: "Farmer & Provider",
   };
   return mapping[role] || "Admin";
 }
 
 export function transformUserToAdmin(user: BackendUser): FrontendAdmin {
-  return {
+  const admin: FrontendAdmin = {
     id: user.id,
     name: `${user.first_name} ${user.last_name}`.trim(),
     email: user.email || "",
@@ -363,7 +364,17 @@ export function transformUserToAdmin(user: BackendUser): FrontendAdmin {
     communityName: user.community_name,
     districtName: user.district_name,
     accountCreatedVia: user.account_created_via,
+    roles: user.roles || (user.role ? [user.role] : []),
+    isFarmer: user.is_farmer || user.role === "farmer" || user.role === "farmer_and_provider",
+    isProvider: user.is_provider || user.role === "service_provider" || user.role === "farmer_and_provider",
   };
+  
+  // Prefer explicit flags for determining dual role if present
+  if (user.is_farmer && user.is_provider) {
+    admin.type = "Farmer & Provider";
+  }
+  
+  return admin;
 }
 
 /**

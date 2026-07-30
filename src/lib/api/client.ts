@@ -459,6 +459,7 @@ class MechAfricaAPIClient {
         "agent": "agent",
         "provider": "service_provider",
         "accounting": "accounts",
+        "farmer & provider": "farmer_and_provider",
       };
       
       const backendRole = roleMapping[role.toLowerCase()] || role.toLowerCase();
