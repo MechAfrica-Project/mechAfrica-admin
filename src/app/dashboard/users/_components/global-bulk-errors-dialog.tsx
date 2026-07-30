@@ -83,50 +83,63 @@ export function GlobalBulkErrorsDialog({ open, onOpenChange }: GlobalBulkErrorsD
   };
 
   const handleBulkRetryAll = async () => {
-    // Only attempt to auto-retry records that failed due to a system error (e.g. database lock)
-    // Issues requiring user correction (invalid phone, missing name) cannot be auto-resolved
-    const systemResolvableRecords = records.filter(r => r.issue_type === 'creation_error' || r.issue_type === 'validation_error');
-    
-    if (systemResolvableRecords.length === 0) {
-      toast.info("No system-resolvable errors found. Other errors require manual correction.");
-      return;
-    }
-    
-    setIsRetryingAll(true);
-    toast.info(`Attempting to auto-resolve ${systemResolvableRecords.length} system error(s)...`);
-    
-    // Group by Job ID to use the bulk retry endpoint efficiently
-    const groupedByJob = systemResolvableRecords.reduce((acc, record) => {
-      const jid = record.job_id || 'unknown';
-      if (!acc[jid]) acc[jid] = [];
-      acc[jid].push(record.row_number);
-      return acc;
-    }, {} as Record<string, number[]>);
-
-    let successCount = 0;
-    let failCount = 0;
-
     try {
+      setIsRetryingAll(true);
+      toast.info("Fetching all system errors globally to auto-resolve...");
+
+      // Fetch all problematic records globally (up to 10000) to bypass pagination limit
+      const response = await api.getAllProblematicRecords(1, 10000);
+      const allRecords = response.records || [];
+
+      // Only attempt to auto-retry records that failed due to a system error (e.g. database lock)
+      // Issues requiring user correction (invalid phone, missing name) cannot be auto-resolved
+      const systemResolvableRecords = allRecords.filter(r => r.issue_type === 'creation_error' || r.issue_type === 'validation_error');
+      
+      if (systemResolvableRecords.length === 0) {
+        toast.info("No system-resolvable errors found. Other errors require manual correction.");
+        setIsRetryingAll(false);
+        return;
+      }
+      
+      toast.info(`Attempting to auto-resolve ${systemResolvableRecords.length} system error(s)...`);
+      
+      // Group by Job ID to use the bulk retry endpoint efficiently
+      const groupedByJob = systemResolvableRecords.reduce((acc, record) => {
+        const jid = record.job_id || 'unknown';
+        if (!acc[jid]) acc[jid] = [];
+        acc[jid].push(record.row_number);
+        return acc;
+      }, {} as Record<string, number[]>);
+
+      let successCount = 0;
+      let failCount = 0;
+      const CHUNK_SIZE = 100;
+
       for (const [jobId, rowNumbers] of Object.entries(groupedByJob)) {
         if (jobId === 'unknown') continue;
-        const result = await api.bulkRetryRecords(jobId, rowNumbers);
-        const succ = result.results.filter(r => r.success).length;
-        successCount += succ;
-        failCount += (result.results.length - succ);
+        
+        for (let i = 0; i < rowNumbers.length; i += CHUNK_SIZE) {
+          const chunk = rowNumbers.slice(i, i + CHUNK_SIZE);
+          const result = await api.bulkRetryRecords(jobId, chunk);
+          
+          if (result && result.results) {
+            const succ = result.results.filter(r => r.success).length;
+            successCount += succ;
+            failCount += (result.results.length - succ);
+          }
+        }
       }
       
       if (successCount > 0) {
         toast.success(`Bulk retry finished! ${successCount} successfully resolved.`);
       } else if (failCount > 0) {
-        toast.error(`Bulk retry finished. ${failCount} failed.`);
-      } else {
-        toast.info("No records could be processed.");
+        toast.error(`Bulk retry attempted, but ${failCount} record(s) still failed.`);
       }
-      fetchRecords();
     } catch (error) {
-      toast.error("An error occurred during bulk retry.");
+      toast.error("Failed to perform bulk retry.");
     } finally {
       setIsRetryingAll(false);
+      fetchRecords(); // Refresh the list to reflect new state
     }
   };
 

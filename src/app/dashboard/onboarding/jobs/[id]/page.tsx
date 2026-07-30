@@ -35,6 +35,7 @@ import { useOnboardStore } from "@/stores/useOnboardStore";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
 import { RecordsTable } from "../../_components/records-table";
 import { EditRecordDialog } from "../../_components/edit-record-dialog";
 import { ViewRecordDialog } from "../../_components/view-record-dialog";
@@ -192,27 +193,32 @@ export default function JobDetailsPage({ params }: PageProps) {
     };
   }, [jobId, fetchJob, stopPolling]);
 
+  // Helper to re-fetch and set job summary
+  const refreshJobSummary = React.useCallback(async () => {
+    if (!jobId) return;
+    const summary = await fetchJobSummary(jobId);
+    if (summary) {
+      setJobSummary({
+        onboardedCount: summary.onboarded?.count ?? 0,
+        skippedCount: summary.skipped?.count ?? 0,
+        errorsCount: summary.errors?.count ?? 0,
+        farmersCreated: summary.result_summary?.farmers_created ?? summary.progress?.farmers_created ?? 0,
+        providersCreated: summary.result_summary?.providers_created ?? summary.progress?.providers_created ?? 0,
+      });
+    }
+  }, [jobId, fetchJobSummary]);
+
   // Fetch job summary to get accurate counts when job is completed
   const jobStatus = currentJob?.status;
   useEffect(() => {
     if (jobStatus === "completed" || jobStatus === "confirmed") {
-      fetchJobSummary(jobId).then((summary) => {
-        if (summary) {
-          setJobSummary({
-            onboardedCount: summary.onboarded?.count ?? 0,
-            skippedCount: summary.skipped?.count ?? 0,
-            errorsCount: summary.errors?.count ?? 0,
-            farmersCreated: summary.result_summary?.farmers_created ?? summary.progress?.farmers_created ?? 0,
-            providersCreated: summary.result_summary?.providers_created ?? summary.progress?.providers_created ?? 0,
-          });
-        }
-      });
+      refreshJobSummary();
       // Pre-fetch all record counts
       fetchOnboardedRecords(jobId, 1, 1);
       fetchSkippedRecords(jobId, 1, 1);
       fetchProblematicRecords(jobId, 1, 1);
     }
-  }, [jobStatus, jobId, fetchJobSummary, fetchOnboardedRecords, fetchSkippedRecords, fetchProblematicRecords]);
+  }, [jobStatus, jobId, refreshJobSummary, fetchOnboardedRecords, fetchSkippedRecords, fetchProblematicRecords]);
 
   // Start polling if job is processing
   useEffect(() => {
@@ -284,30 +290,54 @@ export default function JobDetailsPage({ params }: PageProps) {
   };
 
   const handleAutoFixSystemErrors = async () => {
-    const systemResolvableRecords = problematicRecords.filter(
-        (r) => r.issue_type === 'creation_error' || r.issue_type === 'validation_error'
-    );
-    
-    if (systemResolvableRecords.length === 0) {
-      toast.info("No system-resolvable errors found. Other errors require manual correction.");
-      return;
-    }
-    
-    setIsAutoFixing(true);
-    toast.info(`Attempting to auto-resolve ${systemResolvableRecords.length} system error(s)...`);
-    
     try {
-      const rowNumbers = systemResolvableRecords.map(r => r.row_number);
-      const result = await bulkRetryRecords(jobId, rowNumbers);
+      setIsAutoFixing(true);
+      toast.info("Fetching all system errors to auto-resolve...");
+
+      // Fetch all problematic records for this job (up to 10000) to bypass pagination limit
+      const response = await api.getProblematicRecords(jobId, 1, 10000);
+      const allRecords = (response.records || []) as OnboardProblematicRecord[];
+
+      const systemResolvableRecords = allRecords.filter(
+          (r) => r.issue_type === 'creation_error' || r.issue_type === 'validation_error'
+      );
       
-      if (result) {
-          toast.success(`Auto-fix finished! ${result.successful} successfully resolved.`);
-          handleRetrySuccess();
-      } else {
-          toast.error("Failed to perform bulk retry.");
+      if (systemResolvableRecords.length === 0) {
+        toast.info("No system-resolvable errors found for this job.");
+        return;
       }
+      
+      toast.info(`Attempting to auto-resolve ${systemResolvableRecords.length} system error(s)...`);
+      
+      const rowNumbers = systemResolvableRecords.map(r => r.row_number);
+      const CHUNK_SIZE = 100;
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 0; i < rowNumbers.length; i += CHUNK_SIZE) {
+        const chunk = rowNumbers.slice(i, i + CHUNK_SIZE);
+        const result = await api.bulkRetryRecords(jobId, chunk);
+        
+        if (result && result.results) {
+          const succ = result.results.filter(r => r.success).length;
+          successCount += succ;
+          failCount += (result.results.length - succ);
+        }
+      }
+      
+      if (successCount > 0) {
+          toast.success(`Auto-fix finished! ${successCount} successfully resolved.`);
+          handleRetrySuccess();
+      } else if (failCount > 0) {
+          toast.error(`Auto-fix attempted, but ${failCount} record(s) still failed.`);
+      }
+    } catch (error) {
+      toast.error("Failed to auto-fix system errors.");
     } finally {
       setIsAutoFixing(false);
+      fetchJob(jobId);
+      refreshJobSummary(); // Refresh metrics
+      fetchProblematicRecords(jobId, 1);
     }
   };
 
@@ -364,6 +394,7 @@ export default function JobDetailsPage({ params }: PageProps) {
   const handleRetrySuccess = () => {
     // Refresh all record lists after successful retry
     fetchJob(jobId);
+    refreshJobSummary(); // Refresh metrics
     fetchOnboardedRecords(jobId);
     fetchSkippedRecords(jobId);
     fetchProblematicRecords(jobId);
@@ -375,12 +406,14 @@ export default function JobDetailsPage({ params }: PageProps) {
     fetchSkippedRecords(jobId);
     fetchProblematicRecords(jobId);
     fetchJob(jobId);
+    refreshJobSummary(); // Refresh metrics
   };
 
   const handleDeleteSuccess = () => {
     // Refresh problematic records
     fetchProblematicRecords(jobId);
     fetchJob(jobId);
+    refreshJobSummary(); // Refresh metrics
   };
 
   // Handlers for inline actions from table
