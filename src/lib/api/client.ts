@@ -487,6 +487,19 @@ class MechAfricaAPIClient {
   }
 
   /**
+   * Create a new user (Farmer, Service Provider, Agent, or Admin)
+   */
+  async createUser(
+    userData: Record<string, unknown>
+  ): Promise<FrontendLoginResponse> {
+    const response = await this.post<BackendLoginResponse>(
+      "/admin/users/create",
+      userData
+    );
+    return transformLoginResponse(response.data);
+  }
+
+  /**
    * Create a new admin
    */
   async createAdmin(
@@ -500,11 +513,12 @@ class MechAfricaAPIClient {
   ): Promise<FrontendLoginResponse> {
     const payload = transformAdminToBackendUser(admin);
     const response = await this.post<BackendLoginResponse>(
-      "/admin/register",
-      payload as unknown as Record<string, unknown>
+      "/admin/users/create",
+      { ...payload, role: "admin" }
     );
     return transformLoginResponse(response.data);
   }
+
 
   /**
    * Update a specific user's details (admin only)

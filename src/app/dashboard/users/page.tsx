@@ -146,13 +146,7 @@ function AdminsPageContent() {
   }, [clearError]);
 
   const handleAddAdmin = async (
-    newAdmin: Omit<Admin, "id"> & {
-      password: string;
-      idNumber: string;
-      idType: string;
-      communityName: string;
-      gender: string;
-    }
+    newAdmin: any
   ) => {
     const success = await addAdmin(newAdmin);
     if (success) {

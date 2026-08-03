@@ -22,6 +22,7 @@ export interface AdminsState {
   fetchAdmins: (page?: number, limit?: number, role?: string, search?: string, missingData?: string, gender?: string, accountCreatedVia?: string) => Promise<void>;
   fetchDataQuality: () => Promise<void>;
   setAdmins: (admins: Admin[]) => void;
+  addUser: (userData: Record<string, unknown>) => Promise<boolean>;
   addAdmin: (
     admin: Omit<Admin, "id"> & {
       password: string;
@@ -94,6 +95,36 @@ export const useAdminsStore = create<AdminsState>((set, get) => ({
   // Set admins directly (for local updates)
   setAdmins: (admins: Admin[]) => {
     set({ admins });
+  },
+
+  // Add a new user (farmer, provider, admin, agent) via API
+  addUser: async (userData: Record<string, unknown>) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await api.createUser(userData);
+
+      if (response.success) {
+        // Refresh the admins/users list
+        await get().fetchAdmins();
+        return true;
+      } else {
+        set({
+          isLoading: false,
+          error: response.message || "Failed to create user",
+        });
+        return false;
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create user";
+
+      set({
+        isLoading: false,
+        error: errorMessage,
+      });
+      return false;
+    }
   },
 
   // Add a new admin via API
