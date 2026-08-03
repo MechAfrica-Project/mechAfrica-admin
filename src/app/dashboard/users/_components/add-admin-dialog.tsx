@@ -20,8 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Admin, useAdminsStore } from "@/stores/useAdminsStore";
+import { useAdminsStore } from "@/stores/useAdminsStore";
+import { useCatalogStore } from "@/stores/useCatalogStore";
 import { Tractor, Sprout, ShieldAlert, UserCheck, Check, Sparkles } from "lucide-react";
+import { useEffect } from "react";
 
 export type NewAdminData = {
   name: string;
@@ -40,10 +42,10 @@ export type NewAdminData = {
 interface AddAdminDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddAdmin?: (admin: any) => void;
+  onAddAdmin?: (admin: NewAdminData) => void;
 }
 
-const AVAILABLE_CROPS = [
+const DEFAULT_FALLBACK_CROPS = [
   "Maize",
   "Cassava",
   "Rice",
@@ -56,7 +58,7 @@ const AVAILABLE_CROPS = [
   "Groundnuts",
 ];
 
-const AVAILABLE_SERVICES = [
+const DEFAULT_FALLBACK_SERVICES = [
   { id: "ploughing", label: "Ploughing" },
   { id: "planting", label: "Planting" },
   { id: "spraying", label: "Spraying" },
@@ -76,7 +78,33 @@ export function AddAdminDialog({
   onAddAdmin,
 }: AddAdminDialogProps) {
   const addUser = useAdminsStore((s) => s.addUser);
-  const addAdmin = useAdminsStore((s) => s.addAdmin);
+
+  // Dynamic catalog from DB
+  const storeCrops = useCatalogStore((s) => s.crops);
+  const storeServices = useCatalogStore((s) => s.services);
+  const fetchCrops = useCatalogStore((s) => s.fetchCrops);
+  const fetchServices = useCatalogStore((s) => s.fetchServices);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCrops();
+      fetchServices();
+    }
+  }, [isOpen, fetchCrops, fetchServices]);
+
+  // Derived list from catalog store or fallback
+  const availableCrops =
+    storeCrops.length > 0
+      ? storeCrops.map((c) => c.name)
+      : DEFAULT_FALLBACK_CROPS;
+
+  const availableServices =
+    storeServices.length > 0
+      ? storeServices.map((s) => ({
+          id: s.name.toLowerCase().replace(/\s+/g, "_"),
+          label: s.name,
+        }))
+      : DEFAULT_FALLBACK_SERVICES;
 
   const [role, setRole] = useState<"farmer" | "service_provider" | "admin" | "agent">("farmer");
 
@@ -445,7 +473,7 @@ export function AddAdminDialog({
                       <SelectItem value="ghana_card">Ghana Card</SelectItem>
                       <SelectItem value="voter_id">Voter ID</SelectItem>
                       <SelectItem value="passport">Passport</SelectItem>
-                      <SelectItem value="driver_license">Driver's License</SelectItem>
+                      <SelectItem value="driver_license">Driver&apos;s License</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -559,7 +587,7 @@ export function AddAdminDialog({
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Crops Grown</Label>
                   <div className="flex flex-wrap gap-1.5">
-                    {AVAILABLE_CROPS.map((crop) => {
+                    {availableCrops.map((crop) => {
                       const selected = formData.cropTypes.includes(crop);
                       return (
                         <Badge
@@ -653,7 +681,7 @@ export function AddAdminDialog({
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Services Rendered</Label>
                   <div className="flex flex-wrap gap-1.5">
-                    {AVAILABLE_SERVICES.map((serv) => {
+                    {availableServices.map((serv) => {
                       const selected = formData.servicesOffered.includes(serv.id);
                       return (
                         <Badge

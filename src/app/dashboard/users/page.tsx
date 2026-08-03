@@ -3,10 +3,10 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useHeaderStore } from "@/stores/useHeaderStore";
-import { AddAdminDialog } from "./_components/add-admin-dialog";
+import { AddAdminDialog, NewAdminData } from "./_components/add-admin-dialog";
 import { AdminsTable } from "./_components/admins-table";
 import { DataQualityBanner } from "./_components/data-quality-banner";
-import { useAdminsStore, Admin } from "@/stores/useAdminsStore";
+import { useAdminsStore } from "@/stores/useAdminsStore";
 import { useTableStore } from "@/stores/useTableStore";
 import { RefreshCcw, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -146,9 +146,9 @@ function AdminsPageContent() {
   }, [clearError]);
 
   const handleAddAdmin = async (
-    newAdmin: any
+    newAdmin: NewAdminData
   ) => {
-    const success = await addAdmin(newAdmin);
+    const success = await addAdmin(newAdmin as Parameters<typeof addAdmin>[0]);
     if (success) {
       setIsDialogOpen(false);
     }

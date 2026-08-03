@@ -331,7 +331,7 @@ export default function JobDetailsPage({ params }: PageProps) {
       } else if (failCount > 0) {
           toast.error(`Auto-fix attempted, but ${failCount} record(s) still failed.`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to auto-fix system errors.");
     } finally {
       setIsAutoFixing(false);

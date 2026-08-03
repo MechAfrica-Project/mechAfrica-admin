@@ -27,7 +27,6 @@ import type {
   OnboardStagedRecord,
   OnboardSkippedRecord,
   ParticipantType,
-  RoleType,
 } from "@/lib/api/types";
 
 interface ViewRecordDialogProps {

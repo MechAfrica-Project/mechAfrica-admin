@@ -38,7 +38,7 @@ export function GlobalBulkErrorsDialog({ open, onOpenChange }: GlobalBulkErrorsD
       const response = await api.getAllProblematicRecords(1, 100);
       setRecords(response.records || []);
       setTotalRecords(response.count || 0);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load problematic records.");
     } finally {
       setIsLoading(false);
@@ -55,7 +55,7 @@ export function GlobalBulkErrorsDialog({ open, onOpenChange }: GlobalBulkErrorsD
     setIsDownloading(true);
     try {
       await api.downloadAllProblematicExcel();
-    } catch (error) {
+    } catch {
       toast.error("Could not download the errors file.");
     } finally {
       setIsDownloading(false);
@@ -73,7 +73,7 @@ export function GlobalBulkErrorsDialog({ open, onOpenChange }: GlobalBulkErrorsD
         `Successfully applied ${result.updated} corrections. Auto-retried ${result.auto_retried}, ${result.retry_successful} successful.`
       );
       fetchRecords(); // Refresh the list
-    } catch (error) {
+    } catch {
       toast.error("Failed to upload and apply corrections.");
     } finally {
       setIsUploading(false);
@@ -135,7 +135,7 @@ export function GlobalBulkErrorsDialog({ open, onOpenChange }: GlobalBulkErrorsD
       } else if (failCount > 0) {
         toast.error(`Bulk retry attempted, but ${failCount} record(s) still failed.`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to perform bulk retry.");
     } finally {
       setIsRetryingAll(false);
