@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,11 +19,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAdminsStore } from "@/stores/useAdminsStore";
 import { useCatalogStore } from "@/stores/useCatalogStore";
-import { Tractor, Sprout, ShieldAlert, UserCheck, Check, Sparkles } from "lucide-react";
-import { useEffect } from "react";
+import {
+  Tractor,
+  Sprout,
+  ShieldAlert,
+  UserCheck,
+  Check,
+  Sparkles,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 
 export type NewAdminData = {
   name: string;
@@ -147,8 +154,52 @@ export function AddAdminDialog({
     equipmentModel: "5075E",
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Real-time Field Validations
+  const isFirstNameValid = formData.firstName.trim().length > 0;
+  const isLastNameValid = formData.lastName.trim().length > 0;
+  const cleanPhone = formData.phoneNumber.replace(/[\s\-\(\)]/g, "");
+  const isPhoneValid = cleanPhone.length >= 9 && /^[0-9+]+$/.test(cleanPhone);
+
+  const isEmailValid =
+    role === "admin"
+      ? formData.email.trim().length > 0 &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+      : !formData.email.trim() ||
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
+
+  const isPasswordValid =
+    role === "admin"
+      ? formData.password.length >= 6 &&
+        formData.password === formData.confirmPassword
+      : true;
+
+  const isFormValid =
+    isFirstNameValid &&
+    isLastNameValid &&
+    isPhoneValid &&
+    isEmailValid &&
+    isPasswordValid;
+
+  // Real-time helper message for status badge
+  const getValidationHint = () => {
+    if (!isFirstNameValid || !isLastNameValid) {
+      return { msg: "First & Last name required", valid: false };
+    }
+    if (!isPhoneValid) {
+      return { msg: "Valid phone number required (min. 9 digits)", valid: false };
+    }
+    if (role === "admin" && !isEmailValid) {
+      return { msg: "Valid email address required for admin", valid: false };
+    }
+    if (role === "admin" && !isPasswordValid) {
+      return { msg: "Password must be ≥ 6 chars & match", valid: false };
+    }
+    return { msg: "All required details complete", valid: true };
+  };
+
+  const validationHint = getValidationHint();
 
   const toggleCrop = (crop: string) => {
     setFormData((prev) => {
@@ -174,43 +225,10 @@ export function AddAdminDialog({
     });
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-    }
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = "Phone number is required";
-    }
-
-    if (role === "admin") {
-      if (!formData.email.trim()) {
-        newErrors.email = "Email is required for admin accounts";
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = "Invalid email format";
-      }
-      if (!formData.password) {
-        newErrors.password = "Password is required for admin accounts";
-      } else if (formData.password.length < 6) {
-        newErrors.password = "Password must be at least 6 characters";
-      }
-      if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = "Passwords do not match";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!isFormValid) {
       return;
     }
 
@@ -258,7 +276,6 @@ export function AddAdminDialog({
       const success = await addUser(payload);
 
       if (success) {
-        // Also call onAddAdmin if legacy handler passed
         if (onAddAdmin && role === "admin") {
           onAddAdmin({
             name: `${formData.firstName} ${formData.lastName}`,
@@ -314,14 +331,15 @@ export function AddAdminDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden flex flex-col border-emerald-900/20 bg-card">
-        <DialogHeader className="p-6 pb-4 border-b border-border bg-muted/30">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+      <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden flex flex-col border-emerald-900/20 bg-card shadow-2xl">
+        {/* Header Section (Fixed Top) */}
+        <DialogHeader className="p-6 pb-4 border-b border-border bg-muted/30 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold">Onboard New User</DialogTitle>
+              <DialogTitle className="text-xl font-bold tracking-tight">Onboard New User</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                 Create a pre-configured Farmer, Service Provider, Agent, or Admin account
               </DialogDescription>
@@ -333,7 +351,7 @@ export function AddAdminDialog({
             <button
               type="button"
               onClick={() => setRole("farmer")}
-              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border ${
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
                 role === "farmer"
                   ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
                   : "bg-muted/50 hover:bg-muted text-muted-foreground border-transparent"
@@ -346,7 +364,7 @@ export function AddAdminDialog({
             <button
               type="button"
               onClick={() => setRole("service_provider")}
-              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border ${
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
                 role === "service_provider"
                   ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
                   : "bg-muted/50 hover:bg-muted text-muted-foreground border-transparent"
@@ -359,7 +377,7 @@ export function AddAdminDialog({
             <button
               type="button"
               onClick={() => setRole("agent")}
-              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border ${
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
                 role === "agent"
                   ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
                   : "bg-muted/50 hover:bg-muted text-muted-foreground border-transparent"
@@ -372,7 +390,7 @@ export function AddAdminDialog({
             <button
               type="button"
               onClick={() => setRole("admin")}
-              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border ${
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
                 role === "admin"
                   ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
                   : "bg-muted/50 hover:bg-muted text-muted-foreground border-transparent"
@@ -384,8 +402,10 @@ export function AddAdminDialog({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 p-6 space-y-6">
+        {/* Main Form (Flex column with Scrollable Middle Body & Fixed Footer) */}
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          {/* Scrollable Form Body */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
             {/* SECTION 1: Personal Information */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -400,9 +420,8 @@ export function AddAdminDialog({
                     placeholder="e.g. Kwame"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className={errors.firstName ? "border-destructive" : ""}
+                    className={!isFirstNameValid && formData.firstName ? "border-destructive" : ""}
                   />
-                  {errors.firstName && <p className="text-[10px] text-destructive">{errors.firstName}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -412,9 +431,8 @@ export function AddAdminDialog({
                     placeholder="e.g. Mensah"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className={errors.lastName ? "border-destructive" : ""}
+                    className={!isLastNameValid && formData.lastName ? "border-destructive" : ""}
                   />
-                  {errors.lastName && <p className="text-[10px] text-destructive">{errors.lastName}</p>}
                 </div>
               </div>
 
@@ -426,9 +444,8 @@ export function AddAdminDialog({
                     placeholder="e.g. 0244123456"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    className={errors.phoneNumber ? "border-destructive" : ""}
+                    className={!isPhoneValid && formData.phoneNumber ? "border-destructive" : ""}
                   />
-                  {errors.phoneNumber && <p className="text-[10px] text-destructive">{errors.phoneNumber}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -441,9 +458,8 @@ export function AddAdminDialog({
                     placeholder="e.g. kwame@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={errors.email ? "border-destructive" : ""}
+                    className={!isEmailValid ? "border-destructive" : ""}
                   />
-                  {errors.email && <p className="text-[10px] text-destructive">{errors.email}</p>}
                 </div>
               </div>
 
@@ -532,9 +548,7 @@ export function AddAdminDialog({
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className={errors.password ? "border-destructive" : ""}
                     />
-                    {errors.password && <p className="text-[10px] text-destructive">{errors.password}</p>}
                   </div>
 
                   <div className="space-y-1.5">
@@ -545,9 +559,7 @@ export function AddAdminDialog({
                       placeholder="••••••••"
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className={errors.confirmPassword ? "border-destructive" : ""}
                     />
-                    {errors.confirmPassword && <p className="text-[10px] text-destructive">{errors.confirmPassword}</p>}
                   </div>
                 </div>
               )}
@@ -595,7 +607,7 @@ export function AddAdminDialog({
                           variant={selected ? "default" : "outline"}
                           className={`cursor-pointer transition-all ${
                             selected
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                               : "hover:border-emerald-500"
                           }`}
                           onClick={() => toggleCrop(crop)}
@@ -689,7 +701,7 @@ export function AddAdminDialog({
                           variant={selected ? "default" : "outline"}
                           className={`cursor-pointer transition-all ${
                             selected
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                               : "hover:border-emerald-500"
                           }`}
                           onClick={() => toggleService(serv.id)}
@@ -761,24 +773,48 @@ export function AddAdminDialog({
                 </div>
               </div>
             )}
-          </ScrollArea>
+          </div>
 
-          <div className="p-4 border-t border-border bg-muted/20 flex items-center justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[130px]"
-            >
-              {isSubmitting ? "Onboarding..." : `Onboard ${role.replace("_", " ")}`}
-            </Button>
+          {/* Fixed Footer Bar (Always 100% visible at the bottom) */}
+          <div className="p-4 border-t border-border bg-muted/30 flex-shrink-0 flex items-center justify-between gap-4">
+            {/* Real-time Validation Helper Badge */}
+            <div className="flex items-center gap-2">
+              {validationHint.valid ? (
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1 text-[11px] py-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{validationHint.msg}</span>
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1 text-[11px] py-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>{validationHint.msg}</span>
+                </Badge>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+                className="cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!isFormValid || isSubmitting}
+                className={
+                  isFormValid && !isSubmitting
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md shadow-emerald-600/20 cursor-pointer min-w-[140px] transition-all"
+                    : "bg-muted text-muted-foreground border-transparent cursor-not-allowed opacity-60 min-w-[140px]"
+                }
+              >
+                {isSubmitting ? "Onboarding..." : `Onboard ${role.replace("_", " ")}`}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
