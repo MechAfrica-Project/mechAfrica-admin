@@ -1462,12 +1462,17 @@ export interface AdminFarmDetail {
   region?: string;
   district?: string;
   mainCrop?: string;
+  landOwnership?: string;
+  farmingMethod?: string;
 }
 
 export interface AdminEquipmentDetail {
   name?: string;
   type?: string;
   quantity?: number;
+  brand?: string;
+  model?: string;
+  status?: string;
 }
 
 export interface AdminUserDetailsResponse {
