@@ -577,6 +577,13 @@ class MechAfricaAPIClient {
     return this.put(`/admin/settings/${key}`, data as unknown as Record<string, unknown>);
   }
 
+  /**
+   * Generate AI welcome SMS templates for a specific role
+   */
+  async generateWelcomeSMSTemplates(role: string): Promise<ApiResponse<{ templates: string[] }>> {
+    return this.get<{ templates: string[] }>(`/admin/settings/generate-sms?role=${role}`);
+  }
+
   // ---------------------------------------------------------------------------
   // Service Request Endpoints
   // ---------------------------------------------------------------------------
