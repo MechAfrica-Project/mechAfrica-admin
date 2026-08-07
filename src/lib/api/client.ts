@@ -25,6 +25,8 @@ import type {
   BackendManageUserRequest,
   DataQualitySummary,
   BackendUpdateProfileRequest,
+  SystemSetting,
+  UpsertSettingRequest,
   AdminUpdateUserRequest,
   AdminUserDetailsResponse,
   FrontendLoginResponse,
@@ -552,6 +554,27 @@ class MechAfricaAPIClient {
    */
   async deleteAdmin(adminId: string): Promise<ApiResponse<unknown>> {
     return this.manageUser(adminId, "deactivate");
+  }
+
+  // ---------------------------------------------------------------------------
+  // System Settings Endpoints
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Get all system settings
+   */
+  async getSettings(): Promise<ApiResponse<SystemSetting[]>> {
+    return this.get<SystemSetting[]>("/admin/settings");
+  }
+
+  /**
+   * Update a specific system setting
+   */
+  async updateSetting(
+    key: string,
+    data: UpsertSettingRequest
+  ): Promise<ApiResponse<unknown>> {
+    return this.put(`/admin/settings/${key}`, data as unknown as Record<string, unknown>);
   }
 
   // ---------------------------------------------------------------------------

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Check, ChevronsUpDown, Loader2, Search, X } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import { api } from "@/lib/api/client";
+import { FrontendContact } from "@/lib/api/types";
 
 interface UserOption {
   id: string;
@@ -37,7 +38,7 @@ export function UserCombobox({ value, onChange, placeholder = "Search user by na
       // We'll use role=all or omit role, but our API client expects a role or we use getUsers
       const response = await api.getUsers({ search, limit: 10, page: 1 });
       
-      const mappedOptions = response.data.map((u: any) => ({
+      const mappedOptions = response.data.map((u: FrontendContact) => ({
         id: u.id,
         name: `${u.firstName || ""} ${u.otherNames || ""}`.trim() || "Unknown",
         phone: u.phone || "No phone",
@@ -65,7 +66,7 @@ export function UserCombobox({ value, onChange, placeholder = "Search user by na
             phone: u.phone_number || "No phone",
             role: u.role || "user",
           });
-        } catch (e) {
+        } catch {
           console.error("Failed to fetch selected user details");
         }
       };
@@ -116,6 +117,7 @@ export function UserCombobox({ value, onChange, placeholder = "Search user by na
         }}
         role="combobox"
         aria-expanded={isOpen}
+        aria-controls="user-listbox"
         aria-haspopup="listbox"
       >
         <div className="flex flex-1 items-center gap-2 overflow-hidden">
@@ -166,7 +168,7 @@ export function UserCombobox({ value, onChange, placeholder = "Search user by na
               No users found.
             </div>
           ) : (
-            <ul role="listbox" className="w-full">
+            <ul id="user-listbox" role="listbox" className="w-full">
               {options.map((option) => (
                 <li
                   key={option.id}

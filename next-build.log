@@ -1,0 +1,51 @@
+   ▲ Next.js 15.5.21
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 6.9s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/26) ...
+   Generating static pages (6/26) 
+   Generating static pages (12/26) 
+   Generating static pages (19/26) 
+ ✓ Generating static pages (26/26)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                             Size  First Load JS
+┌ ○ /                                                37.8 kB         169 kB
+├ ○ /_not-found                                        146 B         102 kB
+├ ƒ /api/finances/data                                 146 B         102 kB
+├ ƒ /api/weather                                       146 B         102 kB
+├ ○ /dashboard/alerts                                  146 B         102 kB
+├ ○ /dashboard/alerts/broadcast                      7.09 kB         166 kB
+├ ○ /dashboard/crops                                 4.26 kB         170 kB
+├ ○ /dashboard/dashboard                               146 B         102 kB
+├ ○ /dashboard/dashboard/database-page               20.3 kB         179 kB
+├ ○ /dashboard/dashboard/maps-page                    291 kB         568 kB
+├ ○ /dashboard/dashboard/provider-verification       6.99 kB         171 kB
+├ ƒ /dashboard/dashboard/provider-verification/[id]    450 B         103 kB
+├ ○ /dashboard/dashboard/reports                     9.06 kB         250 kB
+├ ○ /dashboard/finances/revenue-payment              5.75 kB         242 kB
+├ ○ /dashboard/onboarding                              146 B         102 kB
+├ ○ /dashboard/onboarding/jobs                       5.81 kB         160 kB
+├ ƒ /dashboard/onboarding/jobs/[id]                  22.5 kB         195 kB
+├ ○ /dashboard/onboarding/upload                     11.9 kB         176 kB
+├ ○ /dashboard/requests/assignment                   5.52 kB         147 kB
+├ ○ /dashboard/requests/list                         8.82 kB         126 kB
+├ ○ /dashboard/requests/request-management           4.37 kB         237 kB
+├ ƒ /dashboard/requests/request-management/[id]      6.09 kB         158 kB
+├ ○ /dashboard/services                              4.36 kB         170 kB
+├ ○ /dashboard/settings                              6.85 kB         133 kB
+├ ○ /dashboard/users                                 20.2 kB         179 kB
+└ ○ /dashboard/weather/weather-data                  12.8 kB         219 kB
++ First Load JS shared by all                         102 kB
+  ├ chunks/1255-f5767ca0d1da046a.js                    46 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js              54.2 kB
+  └ other shared chunks (total)                         2 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

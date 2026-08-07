@@ -43,6 +43,8 @@ export type {
   BackendManageUserRequest,
   BackendUpdateProfileRequest,
   AdminUpdateUserRequest,
+  SystemSetting,
+  UpsertSettingRequest,
   // Frontend types
   FrontendUser,
   FrontendLoginResponse,

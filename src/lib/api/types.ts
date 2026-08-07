@@ -14,6 +14,20 @@ export interface ApiResponse<T> {
 // Authentication Types
 // =============================================================================
 
+export interface SystemSetting {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  key: string;
+  value: string;
+  description?: string;
+}
+
+export interface UpsertSettingRequest {
+  value: string;
+  description?: string;
+}
+
 export interface BackendLoginRequest {
   email?: string;
   phone_number?: string;
