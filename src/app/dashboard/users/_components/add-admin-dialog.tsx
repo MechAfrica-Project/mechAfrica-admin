@@ -155,6 +155,7 @@ export function AddAdminDialog({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Real-time Field Validations
   const isFirstNameValid = formData.firstName.trim().length > 0;
@@ -276,6 +277,7 @@ export function AddAdminDialog({
       const success = await addUser(payload);
 
       if (success) {
+        setServerError(null);
         if (onAddAdmin && role === "admin") {
           onAddAdmin({
             name: `${formData.firstName} ${formData.lastName}`,
@@ -321,9 +323,13 @@ export function AddAdminDialog({
           equipmentBrand: "John Deere",
           equipmentModel: "5075E",
         });
+      } else {
+        const storeErr = useAdminsStore.getState().error;
+        setServerError(storeErr || "Failed to onboard user. Please check form inputs.");
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to onboard user:", err);
+      setServerError(err instanceof Error ? err.message : "Failed to onboard user");
     } finally {
       setIsSubmitting(false);
     }
@@ -406,6 +412,23 @@ export function AddAdminDialog({
         <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Scrollable Form Body */}
           <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+            {/* Server Error Alert Banner */}
+            {serverError && (
+              <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-medium flex items-center justify-between shadow-sm animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-destructive" />
+                  <span>{serverError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setServerError(null)}
+                  className="text-destructive font-semibold hover:underline text-[11px] ml-2"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
             {/* SECTION 1: Personal Information */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">

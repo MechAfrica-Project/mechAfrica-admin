@@ -8,7 +8,7 @@ import { AdminsTable } from "./_components/admins-table";
 import { DataQualityBanner } from "./_components/data-quality-banner";
 import { useAdminsStore } from "@/stores/useAdminsStore";
 import { useTableStore } from "@/stores/useTableStore";
-import { RefreshCcw, Plus, Search, Filter } from "lucide-react";
+import { RefreshCcw, Plus, Search, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -291,11 +291,20 @@ function AdminsPageContent() {
             <div className="relative w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search by name, phone, location..." 
-                className="pl-9 bg-background border-border"
+                placeholder="Search by name, phone (+233...), email, location..." 
+                className="pl-9 pr-9 bg-background border-border"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5 rounded-full hover:bg-muted"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
