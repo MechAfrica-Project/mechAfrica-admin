@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { AdminUpdateUserRequest, AdminFarmDetail } from "@/lib/api/types";
 import { api } from "@/lib/api/client";
 import { useCatalogStore } from "@/stores/useCatalogStore";
+import { useLocationStore } from "@/stores/useLocationStore";
 import { AdminTypeBadge } from "./admin-type-badge";
 import {
   Pencil,
@@ -87,12 +88,26 @@ export function EditUserDialog({
   const fetchCrops = useCatalogStore((s) => s.fetchCrops);
   const fetchServices = useCatalogStore((s) => s.fetchServices);
 
+  // Location Store
+  const regions = useLocationStore((s) => s.regions);
+  const isLoadingLocations = useLocationStore((s) => s.isLoading);
+  const fetchLocations = useLocationStore((s) => s.fetchLocations);
+
+  // Location selection state (IDs)
+  const [selectedRegionId, setSelectedRegionId] = useState("");
+  const [selectedDistrictId, setSelectedDistrictId] = useState("");
+
+  // Derived cascading data
+  const selectedRegion = regions.find((r) => r.id === selectedRegionId);
+  const availableDistricts = selectedRegion?.districts || [];
+
   useEffect(() => {
     if (isOpen) {
       fetchCrops();
       fetchServices();
+      fetchLocations();
     }
-  }, [isOpen, fetchCrops, fetchServices]);
+  }, [isOpen, fetchCrops, fetchServices, fetchLocations]);
 
   const availableCrops =
     storeCrops.length > 0
@@ -164,14 +179,17 @@ export function EditUserDialog({
           setFarmsList(farms);
           if (primaryFarm) setSelectedFarmId(primaryFarm.id);
 
+          const userRegionName = details.region_name || user.region_name || "";
+          const userDistrictName = details.district_name || user.district_name || "";
+
           setFormData({
             firstName: user.first_name || "",
             lastName: user.last_name || "",
             phoneNumber: user.phone_number || "",
             idNumber: user.id_number || "",
             communityName: details.community_name || user.community_name || user.street_address || initialData.communityName || "",
-            regionName: details.region_name || user.region_name || "",
-            districtName: details.district_name || user.district_name || "",
+            regionName: userRegionName,
+            districtName: userDistrictName,
             farmName: primaryFarm?.farmName || "",
             farmLatitude: primaryFarm?.latitude?.toString() || "",
             farmLongitude: primaryFarm?.longitude?.toString() || "",
@@ -190,6 +208,21 @@ export function EditUserDialog({
             equipmentBrand: details.equipment && details.equipment.length > 0 ? (details.equipment[0].brand || "") : "",
             equipmentModel: details.equipment && details.equipment.length > 0 ? (details.equipment[0].model || "") : "",
           });
+
+          // Auto-match existing region/district names to their IDs
+          // This runs after locations are fetched from the store
+          const matchedRegion = regions.find(
+            (r) => r.name.toLowerCase() === userRegionName.toLowerCase()
+          );
+          if (matchedRegion) {
+            setSelectedRegionId(matchedRegion.id);
+            const matchedDistrict = matchedRegion.districts.find(
+              (d) => d.name.toLowerCase() === userDistrictName.toLowerCase()
+            );
+            if (matchedDistrict) {
+              setSelectedDistrictId(matchedDistrict.id);
+            }
+          }
         }
       } catch (err) {
         console.error("Failed to load user details for editing:", err);
@@ -203,7 +236,7 @@ export function EditUserDialog({
     return () => {
       mounted = false;
     };
-  }, [isOpen, userId, initialData.communityName]);
+  }, [isOpen, userId, initialData.communityName, regions]);
 
   // Real-time Field Validations
   const isFirstNameValid = formData.firstName.trim().length > 0;
@@ -388,29 +421,63 @@ export function EditUserDialog({
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Region</Label>
+                    <Select
+                      value={selectedRegionId}
+                      onValueChange={(val) => {
+                        setSelectedRegionId(val);
+                        setSelectedDistrictId("");
+                        const region = regions.find((r) => r.id === val);
+                        setFormData((prev) => ({
+                          ...prev,
+                          regionName: region?.name || "",
+                          districtName: "",
+                        }));
+                      }}
+                      disabled={isLoadingLocations}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingLocations ? "Loading..." : "Select Region"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {regions.map((r) => (
+                          <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">District</Label>
+                    <Select
+                      value={selectedDistrictId}
+                      onValueChange={(val) => {
+                        setSelectedDistrictId(val);
+                        const district = availableDistricts.find((d) => d.id === val);
+                        setFormData((prev) => ({
+                          ...prev,
+                          districtName: district?.name || "",
+                        }));
+                      }}
+                      disabled={!selectedRegionId || availableDistricts.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select District" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableDistricts.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
                     <Label htmlFor="editCommunity" className="text-xs font-medium">Community / Town</Label>
                     <Input
                       id="editCommunity"
                       value={formData.communityName}
                       onChange={(e) => setFormData({ ...formData, communityName: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="editRegion" className="text-xs font-medium">Region</Label>
-                    <Input
-                      id="editRegion"
-                      value={formData.regionName}
-                      onChange={(e) => setFormData({ ...formData, regionName: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="editDistrict" className="text-xs font-medium">District</Label>
-                    <Input
-                      id="editDistrict"
-                      value={formData.districtName}
-                      onChange={(e) => setFormData({ ...formData, districtName: e.target.value })}
                     />
                   </div>
                 </div>

@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAdminsStore } from "@/stores/useAdminsStore";
 import { useCatalogStore } from "@/stores/useCatalogStore";
+import { useLocationStore } from "@/stores/useLocationStore";
 import {
   Tractor,
   Sprout,
@@ -92,12 +93,26 @@ export function AddAdminDialog({
   const fetchCrops = useCatalogStore((s) => s.fetchCrops);
   const fetchServices = useCatalogStore((s) => s.fetchServices);
 
+  // Location Store
+  const regions = useLocationStore((s) => s.regions);
+  const isLoadingLocations = useLocationStore((s) => s.isLoading);
+  const fetchLocations = useLocationStore((s) => s.fetchLocations);
+
+  // Location selection state (IDs)
+  const [selectedRegionId, setSelectedRegionId] = useState("");
+  const [selectedDistrictId, setSelectedDistrictId] = useState("");
+
+  // Derived cascading data
+  const selectedRegion = regions.find((r) => r.id === selectedRegionId);
+  const availableDistricts = selectedRegion?.districts || [];
+
   useEffect(() => {
     if (isOpen) {
       fetchCrops();
       fetchServices();
+      fetchLocations();
     }
-  }, [isOpen, fetchCrops, fetchServices]);
+  }, [isOpen, fetchCrops, fetchServices, fetchLocations]);
 
   // Derived list from catalog store or fallback
   const availableCrops =
@@ -323,6 +338,8 @@ export function AddAdminDialog({
           equipmentBrand: "",
           equipmentModel: "",
         });
+        setSelectedRegionId("");
+        setSelectedDistrictId("");
       } else {
         const storeErr = useAdminsStore.getState().error;
         setServerError(storeErr || "Failed to onboard user. Please check form inputs.");
@@ -531,32 +548,64 @@ export function AddAdminDialog({
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Region</Label>
+                  <Select
+                    value={selectedRegionId}
+                    onValueChange={(val) => {
+                      setSelectedRegionId(val);
+                      setSelectedDistrictId("");
+                      const region = regions.find((r) => r.id === val);
+                      setFormData((prev) => ({
+                        ...prev,
+                        regionName: region?.name || "",
+                        districtName: "",
+                      }));
+                    }}
+                    disabled={isLoadingLocations}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={isLoadingLocations ? "Loading..." : "Select Region"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {regions.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">District</Label>
+                  <Select
+                    value={selectedDistrictId}
+                    onValueChange={(val) => {
+                      setSelectedDistrictId(val);
+                      const district = availableDistricts.find((d) => d.id === val);
+                      setFormData((prev) => ({
+                        ...prev,
+                        districtName: district?.name || "",
+                      }));
+                    }}
+                    disabled={!selectedRegionId || availableDistricts.length === 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select District" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableDistricts.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
                   <Label htmlFor="communityName" className="text-xs font-medium">Community / Town</Label>
                   <Input
                     id="communityName"
                     placeholder="e.g. Ejura"
                     value={formData.communityName}
                     onChange={(e) => setFormData({ ...formData, communityName: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="regionName" className="text-xs font-medium">Region</Label>
-                  <Input
-                    id="regionName"
-                    placeholder="e.g. Ashanti"
-                    value={formData.regionName}
-                    onChange={(e) => setFormData({ ...formData, regionName: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="districtName" className="text-xs font-medium">District</Label>
-                  <Input
-                    id="districtName"
-                    placeholder="e.g. Ejura-Sekyedumase"
-                    value={formData.districtName}
-                    onChange={(e) => setFormData({ ...formData, districtName: e.target.value })}
                   />
                 </div>
               </div>
