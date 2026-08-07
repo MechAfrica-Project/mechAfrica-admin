@@ -211,13 +211,18 @@ export function EditUserDialog({
 
           // Auto-match existing region/district names to their IDs
           // This runs after locations are fetched from the store
+          const sanitizeName = (name: string) => name.toLowerCase().replace(/\s+region$/, "").replace(/\s+district$/, "").trim();
+          const sanitizedUserRegion = sanitizeName(userRegionName);
+
           const matchedRegion = regions.find(
-            (r) => r.name.toLowerCase() === userRegionName.toLowerCase()
+            (r) => sanitizeName(r.name) === sanitizedUserRegion
           );
+
           if (matchedRegion) {
             setSelectedRegionId(matchedRegion.id);
+            const sanitizedUserDistrict = sanitizeName(userDistrictName);
             const matchedDistrict = matchedRegion.districts.find(
-              (d) => d.name.toLowerCase() === userDistrictName.toLowerCase()
+              (d) => sanitizeName(d.name) === sanitizedUserDistrict
             );
             if (matchedDistrict) {
               setSelectedDistrictId(matchedDistrict.id);
