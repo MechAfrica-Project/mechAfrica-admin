@@ -734,6 +734,29 @@ class MechAfricaAPIClient {
     return this.post("/admin/push/broadcast", payload);
   }
 
+  /**
+   * Send an SMS notification to specific users or roles
+   */
+  async sendAdminSMSNotification(payload: {
+    title?: string;
+    body: string;
+    target_role?: string;
+    user_id?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.post("/admin/sms/send", payload);
+  }
+
+  /**
+   * Broadcast an SMS notification to all users
+   */
+  async broadcastAdminSMSNotification(payload: {
+    title?: string;
+    body: string;
+    role?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.post("/admin/sms/broadcast", payload);
+  }
+
   // ---------------------------------------------------------------------------
   // Bulk Onboarding Endpoints
   // ---------------------------------------------------------------------------

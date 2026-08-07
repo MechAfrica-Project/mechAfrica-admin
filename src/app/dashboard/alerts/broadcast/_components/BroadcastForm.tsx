@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api/client";
+import { UserCombobox } from "./UserCombobox";
+import { Smartphone, Bell } from "lucide-react";
 
 export default function BroadcastForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +22,7 @@ export default function BroadcastForm() {
   const [body, setBody] = useState("");
   const [targetAudience, setTargetAudience] = useState("all");
   const [userId, setUserId] = useState("");
+  const [channel, setChannel] = useState<"push" | "sms">("push");
 
   const handleSend = async () => {
     if (title.length < 2) {
@@ -35,10 +38,11 @@ export default function BroadcastForm() {
       setIsSubmitting(true);
 
       if (targetAudience === "all") {
-        await api.broadcastAdminPushNotification({
-          title,
-          body,
-        });
+        if (channel === "push") {
+          await api.broadcastAdminPushNotification({ title, body });
+        } else {
+          await api.broadcastAdminSMSNotification({ title, body });
+        }
       } else {
         const payload: Parameters<typeof api.sendAdminPushNotification>[0] = {
           title,
@@ -51,17 +55,21 @@ export default function BroadcastForm() {
           payload.target_role = "service_provider";
         } else if (targetAudience === "specific_user") {
           if (!userId) {
-            toast.error("User ID is required for specific user target.");
+            toast.error("Please select a specific user.");
             setIsSubmitting(false);
             return;
           }
           payload.user_id = userId;
         }
 
-        await api.sendAdminPushNotification(payload);
+        if (channel === "push") {
+          await api.sendAdminPushNotification(payload);
+        } else {
+          await api.sendAdminSMSNotification(payload);
+        }
       }
 
-      toast.success("Push notification sent successfully!");
+      toast.success(`${channel === 'push' ? 'Push notification' : 'SMS'} sent successfully!`);
       setTitle("");
       setBody("");
       setTargetAudience("all");
@@ -77,6 +85,40 @@ export default function BroadcastForm() {
   return (
     <div className="max-w-2xl bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
       <div className="space-y-6">
+        
+        {/* Channel Selection */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Delivery Channel</span>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setChannel("push")}
+              className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
+                channel === "push" 
+                  ? "border-[#00594C] bg-[#00594C]/5 text-[#00594C]" 
+                  : "border-gray-100 bg-white text-gray-500 hover:border-gray-200"
+              }`}
+            >
+              <Bell className={`w-6 h-6 mb-2 ${channel === "push" ? "text-[#00594C]" : "text-gray-400"}`} />
+              <span className="font-semibold text-sm">Push Notification</span>
+              <span className="text-xs opacity-70 mt-1">Send to app</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setChannel("sms")}
+              className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
+                channel === "sms" 
+                  ? "border-[#00594C] bg-[#00594C]/5 text-[#00594C]" 
+                  : "border-gray-100 bg-white text-gray-500 hover:border-gray-200"
+              }`}
+            >
+              <Smartphone className={`w-6 h-6 mb-2 ${channel === "sms" ? "text-[#00594C]" : "text-gray-400"}`} />
+              <span className="font-semibold text-sm">SMS Message</span>
+              <span className="text-xs opacity-70 mt-1">Send to phone</span>
+            </button>
+          </div>
+        </div>
         
         {/* Title */}
         <div className="space-y-2">
@@ -129,15 +171,12 @@ export default function BroadcastForm() {
         {/* Specific User ID */}
         {targetAudience === "specific_user" && (
           <div className="space-y-2">
-            <span className="text-xs font-medium text-gray-600">User ID (UUID)</span>
-            <div className="rounded-2xl border border-gray-100 bg-[#f8faf9] px-3 py-1">
-              <Input
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                className="h-10 border-none bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
-              />
-            </div>
+            <span className="text-xs font-medium text-gray-600">Select User</span>
+            <UserCombobox 
+              value={userId} 
+              onChange={setUserId} 
+              placeholder="Search by name, business, or phone..." 
+            />
           </div>
         )}
 
