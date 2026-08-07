@@ -98,23 +98,7 @@ export default function ProvidersPage() {
     }
   };
 
-  // Loading state
-  if (isLoading && providers.length === 0) {
-    return (
-      <div className="min-h-screen bg-[#f8faf9] flex">
-        <main className="flex-1 p-6">
-          <div className="max-w-full mx-auto">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00594C] mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading providers...</p>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+
 
   // Error state
   if (error && providers.length === 0) {
@@ -168,7 +152,7 @@ export default function ProvidersPage() {
             </span>
           </div>
 
-          <ProvidersTable providers={providersList} onProviderClick={handleProviderClick} />
+          <ProvidersTable isLoading={isLoading} providers={providersList} onProviderClick={handleProviderClick} />
         </div>
       </main>
 

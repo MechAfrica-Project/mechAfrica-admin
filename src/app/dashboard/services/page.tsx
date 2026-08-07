@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useCatalogStore, ServiceCatalog } from "@/stores/useCatalogStore";
 import { Plus, Edit2, Trash2, Image as ImageIcon, X, UploadCloud } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ServicesPage() {
   const { services, isLoading, fetchServices, createService, updateService, deleteService, uploadImage } = useCatalogStore();
@@ -108,7 +109,18 @@ export default function ServicesPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading && services.length === 0 ? (
-              <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500">Loading...</td></tr>
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  <td className="px-6 py-4 whitespace-nowrap"><Skeleton className="h-10 w-10 rounded-full" /></td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Skeleton className="h-4 w-[150px] mb-2" />
+                    <Skeleton className="h-3 w-[100px]" />
+                  </td>
+                  <td className="px-6 py-4"><Skeleton className="h-4 w-[250px]" /></td>
+                  <td className="px-6 py-4 whitespace-nowrap"><Skeleton className="h-5 w-[60px] rounded-full" /></td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right"><Skeleton className="h-6 w-16 ml-auto" /></td>
+                </tr>
+              ))
             ) : services.length === 0 ? (
               <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500">No services found.</td></tr>
             ) : (

@@ -12,16 +12,19 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  isLoading?: boolean;
 }
 
 export default function DataTable<TData, TValue>({
   columns,
   data,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -88,7 +91,29 @@ export default function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading && data.length === 0 ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i} className="animate-pulse border-b border-border hover:bg-muted/30 transition-colors">
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={colIndex} className="py-3 px-4">
+                      {colIndex === 0 ? (
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-10 w-10 rounded-full" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-[120px]" />
+                            <Skeleton className="h-3 w-[80px]" />
+                          </div>
+                        </div>
+                      ) : colIndex === columns.length - 1 ? (
+                        <Skeleton className="h-8 w-8 ml-auto" />
+                      ) : (
+                        <Skeleton className="h-4 w-full max-w-[100px]" />
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -117,6 +142,11 @@ export default function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </ListCard>
+      {isLoading && data.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden z-10 rounded-t-xl">
+          <div className="h-full bg-primary animate-[progress_1s_ease-in-out_infinite]" style={{ width: "50%", transformOrigin: "0% 50%" }} />
+        </div>
+      )}
     </div>
   );
 }

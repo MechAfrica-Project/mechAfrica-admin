@@ -46,20 +46,7 @@ export default function AllRequestsPage() {
   const currentPage = pagination?.page || 1;
   const totalRecords = pagination?.total || requests.length;
 
-  if (isLoading && requests.length === 0) {
-    return (
-      <main className="min-h-screen bg-background p-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00594C] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
+
 
   if (error && requests.length === 0) {
     return (

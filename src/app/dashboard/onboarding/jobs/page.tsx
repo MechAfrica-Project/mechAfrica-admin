@@ -73,39 +73,7 @@ export default function JobsPage() {
     router.push("/dashboard/onboarding/upload");
   };
 
-  // Loading state
-  if (isLoadingJobs && jobs.length === 0) {
-    return (
-      <div className="min-h-full bg-gray-50/50 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        <div className="max-w-5xl mx-auto">
-          {/* Header Skeleton */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gray-200 animate-pulse" />
-              <div className="space-y-2">
-                <div className="h-6 bg-gray-200 rounded w-48 animate-pulse" />
-                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse" />
-              </div>
-            </div>
-            <div className="h-10 bg-gray-200 rounded w-32 animate-pulse" />
-          </div>
 
-          {/* Filter Skeleton */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-10 bg-gray-200 rounded w-80 animate-pulse" />
-            <div className="h-10 bg-gray-200 rounded w-40 animate-pulse" />
-          </div>
-
-          {/* Jobs List Skeleton */}
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <JobCardSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Error state
   if (error && jobs.length === 0) {
@@ -240,7 +208,13 @@ export default function JobsPage() {
         </div>
 
         {/* Jobs List */}
-        {filteredJobs.length === 0 ? (
+        {isLoadingJobs && jobs.length === 0 ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <JobCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredJobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 border rounded-xl bg-white">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <FileSpreadsheet className="w-8 h-8 text-gray-400" />
@@ -265,6 +239,11 @@ export default function JobsPage() {
           </div>
         ) : (
           <div className="space-y-4">
+            {isLoadingJobs && (
+              <div className="h-1 w-full bg-[#00594C]/20 rounded-full overflow-hidden mb-2">
+                <div className="h-full bg-[#00594C] animate-[progress_1s_ease-in-out_infinite]" style={{ width: "50%", transformOrigin: "0% 50%" }} />
+              </div>
+            )}
             {filteredJobs.map((job) => (
               <JobCard key={job.id} job={job} />
             ))}

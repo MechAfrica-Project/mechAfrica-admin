@@ -7,13 +7,15 @@ import type { ProviderListItem } from "../types";
 import ListCard from '@/components/lists/ListCard';
 import Pagination from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Props {
+  isLoading?: boolean;
   providers: ProviderListItem[];
   onProviderClick: (p: ProviderListItem) => void;
 }
 
-export function ProvidersTable({ providers, onProviderClick }: Props) {
+export function ProvidersTable({ isLoading, providers, onProviderClick }: Props) {
   const page = useTableStore((s) => s.pages["providers"] || 1);
   const setPage = useTableStore((s) => s.setPage);
   const pageSize = 6;
@@ -34,7 +36,32 @@ export function ProvidersTable({ providers, onProviderClick }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visibleProviders.map((p) => (
+            {isLoading && providers.length === 0 ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i} className="animate-pulse">
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-start gap-4">
+                      <Skeleton className="w-10 h-10 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[150px]" />
+                        <Skeleton className="h-3 w-[100px]" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4"><Skeleton className="h-5 w-[80px] rounded-full" /></TableCell>
+                  <TableCell className="px-6 py-4"><Skeleton className="h-4 w-[120px]" /></TableCell>
+                  <TableCell className="px-6 py-4"><Skeleton className="h-4 w-[100px]" /></TableCell>
+                  <TableCell className="px-6 py-4"><Skeleton className="h-4 w-4 ml-auto" /></TableCell>
+                </TableRow>
+              ))
+            ) : providers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                  No providers found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              visibleProviders.map((p) => (
               <TableRow
                 key={p.id}
                 className="border-b last:border-b-0 hover:bg-muted/30 transition-colors cursor-pointer"
@@ -72,10 +99,16 @@ export function ProvidersTable({ providers, onProviderClick }: Props) {
                 </TableCell>
                 <TableCell className="px-6 py-4 align-top text-right" />
               </TableRow>
-            ))}
+            ))
+            )}
           </TableBody>
         </Table>
       </div>
+      {isLoading && providers.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden z-10 rounded-t-xl">
+          <div className="h-full bg-primary animate-[progress_1s_ease-in-out_infinite]" style={{ width: "50%", transformOrigin: "0% 50%" }} />
+        </div>
+      )}
     </ListCard>
   );
 }

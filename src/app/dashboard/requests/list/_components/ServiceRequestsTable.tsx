@@ -9,10 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
 import type { FrontendRequestItem, BackendNotificationLog } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
 import { AlertCircle, ChevronDown, ChevronRight, MessageSquare, Bell, Smartphone, Mail, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -141,9 +143,9 @@ export function ServiceRequestsTable({
         ) : null
       }
     >
-      {isLoading && (
-        <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      {isLoading && requests.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden z-10 rounded-t-xl">
+          <div className="h-full bg-primary animate-[progress_1s_ease-in-out_infinite]" style={{ width: "50%", transformOrigin: "0% 50%" }} />
         </div>
       )}
 
@@ -162,7 +164,27 @@ export function ServiceRequestsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {requests.length === 0 && !isLoading ? (
+          {isLoading && requests.length === 0 ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i} className="animate-pulse">
+                <TableCell><Skeleton className="h-4 w-4 rounded" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[120px] mb-1" />
+                  <Skeleton className="h-3 w-[80px]" />
+                </TableCell>
+                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[100px] mb-1" />
+                  <Skeleton className="h-3 w-[80px]" />
+                </TableCell>
+                <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
+              </TableRow>
+            ))
+          ) : requests.length === 0 ? (
             <TableRow>
               <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                 No service requests found.

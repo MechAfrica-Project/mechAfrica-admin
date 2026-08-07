@@ -1,9 +1,10 @@
 "use client";
 
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Pagination from "@/components/ui/pagination";
 import ListCard from "@/components/lists/ListCard";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AdminRow } from "./admin-row";
 import { EditUserDialog } from "./edit-user-dialog";
 import { useState } from "react";
@@ -97,9 +98,9 @@ export function AdminsTable({
         ) : null
       }
     >
-      {isLoading && (
-        <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00594C]"></div>
+      {isLoading && pagedAdmins.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-[#00594C]/20 overflow-hidden z-10 rounded-t-xl">
+          <div className="h-full bg-[#00594C] animate-[progress_1s_ease-in-out_infinite]" style={{ width: "50%", transformOrigin: "0% 50%" }} />
         </div>
       )}
       <Table>
@@ -124,16 +125,43 @@ export function AdminsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {pagedAdmins.map((admin) => (
-            <AdminRow
-              key={admin.id}
-              admin={admin}
-              isSelected={selectedAdmins.includes(admin.id)}
-              onSelect={() => onSelectAdmin(admin.id)}
-              onDelete={() => onDeleteAdmin(admin.id)}
-              onEdit={() => setEditingAdmin(admin)}
-            />
-          ))}
+          {isLoading && pagedAdmins.length === 0 ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i} className="animate-pulse">
+                <TableCell><Skeleton className="h-4 w-4 rounded" /></TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-[150px]" />
+                      <Skeleton className="h-3 w-[100px]" />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell><Skeleton className="h-5 w-[80px] rounded-full" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-md ml-auto" /></TableCell>
+              </TableRow>
+            ))
+          ) : pagedAdmins.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                No users found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            pagedAdmins.map((admin) => (
+              <AdminRow
+                key={admin.id}
+                admin={admin}
+                isSelected={selectedAdmins.includes(admin.id)}
+                onSelect={() => onSelectAdmin(admin.id)}
+                onDelete={() => onDeleteAdmin(admin.id)}
+                onEdit={() => setEditingAdmin(admin)}
+              />
+            ))
+          )}
         </TableBody>
       </Table>
     </ListCard>

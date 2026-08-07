@@ -179,21 +179,6 @@ export default function DatabasePage() {
     handleRefresh();
   };
 
-  // Loading state
-  if (isLoading && allContacts.length === 0) {
-    return (
-      <main className="p-3 md:px-6">
-        <div className="mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00594C] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading contacts...</p>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   // Error state
   if (error && allContacts.length === 0) {
@@ -270,6 +255,7 @@ export default function DatabasePage() {
             onDelete: setDeletingContactId,
           })}
           data={filteredContacts}
+          isLoading={isLoading}
         />
       </div>
 
