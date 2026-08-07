@@ -162,7 +162,7 @@ export default function BroadcastForm() {
                 <SelectItem value="all">Everyone (Broadcast)</SelectItem>
                 <SelectItem value="farmers">All Farmers</SelectItem>
                 <SelectItem value="service_providers">All Service Providers</SelectItem>
-                <SelectItem value="specific_user">Specific User ID</SelectItem>
+                <SelectItem value="specific_user">Specific Individual</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -170,8 +170,8 @@ export default function BroadcastForm() {
 
         {/* Specific User ID */}
         {targetAudience === "specific_user" && (
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-gray-600">Select User</span>
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <span className="text-xs font-medium text-gray-600">Find User</span>
             <UserCombobox 
               value={userId} 
               onChange={setUserId} 

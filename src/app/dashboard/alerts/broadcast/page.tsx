@@ -15,7 +15,7 @@ export default function BroadcastNotificationsPage() {
     <div className="p-6">
       <div className="mb-6">
         <p className="text-gray-500">
-          Send direct push notifications to the mobile applications of farmers and service providers.
+          Send direct push notifications and SMS messages to the mobile applications and phones of farmers, service providers, or individual users.
         </p>
       </div>
       <BroadcastForm />
