@@ -142,6 +142,13 @@ class MechAfricaAPIClient {
   private async handleError(response: Response, defaultMessage: string = `HTTP ${response.status}`) {
     const error = await response.json().catch(() => ({}));
     let errorMessage = error.message || defaultMessage;
+    if (error.errors) {
+      if (typeof error.errors === 'string') {
+        errorMessage = `${errorMessage}: ${error.errors}`;
+      } else {
+        errorMessage = `${errorMessage}: ${JSON.stringify(error.errors)}`;
+      }
+    }
 
     // Check for 401 Unauthorized or specific token expiration messages
     if (response.status === 401 || errorMessage.toLowerCase().includes("invalid or expired token")) {
