@@ -42,6 +42,8 @@ interface AdminUser {
   dateOfRegistration: string;
   idNumber?: string;
   communityName?: string;
+  regionName?: string;
+  districtName?: string;
   accountCreatedVia?: string;
 }
 
@@ -49,6 +51,9 @@ interface UserExtras {
   farms: AdminFarmDetail[];
   servicesOffered: string[];
   equipment: AdminEquipmentDetail[];
+  region_name?: string;
+  district_name?: string;
+  community_name?: string;
 }
 
 interface Props {
@@ -100,6 +105,9 @@ export default function AdminDetailsDialog({ open, onOpenChange, user }: Props) 
             farms: (resp.farms || []) as AdminFarmDetail[],
             servicesOffered: resp.services_offered || [],
             equipment: resp.equipment || [],
+            region_name: resp.region_name,
+            district_name: resp.district_name,
+            community_name: resp.community_name,
           });
         }
       } catch {
@@ -192,7 +200,8 @@ export default function AdminDetailsDialog({ open, onOpenChange, user }: Props) 
             <div className="grid grid-cols-2 gap-3">
               <DetailCard icon={<Phone className="w-4 h-4" />} label="Phone Number" value={user?.phoneNumber} />
               <DetailCard icon={<CreditCard className="w-4 h-4" />} label="ID Number" value={user?.idNumber} />
-              <DetailCard icon={<MapPin className="w-4 h-4" />} label="Community / Location" value={user?.communityName} />
+              <DetailCard icon={<MapPin className="w-4 h-4" />} label="Community / Town" value={extras?.community_name || user?.communityName} />
+              <DetailCard icon={<MapPin className="w-4 h-4" />} label="Region & District" value={[extras?.region_name || user?.regionName, extras?.district_name || user?.districtName].filter(Boolean).join(" • ")} />
               <DetailCard icon={<Calendar className="w-4 h-4" />} label="Registration Date" value={user?.dateOfRegistration} />
             </div>
           </div>

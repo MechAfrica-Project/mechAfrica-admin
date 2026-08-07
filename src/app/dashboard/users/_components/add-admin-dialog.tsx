@@ -125,8 +125,8 @@ export function AddAdminDialog({
     idType: "ghana_card",
     idNumber: "",
     communityName: "",
-    regionName: "Ashanti",
-    districtName: "Ejura",
+    regionName: "",
+    districtName: "",
     avatarUrl: "",
     password: "",
     confirmPassword: "",
@@ -135,7 +135,7 @@ export function AddAdminDialog({
     farmName: "",
     farmSize: "",
     farmSizeUnit: "acres",
-    mainCrop: "Maize",
+    mainCrop: "",
     cropTypes: [] as string[],
     landOwnership: "owned",
     farmingMethod: "conventional",
@@ -144,14 +144,14 @@ export function AddAdminDialog({
     businessName: "",
     serviceCategory: "operator",
     servicesOffered: [] as string[],
-    experienceYears: "2",
+    experienceYears: "",
     hourlyRate: "",
     dailyRate: "",
-    serviceRadius: "25",
+    serviceRadius: "",
     equipmentName: "",
-    equipmentType: "Tractor",
-    equipmentBrand: "John Deere",
-    equipmentModel: "5075E",
+    equipmentType: "",
+    equipmentBrand: "",
+    equipmentModel: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -299,29 +299,29 @@ export function AddAdminDialog({
           idType: "ghana_card",
           idNumber: "",
           communityName: "",
-          regionName: "Ashanti",
-          districtName: "Ejura",
+          regionName: "",
+          districtName: "",
           avatarUrl: "",
           password: "",
           confirmPassword: "",
           farmName: "",
           farmSize: "",
           farmSizeUnit: "acres",
-          mainCrop: "Maize",
+          mainCrop: "",
           cropTypes: [],
           landOwnership: "owned",
           farmingMethod: "conventional",
           businessName: "",
           serviceCategory: "operator",
           servicesOffered: [],
-          experienceYears: "2",
+          experienceYears: "",
           hourlyRate: "",
           dailyRate: "",
-          serviceRadius: "25",
+          serviceRadius: "",
           equipmentName: "",
-          equipmentType: "Tractor",
-          equipmentBrand: "John Deere",
-          equipmentModel: "5075E",
+          equipmentType: "",
+          equipmentBrand: "",
+          equipmentModel: "",
         });
       } else {
         const storeErr = useAdminsStore.getState().error;
@@ -409,7 +409,7 @@ export function AddAdminDialog({
         </DialogHeader>
 
         {/* Main Form (Flex column with Scrollable Middle Body & Fixed Footer) */}
-        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden" autoComplete="off">
           {/* Scrollable Form Body */}
           <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
             {/* Server Error Alert Banner */}
@@ -478,6 +478,7 @@ export function AddAdminDialog({
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="off"
                     placeholder="e.g. kwame@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -568,6 +569,7 @@ export function AddAdminDialog({
                     <Input
                       id="password"
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -579,8 +581,9 @@ export function AddAdminDialog({
                     <Input
                       id="confirmPassword"
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••"
-                      value={formData.confirmPassword}
+                      value={formData.password ? formData.confirmPassword : ""}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     />
                   </div>

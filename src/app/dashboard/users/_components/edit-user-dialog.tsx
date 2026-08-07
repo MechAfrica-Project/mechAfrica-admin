@@ -169,9 +169,9 @@ export function EditUserDialog({
             lastName: user.last_name || "",
             phoneNumber: user.phone_number || "",
             idNumber: user.id_number || "",
-            communityName: user.community_name || "",
-            regionName: user.region_name || "Ashanti",
-            districtName: user.district_name || "Ejura",
+            communityName: details.community_name || user.community_name || user.street_address || initialData.communityName || "",
+            regionName: details.region_name || user.region_name || "",
+            districtName: details.district_name || user.district_name || "",
             farmName: primaryFarm?.farmName || "",
             farmLatitude: primaryFarm?.latitude?.toString() || "",
             farmLongitude: primaryFarm?.longitude?.toString() || "",
@@ -203,7 +203,7 @@ export function EditUserDialog({
     return () => {
       mounted = false;
     };
-  }, [isOpen, userId]);
+  }, [isOpen, userId, initialData.communityName]);
 
   // Real-time Field Validations
   const isFirstNameValid = formData.firstName.trim().length > 0;
@@ -263,6 +263,7 @@ export function EditUserDialog({
         id_number: formData.idNumber.trim(),
         community_name: formData.communityName.trim(),
         region_name: formData.regionName.trim(),
+        district_name: formData.districtName.trim(),
       };
 
       if (isFarmer) {

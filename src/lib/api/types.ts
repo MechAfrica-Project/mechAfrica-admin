@@ -30,6 +30,7 @@ export interface BackendUser {
   community_name?: string;
   district_name?: string;
   region_name?: string;
+  street_address?: string;
   id_number?: string;
   is_verified: boolean;
   is_active: boolean;
@@ -1436,6 +1437,7 @@ export interface AdminUpdateUserRequest {
   phone_number?: string;
   id_number?: string;
   region_name?: string;
+  district_name?: string;
   community_name?: string;
 
   // Extra fields for Farmers
@@ -1480,4 +1482,7 @@ export interface AdminUserDetailsResponse {
   farms?: AdminFarmDetail[];
   services_offered?: string[];
   equipment?: AdminEquipmentDetail[];
+  region_name?: string;
+  district_name?: string;
+  community_name?: string;
 }
