@@ -222,9 +222,9 @@ export default function SettingsPage() {
   const roleLabel = ROLES.find((r) => r.id === activeTab)?.label || "Role";
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto space-y-6 h-[calc(100vh-2rem)] flex flex-col">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Settings className="w-6 h-6 text-[#00594C]" />
@@ -249,13 +249,13 @@ export default function SettingsPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3 shrink-0">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1 min-h-0">
         {/* Core Routing */}
         <Card className="lg:col-span-4 shadow-sm border-gray-200">
           <CardHeader>
@@ -283,9 +283,9 @@ export default function SettingsPage() {
         </Card>
 
         {/* SMS Templates */}
-        <div className="lg:col-span-8 space-y-4">
-          <Card className="shadow-sm border-gray-200 overflow-hidden">
-            <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
+        <div className="lg:col-span-8 h-full min-h-0">
+          <Card className="shadow-sm border-gray-200 overflow-hidden flex flex-col h-full">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4 shrink-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -316,8 +316,8 @@ export default function SettingsPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-0">
-              <div className="p-5 border-b border-gray-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-4">
+            <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+              <div className="p-5 border-b border-gray-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
                 <p className="text-sm text-gray-500">
                   Showing templates for <strong className="text-gray-900 font-semibold">{roleLabel}s</strong>
                 </p>
@@ -341,7 +341,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="p-5 space-y-4 bg-gray-50/40">
+              <div className="p-5 space-y-4 bg-gray-50/40 flex-1 overflow-y-auto custom-scrollbar">
                 {activeTemplates.map((template, idx) => {
                   const estimatedLength = template.content
                     .replace("{{NAME}}", "John Doe (Farmer)")
@@ -352,7 +352,7 @@ export default function SettingsPage() {
                   return (
                     <div
                       key={template.id}
-                      className="group relative bg-white p-4 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md hover:border-gray-300"
+                      className="group relative bg-white p-4 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md hover:border-gray-300 shrink-0"
                     >
                       <button
                         onClick={() => removeTemplate(template.id)}
@@ -392,7 +392,7 @@ export default function SettingsPage() {
                 })}
 
                 {activeTemplates.length === 0 && (
-                  <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center animate-in fade-in">
+                  <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center animate-in fade-in h-full">
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                       <MessageSquare className="w-5 h-5 text-gray-400" />
                     </div>
@@ -405,7 +405,7 @@ export default function SettingsPage() {
               </div>
             </CardContent>
             
-            <CardFooter className="bg-gray-50 border-t border-gray-100 py-3 px-5 flex items-center gap-2">
+            <CardFooter className="bg-gray-50 border-t border-gray-100 py-3 px-5 flex items-center gap-2 shrink-0">
               <AlertCircle className="w-4 h-4 text-gray-400" />
               <p className="text-[11px] text-gray-500">
                 Variables: <code className="bg-gray-200/80 text-gray-700 px-1.5 py-0.5 rounded font-mono text-[10px]">{"{{NAME}}"}</code> <code className="bg-gray-200/80 text-gray-700 px-1.5 py-0.5 rounded font-mono text-[10px]">{"{{USSD_CODE}}"}</code>
