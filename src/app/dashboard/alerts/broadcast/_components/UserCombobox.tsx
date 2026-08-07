@@ -61,7 +61,7 @@ export function UserCombobox({ value, onChange, placeholder = "Search user by na
           const u = res.user;
           setSelectedUser({
             id: u.id,
-            name: `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.business_name || "Unknown",
+            name: `${u.first_name || ""} ${u.last_name || ""}`.trim() || "Unknown",
             phone: u.phone_number || "No phone",
             role: u.role || "user",
           });
