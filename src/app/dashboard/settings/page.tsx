@@ -1,27 +1,43 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Save, Phone, MessageSquare, Plus, Trash2, Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { Settings, Save, Phone, MessageSquare, Plus, Trash2, Loader2, AlertCircle, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { SystemSetting } from "@/lib/api/types";
 
+type RoleType = "farmer" | "service_provider" | "agent";
+
 type SmsTemplate = {
   id: string;
-  target_role: "farmer" | "service_provider" | "agent";
+  target_role: RoleType;
   content: string;
 };
+
+const ROLES: { id: RoleType; label: string }[] = [
+  { id: "farmer", label: "Farmer" },
+  { id: "service_provider", label: "Service Provider" },
+  { id: "agent", label: "Agent" },
+];
 
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState<number | null>(null);
+  
+  // UI State
+  const [activeTab, setActiveTab] = useState<RoleType>("farmer");
+  
+  // AI Modal State
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiDrafts, setAiDrafts] = useState<string[]>([]);
+  const [selectedDrafts, setSelectedDrafts] = useState<Set<number>>(new Set());
 
   // Baseline state for dirty-checking
   const [initialUssdCode, setInitialUssdCode] = useState("");
@@ -125,65 +141,74 @@ export default function SettingsPage() {
     }
   };
 
-  const addTemplate = () => {
+  const activeTemplates = templates.filter((t) => t.target_role === activeTab);
+
+  const addBlankTemplate = () => {
     setTemplates([
       ...templates,
       {
         id: Math.random().toString(36).substring(7),
-        target_role: "farmer",
+        target_role: activeTab,
         content: "",
       },
     ]);
   };
 
-  const updateTemplate = (index: number, field: keyof SmsTemplate, val: string) => {
-    const next = [...templates];
-    next[index] = { ...next[index], [field]: val };
-    setTemplates(next);
+  const updateTemplate = (id: string, val: string) => {
+    setTemplates(templates.map((t) => (t.id === id ? { ...t, content: val } : t)));
   };
 
-  const removeTemplate = (index: number) => {
-    const next = [...templates];
-    next.splice(index, 1);
-    setTemplates(next);
+  const removeTemplate = (id: string) => {
+    setTemplates(templates.filter((t) => t.id !== id));
   };
 
-  /**
-   * Calls the backend AI endpoint.
-   * If the current card is empty, replaces it with the 3 generated variants.
-   * If not empty, inserts the 3 variants directly after this card.
-   */
-  const handleAIGenerate = async (index: number) => {
-    const template = templates[index];
+  const openAIModal = () => {
+    setAiDrafts([]);
+    setSelectedDrafts(new Set());
+    setIsAIModalOpen(true);
+    generateAIDrafts();
+  };
+
+  const generateAIDrafts = async () => {
     try {
-      setIsGeneratingAI(index);
-      const res = await api.generateWelcomeSMSTemplates(template.target_role);
+      setIsGeneratingAI(true);
+      const res = await api.generateWelcomeSMSTemplates(activeTab);
 
       if (res.success && res.data?.templates?.length) {
-        const generated: SmsTemplate[] = res.data.templates.map((content) => ({
-          id: Math.random().toString(36).substring(7),
-          target_role: template.target_role,
-          content,
-        }));
-
-        const next = [...templates];
-        if (!template.content.trim()) {
-          // Replace empty card with the 3 generated
-          next.splice(index, 1, ...generated);
-        } else {
-          // Insert after this card
-          next.splice(index + 1, 0, ...generated);
-        }
-        setTemplates(next);
-        toast.success(`Generated ${generated.length} variations!`);
+        setAiDrafts(res.data.templates);
       } else {
         throw new Error(res.message || "Failed to generate templates");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to generate template");
+      toast.error(err instanceof Error ? err.message : "Failed to generate templates");
+      setIsAIModalOpen(false);
     } finally {
-      setIsGeneratingAI(null);
+      setIsGeneratingAI(false);
     }
+  };
+
+  const toggleDraftSelection = (index: number) => {
+    const next = new Set(selectedDrafts);
+    if (next.has(index)) {
+      next.delete(index);
+    } else {
+      next.add(index);
+    }
+    setSelectedDrafts(next);
+  };
+
+  const addSelectedDraftsToTemplates = () => {
+    if (selectedDrafts.size === 0) return;
+
+    const newTemplates: SmsTemplate[] = Array.from(selectedDrafts).map((index) => ({
+      id: Math.random().toString(36).substring(7),
+      target_role: activeTab,
+      content: aiDrafts[index],
+    }));
+
+    setTemplates([...templates, ...newTemplates]);
+    setIsAIModalOpen(false);
+    toast.success(`Added ${newTemplates.length} new template(s)`);
   };
 
   if (isLoading) {
@@ -194,22 +219,24 @@ export default function SettingsPage() {
     );
   }
 
+  const roleLabel = ROLES.find((r) => r.id === activeTab)?.label || "Role";
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Settings className="w-6 h-6 text-[#00594C]" />
             System Settings
           </h1>
-          <p className="text-gray-500 mt-1">Manage global platform configurations.</p>
+          <p className="text-gray-500 mt-1 text-sm">Manage global platform configurations.</p>
         </div>
         {isDirty && (
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-[#00594C] hover:bg-[#00473D] text-white transition-all duration-200 animate-in fade-in zoom-in"
+            className="bg-[#00594C] hover:bg-[#00473D] text-white transition-all duration-200 animate-in fade-in zoom-in w-full sm:w-auto shadow-md"
           >
             {isSaving ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -222,32 +249,33 @@ export default function SettingsPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-md flex items-center gap-3">
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 shrink-0" />
-          <p>{error}</p>
+          <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Core Settings */}
-        <Card className="lg:col-span-1 h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Core Routing */}
+        <Card className="lg:col-span-4 shadow-sm border-gray-200">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Phone className="w-5 h-5 text-gray-500" />
               Core Routing
             </CardTitle>
-            <CardDescription>Global routing codes and IDs</CardDescription>
+            <CardDescription className="text-xs">Global routing codes and IDs</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="ussd">Platform USSD Code</Label>
+              <Label htmlFor="ussd" className="text-xs font-semibold uppercase text-gray-500 tracking-wider">Platform USSD Code</Label>
               <Input
                 id="ussd"
                 value={ussdCode}
                 onChange={(e) => setUssdCode(e.target.value)}
                 placeholder="*920*45#"
+                className="bg-gray-50/50"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-[11px] text-gray-500 leading-relaxed">
                 This code is injected into SMS templates and shown in the apps.
               </p>
             </div>
@@ -255,137 +283,215 @@ export default function SettingsPage() {
         </Card>
 
         {/* SMS Templates */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-gray-500" />
-                Welcome SMS Templates
-              </CardTitle>
-              <CardDescription>
-                When a user signs up, the system randomly selects one template matching their role.
-                <br />
-                Variables:{" "}
-                <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{{NAME}}"}</code>{" "}
-                <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{{USSD_CODE}}"}</code>
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={addTemplate}
-              className="shrink-0 gap-1"
-            >
-              <Plus className="w-4 h-4" /> Add Template
-            </Button>
-          </CardHeader>
+        <div className="lg:col-span-8 space-y-4">
+          <Card className="shadow-sm border-gray-200 overflow-hidden">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-[#00594C]" />
+                    Welcome SMS Templates
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1.5">
+                    When a user signs up, the system randomly selects one template matching their role.
+                  </CardDescription>
+                </div>
+              </div>
+              
+              {/* Segmented Control for Roles */}
+              <div className="mt-5 p-1 bg-gray-100/80 rounded-lg inline-flex w-full sm:w-auto">
+                {ROLES.map((role) => (
+                  <button
+                    key={role.id}
+                    onClick={() => setActiveTab(role.id)}
+                    className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                      activeTab === role.id 
+                        ? "bg-white text-[#00594C] shadow-sm ring-1 ring-gray-900/5" 
+                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50"
+                    }`}
+                  >
+                    {role.label}
+                  </button>
+                ))}
+              </div>
+            </CardHeader>
 
-          <CardContent className="space-y-5">
-            {templates.map((template, idx) => {
-              const estimatedLength = template.content
-                .replace("{{NAME}}", "John Doe (Farmer)")
-                .replace("{{USSD_CODE}}", ussdCode || "*920*45#").length;
+            <CardContent className="p-0">
+              <div className="p-5 border-b border-gray-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-sm text-gray-500">
+                  Showing templates for <strong className="text-gray-900 font-semibold">{roleLabel}s</strong>
+                </p>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    onClick={addBlankTemplate}
+                    className="flex-1 sm:flex-none gap-2 bg-white h-9 shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" /> 
+                    <span className="hidden sm:inline">Add Blank</span>
+                    <span className="sm:hidden">Blank</span>
+                  </Button>
+                  <Button
+                    onClick={openAIModal}
+                    className="flex-1 sm:flex-none gap-2 bg-[#00594C] hover:bg-[#00473D] text-white h-9 shadow-sm transition-all"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-200" />
+                    Generate Ideas
+                  </Button>
+                </div>
+              </div>
 
-              const isOverLimit = estimatedLength > 160;
+              <div className="p-5 space-y-4 bg-gray-50/40">
+                {activeTemplates.map((template, idx) => {
+                  const estimatedLength = template.content
+                    .replace("{{NAME}}", "John Doe (Farmer)")
+                    .replace("{{USSD_CODE}}", ussdCode || "*920*45#").length;
 
-              return (
-                <div
-                  key={template.id}
-                  className="relative bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm"
-                >
-                  {/* Card actions */}
-                  <div className="absolute top-3.5 right-3.5 flex items-center gap-2">
-                    <button
-                      onClick={() => handleAIGenerate(idx)}
-                      disabled={isGeneratingAI !== null}
-                      className="flex items-center gap-1 text-xs font-medium text-[#00594C] bg-[#00594C]/10 px-2.5 py-1 rounded-full hover:bg-[#00594C]/20 disabled:opacity-40 transition-colors"
-                      title="Generate 3 variations with AI"
+                  const isOverLimit = estimatedLength > 160;
+
+                  return (
+                    <div
+                      key={template.id}
+                      className="group relative bg-white p-4 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md hover:border-gray-300"
                     >
-                      {isGeneratingAI === idx ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-3.5 h-3.5" />
-                      )}
-                      {isGeneratingAI === idx ? "Drafting…" : "AI Draft"}
-                    </button>
-                    <button
-                      onClick={() => removeTemplate(idx)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                      title="Remove template"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Fields */}
-                  <div className="space-y-3.5 mt-1 pr-28">
-                    <div className="max-w-xs">
-                      <Label className="mb-1.5 block text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                        Target Audience
-                      </Label>
-                      <Select
-                        value={template.target_role}
-                        onValueChange={(val) => updateTemplate(idx, "target_role", val)}
+                      <button
+                        onClick={() => removeTemplate(template.id)}
+                        className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                        title="Remove template"
                       >
-                        <SelectTrigger className="bg-white h-9">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="farmer">Farmer</SelectItem>
-                          <SelectItem value="service_provider">Service Provider</SelectItem>
-                          <SelectItem value="agent">Agent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        <Trash2 className="w-4 h-4" />
+                      </button>
 
-                    <div>
-                      <Label className="mb-1.5 block text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                        Message Content
-                      </Label>
-                      <Textarea
-                        value={template.content}
-                        onChange={(e) => updateTemplate(idx, "content", e.target.value)}
-                        className={`min-h-[80px] bg-white resize-y ${
-                          isOverLimit ? "border-red-300 focus-visible:ring-red-500" : ""
-                        }`}
-                        placeholder={`Welcome to MechAfrica, {{NAME}}! Dial {{USSD_CODE}} to ${
-                          template.target_role === "farmer" ? "request" : "offer"
-                        } services.`}
-                      />
+                      <div className="pr-10">
+                        <Label className="mb-2 block text-[10px] text-gray-400 uppercase tracking-widest font-semibold">
+                          Message Content
+                        </Label>
+                        <Textarea
+                          value={template.content}
+                          onChange={(e) => updateTemplate(template.id, e.target.value)}
+                          className={`min-h-[80px] bg-gray-50/50 resize-y border-transparent hover:border-gray-200 focus:bg-white focus:border-[#00594C] transition-colors shadow-none ${
+                            isOverLimit ? "border-red-300 focus:border-red-500 bg-red-50/30" : ""
+                          }`}
+                          placeholder={`Welcome to MechAfrica, {{NAME}}! Dial {{USSD_CODE}} to get started.`}
+                        />
+                      </div>
+
+                      <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
+                        <span className="text-xs font-medium text-gray-400">Template {idx + 1}</span>
+                        <span
+                          className={`text-[11px] font-semibold tracking-wide ${
+                            isOverLimit ? "text-red-500" : "text-gray-400"
+                          }`}
+                        >
+                          {estimatedLength} / 160 chars
+                          {isOverLimit && " • MULTIPLE SMS"}
+                        </span>
+                      </div>
                     </div>
+                  );
+                })}
+
+                {activeTemplates.length === 0 && (
+                  <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center animate-in fade-in">
+                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                      <MessageSquare className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="font-semibold text-gray-900">No {roleLabel} templates yet</p>
+                    <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto leading-relaxed">
+                      Create a blank template or use our AI to generate high-converting welcome messages instantly.
+                    </p>
                   </div>
+                )}
+              </div>
+            </CardContent>
+            
+            <CardFooter className="bg-gray-50 border-t border-gray-100 py-3 px-5 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-gray-400" />
+              <p className="text-[11px] text-gray-500">
+                Variables: <code className="bg-gray-200/80 text-gray-700 px-1.5 py-0.5 rounded font-mono text-[10px]">{"{{NAME}}"}</code> <code className="bg-gray-200/80 text-gray-700 px-1.5 py-0.5 rounded font-mono text-[10px]">{"{{USSD_CODE}}"}</code>
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
 
-                  {/* Footer */}
-                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-                    <span className="text-xs text-gray-400">Variation {idx + 1}</span>
-                    <span
-                      className={`text-xs font-medium ${
-                        isOverLimit ? "text-red-600" : "text-gray-400"
+      {/* AI Draft Modal */}
+      <Dialog open={isAIModalOpen} onOpenChange={(open) => !isGeneratingAI && setIsAIModalOpen(open)}>
+        <DialogContent className="sm:max-w-xl p-0 overflow-hidden gap-0 bg-gray-50 border-gray-200">
+          <div className="p-6 bg-white border-b border-gray-100">
+            <DialogHeader>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1.5 bg-emerald-50 rounded-md ring-1 ring-emerald-100">
+                  <Sparkles className="w-4 h-4 text-[#00594C]" />
+                </div>
+                <DialogTitle className="text-xl">Generate Ideas</DialogTitle>
+              </div>
+              <DialogDescription>
+                AI is drafting welcome messages for <strong>{roleLabel}s</strong>. Select the ones you like.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-6">
+            {isGeneratingAI ? (
+              <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                <div className="p-3 bg-emerald-50 rounded-full">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#00594C]" />
+                </div>
+                <p className="text-sm text-gray-500 font-medium animate-pulse">Drafting variations...</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                {aiDrafts.map((draft, idx) => {
+                  const isSelected = selectedDrafts.has(idx);
+                  return (
+                    <div 
+                      key={idx}
+                      onClick={() => toggleDraftSelection(idx)}
+                      className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                        isSelected 
+                          ? "border-[#00594C] bg-emerald-50/30 shadow-sm" 
+                          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/50"
                       }`}
                     >
-                      Est. {estimatedLength} / 160 chars{" "}
-                      {isOverLimit && "(Warning: Multiple SMS)"}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-
-            {templates.length === 0 && (
-              <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center">
-                <MessageSquare className="w-8 h-8 mb-2 text-gray-300" />
-                <p className="font-medium">No templates configured.</p>
-                <p className="text-sm mt-1">
-                  Users won&apos;t receive a welcome SMS until you add one.
-                </p>
-                <Button variant="outline" size="sm" onClick={addTemplate} className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" /> Create First Template
-                </Button>
+                      <div className="absolute top-4 right-4 transition-transform active:scale-95">
+                        {isSelected ? (
+                          <CheckCircle2 className="w-5 h-5 text-[#00594C]" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-700 pr-8 leading-relaxed">{draft}</p>
+                    </div>
+                  );
+                })}
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+
+          <div className="p-4 bg-white border-t border-gray-100 flex justify-end gap-2">
+            <Button 
+              variant="ghost" 
+              onClick={() => setIsAIModalOpen(false)}
+              disabled={isGeneratingAI}
+              className="hover:bg-gray-100"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={addSelectedDraftsToTemplates}
+              disabled={isGeneratingAI || selectedDrafts.size === 0}
+              className="bg-[#00594C] hover:bg-[#00473D] text-white shadow-sm transition-all"
+            >
+              {selectedDrafts.size > 0 ? (
+                <>Add {selectedDrafts.size} Template{selectedDrafts.size > 1 ? "s" : ""}</>
+              ) : (
+                "Select Templates"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
