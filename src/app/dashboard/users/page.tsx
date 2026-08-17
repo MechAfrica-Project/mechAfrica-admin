@@ -70,10 +70,16 @@ function AdminsPageContent() {
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
+      setDebouncedSearch((prev) => {
+        if (prev !== searchTerm) {
+          setPage("admins", 1);
+          return searchTerm;
+        }
+        return prev;
+      });
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, setPage]);
 
 
 
@@ -118,10 +124,7 @@ function AdminsPageContent() {
     loadAdmins();
   }, [loadAdmins]);
 
-  // Reset to page 1 when filter, search, or missing data filter changes
-  useEffect(() => {
-    setPage("admins", 1);
-  }, [selectedRole, selectedGender, debouncedSearch, missingDataFilters, setPage]);
+
 
   // Set page title and filters
   useEffect(() => {
@@ -200,6 +203,7 @@ function AdminsPageContent() {
         return [...prev, filterType];
       }
     });
+    setPage("admins", 1);
   };
 
   // Error state
@@ -265,7 +269,10 @@ function AdminsPageContent() {
           data={dataQuality} 
           activeFilters={missingDataFilters}
           onFilter={handleDataQualityFilter} 
-          onClearFilters={() => setMissingDataFilters([])}
+          onClearFilters={() => {
+            setMissingDataFilters([]);
+            setPage("admins", 1);
+          }}
         />
 
         {/* Header with Search, Filters, Refresh and Add buttons */}
@@ -320,7 +327,10 @@ function AdminsPageContent() {
             </div>
 
             {/* Role Filter */}
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <Select value={selectedRole} onValueChange={(val) => {
+              setSelectedRole(val);
+              setPage("admins", 1);
+            }}>
               <SelectTrigger className="w-[150px] h-9 text-sm bg-background">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -336,7 +346,10 @@ function AdminsPageContent() {
             </Select>
 
             {/* Gender Filter */}
-            <Select value={selectedGender} onValueChange={setSelectedGender}>
+            <Select value={selectedGender} onValueChange={(val) => {
+              setSelectedGender(val);
+              setPage("admins", 1);
+            }}>
               <SelectTrigger className="w-[150px] h-9 text-sm bg-background">
                 <SelectValue placeholder="Gender" />
               </SelectTrigger>
@@ -353,6 +366,7 @@ function AdminsPageContent() {
                 onClick={() => {
                   setSelectedRole("all");
                   setSelectedGender("all");
+                  setPage("admins", 1);
                 }}
                 className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
               >

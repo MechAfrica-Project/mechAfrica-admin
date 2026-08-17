@@ -496,6 +496,55 @@ class MechAfricaAPIClient {
   }
 
   /**
+   * Fetch aggregated analytics stats based on global filters
+   */
+  async getAnalytics(filters: {
+    role?: string;
+    gender?: string;
+    region_id?: string;
+    missing_data?: string;
+  }): Promise<{
+    total_users: number;
+    role_distribution: { name: string; value: number }[];
+    gender_distribution: { name: string; value: number }[];
+  }> {
+    let url = `/admin/analytics?`;
+    const params = new URLSearchParams();
+
+    if (filters.role && filters.role !== "all") {
+      const roleMapping: Record<string, string> = {
+        "admin": "admin",
+        "farmer": "farmer",
+        "agent": "agent",
+        "provider": "service_provider",
+        "accounting": "accounts",
+        "farmer & provider": "farmer_and_provider",
+      };
+      params.append("role", roleMapping[filters.role.toLowerCase()] || filters.role.toLowerCase());
+    }
+
+    if (filters.gender && filters.gender !== "all") {
+      params.append("gender", filters.gender);
+    }
+    if (filters.region_id && filters.region_id !== "all") {
+      params.append("region_id", filters.region_id);
+    }
+    if (filters.missing_data) {
+      params.append("missing_data", filters.missing_data);
+    }
+
+    url += params.toString();
+    const response = await this.get<{
+      data: {
+        total_users: number;
+        role_distribution: { name: string; value: number }[];
+        gender_distribution: { name: string; value: number }[];
+      }
+    }>(url);
+    return response.data;
+  }
+
+  /**
    * Create a new user (Farmer, Service Provider, Agent, or Admin)
    */
   async createUser(
