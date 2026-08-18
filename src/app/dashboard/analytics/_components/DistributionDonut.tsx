@@ -1,6 +1,6 @@
 "use client";
 
-// @ts-ignore
+// @ts-expect-error
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface DistributionDonutProps {
