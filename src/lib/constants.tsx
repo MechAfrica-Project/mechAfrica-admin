@@ -72,6 +72,9 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
     { title: "Upload", path: "/dashboard/onboarding/upload" },
     { title: "Jobs History", path: "/dashboard/onboarding/jobs" },
   ],
+  "/analytics": [
+    { title: "Overview", path: "/dashboard/analytics" },
+  ],
   "/alerts": [
     { title: "Broadcast Notifications", path: "/dashboard/alerts/broadcast" },
   ],

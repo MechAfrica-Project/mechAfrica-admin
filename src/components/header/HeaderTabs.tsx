@@ -67,7 +67,7 @@ export default function HeaderTabs() {
     }
   };
 
-  if (!tabs.length) return null;
+  if (!tabs || !tabs.length) return null;
 
   return (
     <>
