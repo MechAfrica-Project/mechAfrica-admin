@@ -5,7 +5,7 @@ import { useAnalyticsStore } from "@/stores/useAnalyticsStore";
 import { AnalyticsFilters } from "./_components/AnalyticsFilters";
 import { StatCard } from "./_components/StatCard";
 import { DistributionDonut } from "./_components/DistributionDonut";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { Users, UserCheck, ShieldAlert } from "lucide-react";
 
 export default function AnalyticsPage() {
@@ -15,7 +15,7 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -23,7 +23,7 @@ export default function AnalyticsPage() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
   };

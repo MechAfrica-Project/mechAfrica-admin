@@ -506,7 +506,7 @@ class MechAfricaAPIClient {
   }): Promise<{
     total_users: number;
     role_distribution: { name: string; value: number }[];
-    gender_distribution: { name: string; value: number }[];
+        gender_distribution: { name: string; value: number }[];
   }> {
     let url = `/admin/analytics?`;
     const params = new URLSearchParams();
@@ -535,11 +535,9 @@ class MechAfricaAPIClient {
 
     url += params.toString();
     const response = await this.get<{
-      data: {
         total_users: number;
         role_distribution: { name: string; value: number }[];
         gender_distribution: { name: string; value: number }[];
-      }
     }>(url);
     return response.data;
   }
