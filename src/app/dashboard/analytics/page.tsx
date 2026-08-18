@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-gray-900">Analytics & Insights</h2>
-          <p className="text-muted-foreground mt-1">Strategic overview of the platform's user base.</p>
+          <p className="text-muted-foreground mt-1">Strategic overview of the platform&apos;s user base.</p>
         </div>
       </div>
 

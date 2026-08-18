@@ -64,9 +64,10 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
       });
 
       set({ data, isLoading: false });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       console.error('Failed to fetch analytics:', error);
-      set({ error: error.message || 'Failed to fetch analytics', isLoading: false });
+      set({ error: err.message || 'Failed to fetch analytics', isLoading: false });
       toast.error('Failed to load analytics data');
     }
   },
