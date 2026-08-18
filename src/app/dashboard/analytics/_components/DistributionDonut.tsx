@@ -1,6 +1,6 @@
 "use client";
 
-// @ts-expect-error
+// @ts-expect-error - recharts types are broken in Next.js build
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface DistributionDonutProps {

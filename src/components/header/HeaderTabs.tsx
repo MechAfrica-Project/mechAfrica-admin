@@ -32,6 +32,8 @@ export default function HeaderTabs() {
     if (pathname.startsWith("/dashboard/finances"))
       return SECTION_TABS["/finances"];
     if (pathname.startsWith("/dashboard/admin")) return SECTION_TABS["/admin"];
+    if (pathname.startsWith("/dashboard/analytics"))
+      return SECTION_TABS["/analytics"];
     if (pathname.startsWith("/dashboard/onboarding"))
       return SECTION_TABS["/onboarding"];
     if (pathname.startsWith("/dashboard/users"))
