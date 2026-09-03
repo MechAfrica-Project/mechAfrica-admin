@@ -1,0 +1,40 @@
+name: Config integrity
+
+# Guards against the A8-2008 injection pattern: obfuscated code appended to a
+# config file behind a run of whitespace. The injection arrived as commits
+# re-authored by someone with org write access, so this deliberately runs on
+# push to every branch rather than as a local hook.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  integrity:
+    name: Scan for injected code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Scan tracked files
+        run: node scripts/check-config-integrity.mjs
+
+      - name: Check for re-authored commits
+        run: |
+          # Every legitimate commit in this org is committed at +0000. The
+          # A8-2008 commits kept the real author but were committed at -0700.
+          suspect=$(git log -50 --format='%h  %an  committed %cd  %s' \
+            --date=format:'%z %Y-%m-%d' | grep -v '  committed +0000 ' || true)
+          if [ -n "$suspect" ]; then
+            echo "::warning title=Unexpected committer timezone::Commits below were committed outside +0000. Verify they are yours."
+            echo "$suspect"
+          else
+            echo "committer timezones: all +0000"
+          fi
