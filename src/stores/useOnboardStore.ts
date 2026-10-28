@@ -173,14 +173,14 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
   uploadFile: async (file, options = {}) => {
     set({ isUploading: true, uploadProgress: 0, uploadError: null });
 
-    try {
-      // Simulate upload progress (since we can't track actual progress with fetch)
-      const progressInterval = setInterval(() => {
-        set((state) => ({
-          uploadProgress: Math.min(state.uploadProgress + 10, 90),
-        }));
-      }, 200);
+    // Simulate upload progress (since we can't track actual progress with fetch)
+    const progressInterval = setInterval(() => {
+      set((state) => ({
+        uploadProgress: Math.min(state.uploadProgress + 10, 90),
+      }));
+    }, 200);
 
+    try {
       const response = await api.uploadBulkOnboard(file, options);
 
       clearInterval(progressInterval);
@@ -211,6 +211,8 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
       });
 
       return null;
+    } finally {
+      clearInterval(progressInterval);
     }
   },
 

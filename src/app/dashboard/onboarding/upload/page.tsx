@@ -118,7 +118,7 @@ export default function UploadPage() {
       toast.success("File uploaded! Processing started.");
       router.push(`/dashboard/onboarding/jobs/${jobId}`);
     } else {
-      toast.error(uploadError || "Upload failed. Please try again.");
+      toast.error(useOnboardStore.getState().uploadError || "Upload failed. Please try again.");
       setStep("review");
     }
   };
@@ -142,8 +142,8 @@ export default function UploadPage() {
     if (jobId) {
       toast.success("File uploaded successfully! Processing started.");
       router.push(`/dashboard/onboarding/jobs/${jobId}`);
-    } else if (uploadError) {
-      toast.error(uploadError);
+    } else {
+      toast.error(useOnboardStore.getState().uploadError || "Upload failed. Please try again.");
       setStep("select");
     }
   };

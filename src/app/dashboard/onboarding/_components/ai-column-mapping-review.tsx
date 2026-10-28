@@ -67,11 +67,9 @@ export function AIColumnMappingReview({
   );
 
   const allFields = Object.keys(FIELD_LABELS);
-  const missingRequired = REQUIRED_FIELDS
-    ? [...REQUIRED_FIELDS].filter(
-        (f) => !fieldToHeader[f] || fieldToHeader[f] === "__skip__"
-      )
-    : [];
+  const missingRequired = [...REQUIRED_FIELDS].filter(
+    (field) => !fieldToHeader[field] || fieldToHeader[field] === "__skip__" || !analysis.headers.includes(fieldToHeader[field])
+  );
 
   const handleFieldChange = (fieldName: string, header: string) => {
     setFieldToHeader((prev) => ({ ...prev, [fieldName]: header }));
@@ -81,7 +79,7 @@ export function AIColumnMappingReview({
     // Build final ColumnMapping array from the admin's confirmed selections
     const confirmedMappings: ColumnMapping[] = [];
     for (const [fieldName, header] of Object.entries(fieldToHeader)) {
-      if (header && header !== "__skip__") {
+      if (allFields.includes(fieldName) && header !== "__skip__" && analysis.headers.includes(header)) {
         const originalMapping = analysis.mappings.find(
           (m) => m.field_name === fieldName && m.mapped_to === header
         );
@@ -158,13 +156,13 @@ export function AIColumnMappingReview({
                 • Sheet:{" "}
                 <span className="font-medium">{analysis.sheet_name}</span>
               </p>
-              {analysis.missing_fields?.length > 0 && (
+              {missingRequired.length > 0 && (
                 <div className="mt-2 flex items-center gap-2 text-amber-600 text-sm">
                   <AlertTriangle className="w-4 h-4" />
                   <span>
                     Missing required fields:{" "}
                     <strong>
-                      {analysis.missing_fields
+                      {missingRequired
                         .map((f) => FIELD_LABELS[f] || f)
                         .join(", ")}
                     </strong>
@@ -196,8 +194,7 @@ export function AIColumnMappingReview({
               const originalMapping = analysis.mappings.find(
                 (m) => m.field_name === fieldName
               );
-              const isMapped =
-                selectedHeader && selectedHeader !== "__skip__";
+              const isMapped = analysis.headers.includes(selectedHeader) && selectedHeader !== "";
               const isRequiredMissing = isRequired && !isMapped;
 
               return (
@@ -249,7 +246,7 @@ export function AIColumnMappingReview({
                   {/* Column selector */}
                   <div className="flex-1">
                     <Select
-                      value={selectedHeader || "__skip__"}
+                      value={isMapped ? selectedHeader : "__skip__"}
                       onValueChange={(val) =>
                         handleFieldChange(fieldName, val)
                       }

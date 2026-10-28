@@ -265,6 +265,8 @@ export default function JobDetailsPage({ params }: PageProps) {
     if (result) {
       toast.success("Import confirmed! Processing started.");
       router.push(`/dashboard/onboarding/jobs/${result.newJobId}`);
+    } else {
+      toast.error(useOnboardStore.getState().error || "Failed to confirm import. Please try again.");
     }
   };
 
