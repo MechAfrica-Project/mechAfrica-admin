@@ -862,6 +862,7 @@ class MechAfricaAPIClient {
       progress: job.progress,
       result: job.result,
       resultSummary: job.result_summary,
+      participantCount: job.participant_count,
       problematicFileUrl: job.problematic_file_url,
       errorMessage: job.error_message,
       startedAt: job.started_at,

@@ -34,6 +34,7 @@ interface ViewRecordDialogProps {
   onOpenChange: (open: boolean) => void;
   record: OnboardStagedRecord | OnboardSkippedRecord | null;
   type: "onboarded" | "skipped";
+  isDryRun?: boolean;
 }
 
 const participantTypeConfig: Record<
@@ -91,6 +92,7 @@ export function ViewRecordDialog({
   onOpenChange,
   record,
   type,
+  isDryRun = false,
 }: ViewRecordDialogProps) {
   if (!record) return null;
 
@@ -125,7 +127,7 @@ export function ViewRecordDialog({
             {record.row_number}
           </DialogTitle>
           <DialogDescription>
-            View details of this {type === "onboarded" ? "successfully created" : "skipped"} record.
+            View details of this {type === "onboarded" ? (isDryRun ? "staged" : "successfully created") : "skipped"} record.
           </DialogDescription>
         </DialogHeader>
 
@@ -134,9 +136,9 @@ export function ViewRecordDialog({
           <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
             <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-medium text-green-700">Successfully Created</p>
+              <p className="font-medium text-green-700">{isDryRun ? "Ready to import" : "Successfully Created"}</p>
               <p className="text-sm text-green-600">
-                This record was processed and a new user was created.
+                {isDryRun ? "This record is staged; no user has been created by this dry run." : "This record was processed and a new user was created."}
               </p>
             </div>
           </div>

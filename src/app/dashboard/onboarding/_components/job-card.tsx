@@ -115,7 +115,8 @@ export function JobCard({ job, onClick, compact = false }: JobCardProps) {
   const progress = job.progress;
   const isProcessing = job.status === "processing" || job.status === "analyzing";
   const isDryRun = job.config?.dry_run;
-  const totalCreated = (progress?.farmers_created ?? 0) + (progress?.providers_created ?? 0);
+  const participantCount = job.participantCount ?? job.result?.processed ?? job.resultSummary?.processed;
+  const participantSource = job.participantCount != null ? "Current staged count" : participantCount != null ? "Stored result count" : "Count unavailable";
 
   if (compact) {
     return (
@@ -253,22 +254,23 @@ export function JobCard({ job, onClick, compact = false }: JobCardProps) {
         )}
 
         {/* Stats */}
-        {progress && (
+        {(progress || participantCount != null) && (
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-3 rounded-lg bg-green-50 border border-green-100">
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <Users className="w-4 h-4 text-green-600" />
                 <span className="text-lg font-bold text-green-700">
-                  {totalCreated.toLocaleString()}
+                  {participantCount == null ? "—" : participantCount.toLocaleString()}
                 </span>
               </div>
-              <p className="text-xs text-green-600">Created</p>
+              <p className="text-xs text-green-600">{isDryRun && job.status !== "confirmed" ? "Ready to import" : "Created"}</p>
+              <p className="text-xs text-gray-500">{participantSource}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-amber-50 border border-amber-100">
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <AlertCircle className="w-4 h-4 text-amber-600" />
                 <span className="text-lg font-bold text-amber-700">
-                  {(progress.skipped ?? 0).toLocaleString()}
+                  {(progress?.skipped ?? 0).toLocaleString()}
                 </span>
               </div>
               <p className="text-xs text-amber-600">Skipped</p>
@@ -277,7 +279,7 @@ export function JobCard({ job, onClick, compact = false }: JobCardProps) {
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <XCircle className="w-4 h-4 text-red-600" />
                 <span className="text-lg font-bold text-red-700">
-                  {(progress.errors ?? 0).toLocaleString()}
+                  {(progress?.errors ?? 0).toLocaleString()}
                 </span>
               </div>
               <p className="text-xs text-red-600">Errors</p>

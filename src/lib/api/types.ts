@@ -788,6 +788,7 @@ export interface BackendOnboardJob {
   progress: OnboardJobProgress;
   result?: OnboardJobResult;
   result_summary?: OnboardResultSummary;
+  participant_count?: number;
   problematic_file_url?: string;
   problematic_file_path?: string;
   error_message?: string;
@@ -815,6 +816,7 @@ export interface FrontendOnboardJob {
   progress: OnboardJobProgress;
   result?: OnboardJobResult;
   resultSummary?: OnboardResultSummary;
+  participantCount?: number;
   problematicFileUrl?: string;
   errorMessage?: string;
   startedAt?: string;

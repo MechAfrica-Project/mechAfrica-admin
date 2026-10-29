@@ -157,12 +157,13 @@ export default function JobDetailsPage({ params }: PageProps) {
   const correctionsInputRef = React.useRef<HTMLInputElement>(null);
   const [isRetryingAll, setIsRetryingAll] = useState(false);
   const [jobSummary, setJobSummary] = useState<{
-    onboardedCount: number;
+    onboardedCount: number | undefined;
     skippedCount: number;
     errorsCount: number;
     farmersCreated: number;
     providersCreated: number;
   } | null>(null);
+  const [summaryUnavailable, setSummaryUnavailable] = useState(false);
   const [isAutoFixing, setIsAutoFixing] = useState(false);
 
   // Set page title
@@ -197,9 +198,10 @@ export default function JobDetailsPage({ params }: PageProps) {
   const refreshJobSummary = React.useCallback(async () => {
     if (!jobId) return;
     const summary = await fetchJobSummary(jobId);
+    setSummaryUnavailable(!summary);
     if (summary) {
       setJobSummary({
-        onboardedCount: summary.onboarded?.count ?? 0,
+        onboardedCount: summary.onboarded?.count,
         skippedCount: summary.skipped?.count ?? 0,
         errorsCount: summary.errors?.count ?? 0,
         farmersCreated: summary.result_summary?.farmers_created ?? summary.progress?.farmers_created ?? 0,
@@ -608,20 +610,20 @@ export default function JobDetailsPage({ params }: PageProps) {
   const totalRows = progress?.total_rows ?? result?.total_rows ?? resultSummary?.total_rows ?? 0;
 
   // Use job summary, pagination counts, or progress as fallbacks (in order of preference)
-  const displayFarmersCreated = jobSummary?.farmersCreated ?? (farmersCreated > 0 ? farmersCreated : onboardedPaginationCount);
+  const displayFarmersCreated = jobSummary?.farmersCreated ?? farmersCreated;
   const displayProvidersCreated = jobSummary?.providersCreated ?? providersCreated;
   const displaySkipped = jobSummary?.skippedCount ?? (skippedCount > 0 ? skippedCount : skippedPaginationCount);
   const displayErrors = jobSummary?.errorsCount ?? (errorsCount > 0 ? errorsCount : problematicPaginationCount);
   const displayOnboardedCount = jobSummary?.onboardedCount ?? onboardedPaginationCount;
 
-  // Calculate total created (farmers + providers)
-  const totalCreated = displayFarmersCreated + displayProvidersCreated;
+  const isPreview = Boolean(isDryRun && !isConfirmed);
+  const hasDiscrepancy = jobSummary?.onboardedCount != null && result?.processed != null && result.processed !== jobSummary.onboardedCount;
 
   const tabs: { key: TabType; label: string; count: number; icon: React.ElementType; color: string }[] = [
     {
       key: "onboarded",
-      label: "Created",
-      count: totalCreated > 0 ? totalCreated : displayOnboardedCount,
+      label: isPreview ? "Ready to import" : "Created",
+      count: displayOnboardedCount,
       icon: CheckCircle2,
       color: "text-green-600",
     },
@@ -859,6 +861,16 @@ export default function JobDetailsPage({ params }: PageProps) {
           </Card>
         </div>
 
+        <p className="text-sm text-gray-500 mb-6">Farmer and provider role counts may overlap for participants with both roles. Participant totals use {jobSummary?.onboardedCount != null ? "the current staged summary" : "the records count when available"}.</p>
+        {summaryUnavailable && <p className="text-sm text-amber-700 mb-6" role="status">The current job summary could not be loaded; displayed counts may be incomplete.</p>}
+        {hasDiscrepancy && (
+          <Card className="mb-6 border-amber-200 bg-amber-50">
+            <CardContent className="p-4 text-sm text-amber-800" role="status">
+              Stored result reports {result?.processed.toLocaleString()} participants, while the current staged summary reports {jobSummary?.onboardedCount?.toLocaleString()}. Historical results have not been changed.
+            </CardContent>
+          </Card>
+        )}
+
         {/* Dry Run Notice */}
         {canConfirm && (
           <Card className="mb-6 border-amber-200 bg-amber-50">
@@ -870,8 +882,8 @@ export default function JobDetailsPage({ params }: PageProps) {
                 </p>
                 <p className="text-sm text-amber-700 mt-1">
                   Review the results above and click &quot;Confirm Import&quot; to perform
-                  the actual import. This will create {totalCreated.toLocaleString()} new users
-                  ({displayFarmersCreated.toLocaleString()} farmers, {displayProvidersCreated.toLocaleString()} providers).
+                  the actual import. {displayOnboardedCount.toLocaleString()} participants are ready to import
+                  ({displayFarmersCreated.toLocaleString()} farmer roles, {displayProvidersCreated.toLocaleString()} provider roles; roles may overlap).
                   Unresolved errors stay in this job until fixed, skipped, or deleted.
                 </p>
               </div>
@@ -1104,6 +1116,7 @@ export default function JobDetailsPage({ params }: PageProps) {
           onOpenChange={setIsViewDialogOpen}
           record={viewingRecord}
           type={viewRecordType}
+          isDryRun={isPreview}
         />
       </div>
     </div>
