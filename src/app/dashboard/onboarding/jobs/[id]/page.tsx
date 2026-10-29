@@ -111,7 +111,11 @@ export default function JobDetailsPage({ params }: PageProps) {
   const { setTitle } = useHeaderStore();
 
   // Store state
-  const currentJob = useOnboardStore((s) => s.currentJob);
+  const storedJob = useOnboardStore((s) => s.currentJob);
+  const currentJob = storedJob?.id === jobId ? storedJob : null;
+  const recordsJobId = useOnboardStore((s) => s.recordsJobId);
+  const activeJobId = React.useRef(jobId);
+  activeJobId.current = jobId;
   const isLoadingJob = useOnboardStore((s) => s.isLoadingJob);
   const isConfirming = useOnboardStore((s) => s.isConfirming);
   const isCancelling = useOnboardStore((s) => s.isCancelling);
@@ -156,14 +160,17 @@ export default function JobDetailsPage({ params }: PageProps) {
   const [isUploadingCorrections, setIsUploadingCorrections] = useState(false);
   const correctionsInputRef = React.useRef<HTMLInputElement>(null);
   const [isRetryingAll, setIsRetryingAll] = useState(false);
-  const [jobSummary, setJobSummary] = useState<{
+  const [storedSummary, setJobSummary] = useState<{
+    jobId: string;
     onboardedCount: number | undefined;
-    skippedCount: number;
-    errorsCount: number;
+    skippedCount: number | undefined;
+    errorsCount: number | undefined;
     farmersCreated: number;
     providersCreated: number;
   } | null>(null);
-  const [summaryUnavailable, setSummaryUnavailable] = useState(false);
+  const [unavailableSummaryJobId, setUnavailableSummaryJobId] = useState<string | null>(null);
+  const jobSummary = storedSummary?.jobId === jobId ? storedSummary : null;
+  const summaryUnavailable = unavailableSummaryJobId === jobId;
   const [isAutoFixing, setIsAutoFixing] = useState(false);
 
   // Set page title
@@ -198,15 +205,19 @@ export default function JobDetailsPage({ params }: PageProps) {
   const refreshJobSummary = React.useCallback(async () => {
     if (!jobId) return;
     const summary = await fetchJobSummary(jobId);
-    setSummaryUnavailable(!summary);
+    if (activeJobId.current !== jobId) return;
+    setUnavailableSummaryJobId(summary ? null : jobId);
     if (summary) {
       setJobSummary({
+        jobId,
         onboardedCount: summary.onboarded?.count,
-        skippedCount: summary.skipped?.count ?? 0,
-        errorsCount: summary.errors?.count ?? 0,
+        skippedCount: summary.skipped?.count,
+        errorsCount: summary.errors?.count,
         farmersCreated: summary.result_summary?.farmers_created ?? summary.progress?.farmers_created ?? 0,
         providersCreated: summary.result_summary?.providers_created ?? summary.progress?.providers_created ?? 0,
       });
+    } else {
+      setJobSummary(null);
     }
   }, [jobId, fetchJobSummary]);
 
@@ -599,9 +610,9 @@ export default function JobDetailsPage({ params }: PageProps) {
   };
 
   // Get counts from progress/result or fall back to pagination counts from records
-  const onboardedPaginationCount = recordsPagination.onboarded?.count ?? 0;
-  const skippedPaginationCount = recordsPagination.skipped?.count ?? 0;
-  const problematicPaginationCount = recordsPagination.problematic?.count ?? 0;
+  const onboardedPaginationCount = (recordsJobId === jobId ? recordsPagination.onboarded?.count : undefined) ?? 0;
+  const skippedPaginationCount = recordsJobId === jobId ? recordsPagination.skipped?.count : undefined;
+  const problematicPaginationCount = recordsJobId === jobId ? recordsPagination.problematic?.count : undefined;
 
   const farmersCreated = getStatValue("farmers_created", "farmers_created", "farmers_created");
   const providersCreated = getStatValue("providers_created", "providers_created", "providers_created");
@@ -612,8 +623,10 @@ export default function JobDetailsPage({ params }: PageProps) {
   // Use job summary, pagination counts, or progress as fallbacks (in order of preference)
   const displayFarmersCreated = jobSummary?.farmersCreated ?? farmersCreated;
   const displayProvidersCreated = jobSummary?.providersCreated ?? providersCreated;
-  const displaySkipped = jobSummary?.skippedCount ?? (skippedCount > 0 ? skippedCount : skippedPaginationCount);
-  const displayErrors = jobSummary?.errorsCount ?? (errorsCount > 0 ? errorsCount : problematicPaginationCount);
+  const currentSkipped = jobSummary?.skippedCount ?? skippedPaginationCount ?? currentJob?.skippedCount;
+  const currentErrors = jobSummary?.errorsCount ?? problematicPaginationCount ?? currentJob?.problematicCount;
+  const displaySkipped = currentSkipped ?? skippedCount;
+  const displayErrors = currentErrors ?? errorsCount;
   const displayOnboardedCount = jobSummary?.onboardedCount ?? onboardedPaginationCount;
 
   const isPreview = Boolean(isDryRun && !isConfirmed);
@@ -636,7 +649,7 @@ export default function JobDetailsPage({ params }: PageProps) {
     },
     {
       key: "problematic",
-      label: "Errors",
+      label: "Needs attention",
       count: displayErrors,
       icon: XCircle,
       color: "text-red-600",
@@ -846,6 +859,7 @@ export default function JobDetailsPage({ params }: PageProps) {
                 {displaySkipped.toLocaleString()}
               </p>
               <p className="text-sm text-amber-600">Skipped</p>
+              <p className="text-xs text-gray-500">{currentSkipped != null ? "Current records" : "Historical count"}</p>
             </CardContent>
           </Card>
           <Card className="border-red-200">
@@ -856,7 +870,8 @@ export default function JobDetailsPage({ params }: PageProps) {
               <p className="text-2xl font-bold text-red-700">
                 {displayErrors.toLocaleString()}
               </p>
-              <p className="text-sm text-red-600">Errors</p>
+              <p className="text-sm text-red-600">Needs attention</p>
+              <p className="text-xs text-gray-500">{currentErrors != null ? "Current records, including edited awaiting retry" : "Historical error count"}</p>
             </CardContent>
           </Card>
         </div>

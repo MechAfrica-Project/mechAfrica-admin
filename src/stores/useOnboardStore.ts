@@ -29,6 +29,8 @@ export interface OnboardState {
     pages: number;
   } | null;
 
+  recordsJobId: string | null;
+
   // Records for current job
   onboardedRecords: OnboardStagedRecord[];
   skippedRecords: OnboardSkippedRecord[];
@@ -135,6 +137,7 @@ const initialState = {
     pages: number;
   } | null,
 
+  recordsJobId: null as string | null,
   onboardedRecords: [] as OnboardStagedRecord[],
   skippedRecords: [] as OnboardSkippedRecord[],
   problematicRecords: [] as OnboardProblematicRecord[],
@@ -246,16 +249,21 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
 
   // Fetch single job
   fetchJob: async (jobId) => {
-    set({ isLoadingJob: true, error: null });
+    set((state) => ({
+      isLoadingJob: true, error: null, recordsJobId: jobId,
+      ...(state.recordsJobId !== jobId ? { currentJob: null, onboardedRecords: [], skippedRecords: [], problematicRecords: [], recordsPagination: { onboarded: null, skipped: null, problematic: null } } : {}),
+    }));
 
     try {
       const job = await api.getOnboardJob(jobId);
+      if (get().recordsJobId !== jobId) return;
 
       set({
         currentJob: job,
         isLoadingJob: false,
       });
     } catch (error) {
+      if (get().recordsJobId !== jobId) return;
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch job";
 
@@ -409,10 +417,12 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
 
   // Fetch onboarded records
   fetchOnboardedRecords: async (jobId, page = 1, limit = 50) => {
-    set({ isLoadingRecords: true });
+    if (get().recordsJobId !== jobId) return;
+    set((state) => ({ isLoadingRecords: true, recordsPagination: { ...state.recordsPagination, onboarded: null } }));
 
     try {
       const data = await api.getOnboardedRecords(jobId, page, limit);
+      if (get().recordsJobId !== jobId) return;
 
       set({
         onboardedRecords: data.records,
@@ -429,16 +439,19 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to fetch onboarded records:", error);
+      if (get().recordsJobId !== jobId) return;
       set({ isLoadingRecords: false });
     }
   },
 
   // Fetch skipped records
   fetchSkippedRecords: async (jobId, page = 1, limit = 50) => {
-    set({ isLoadingRecords: true });
+    if (get().recordsJobId !== jobId) return;
+    set((state) => ({ isLoadingRecords: true, recordsPagination: { ...state.recordsPagination, skipped: null } }));
 
     try {
       const data = await api.getSkippedRecords(jobId, page, limit);
+      if (get().recordsJobId !== jobId) return;
 
       set({
         skippedRecords: data.records,
@@ -455,16 +468,19 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to fetch skipped records:", error);
+      if (get().recordsJobId !== jobId) return;
       set({ isLoadingRecords: false });
     }
   },
 
   // Fetch problematic records
   fetchProblematicRecords: async (jobId, page = 1, limit = 50) => {
-    set({ isLoadingRecords: true });
+    if (get().recordsJobId !== jobId) return;
+    set((state) => ({ isLoadingRecords: true, recordsPagination: { ...state.recordsPagination, problematic: null } }));
 
     try {
       const data = await api.getProblematicRecords(jobId, page, limit);
+      if (get().recordsJobId !== jobId) return;
 
       set({
         problematicRecords: data.records,
@@ -481,6 +497,7 @@ export const useOnboardStore = create<OnboardState>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to fetch problematic records:", error);
+      if (get().recordsJobId !== jobId) return;
       set({ isLoadingRecords: false });
     }
   },

@@ -789,6 +789,8 @@ export interface BackendOnboardJob {
   result?: OnboardJobResult;
   result_summary?: OnboardResultSummary;
   participant_count?: number;
+  skipped_count?: number;
+  problematic_count?: number;
   problematic_file_url?: string;
   problematic_file_path?: string;
   error_message?: string;
@@ -817,6 +819,8 @@ export interface FrontendOnboardJob {
   result?: OnboardJobResult;
   resultSummary?: OnboardResultSummary;
   participantCount?: number;
+  skippedCount?: number;
+  problematicCount?: number;
   problematicFileUrl?: string;
   errorMessage?: string;
   startedAt?: string;

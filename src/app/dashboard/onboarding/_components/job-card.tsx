@@ -117,6 +117,8 @@ export function JobCard({ job, onClick, compact = false }: JobCardProps) {
   const isDryRun = job.config?.dry_run;
   const participantCount = job.participantCount ?? job.result?.processed ?? job.resultSummary?.processed;
   const participantSource = job.participantCount != null ? "Current staged count" : participantCount != null ? "Stored result count" : "Count unavailable";
+  const skipped = job.skippedCount ?? progress?.skipped ?? job.result?.skipped ?? job.resultSummary?.skipped;
+  const errors = job.problematicCount ?? progress?.errors ?? job.result?.errors ?? job.resultSummary?.errors;
 
   if (compact) {
     return (
@@ -254,7 +256,7 @@ export function JobCard({ job, onClick, compact = false }: JobCardProps) {
         )}
 
         {/* Stats */}
-        {(progress || participantCount != null) && (
+        {(progress || participantCount != null || skipped != null || errors != null) && (
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-3 rounded-lg bg-green-50 border border-green-100">
               <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -270,19 +272,21 @@ export function JobCard({ job, onClick, compact = false }: JobCardProps) {
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <AlertCircle className="w-4 h-4 text-amber-600" />
                 <span className="text-lg font-bold text-amber-700">
-                  {(progress?.skipped ?? 0).toLocaleString()}
+                  {skipped == null ? "—" : skipped.toLocaleString()}
                 </span>
               </div>
               <p className="text-xs text-amber-600">Skipped</p>
+              <p className="text-xs text-gray-500">{job.skippedCount != null ? "Current records" : skipped != null ? "Historical count" : "Count unavailable"}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-red-50 border border-red-100">
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <XCircle className="w-4 h-4 text-red-600" />
                 <span className="text-lg font-bold text-red-700">
-                  {(progress?.errors ?? 0).toLocaleString()}
+                  {errors == null ? "—" : errors.toLocaleString()}
                 </span>
               </div>
-              <p className="text-xs text-red-600">Errors</p>
+              <p className="text-xs text-red-600">Needs attention</p>
+              <p className="text-xs text-gray-500">{job.problematicCount != null ? "Current records, including edited awaiting retry" : errors != null ? "Historical error count" : "Count unavailable"}</p>
             </div>
           </div>
         )}
