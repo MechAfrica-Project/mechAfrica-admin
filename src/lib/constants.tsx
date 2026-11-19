@@ -1,4 +1,4 @@
-import { Cloud, Home, ListTodo, Users, Wallet, Upload, Bell, Wrench, Sprout, Settings, PieChart } from "lucide-react";
+import { Cloud, Home, ListTodo, Users, Wallet, Upload, Bell, Wrench, Sprout, Settings, PieChart, Store } from "lucide-react";
 
 type NavTab = { title: string; path: string };
 type ActionTab = { title: string; type: "action"; action: string };
@@ -21,6 +21,7 @@ export const SidebarTabs = [
   { title: "Analytics", url: "/dashboard/analytics", icon: PieChart },
   { title: "Services", url: "/dashboard/services", icon: Wrench },
   { title: "Crops", url: "/dashboard/crops", icon: Sprout },
+  { title: "Market", url: "/dashboard/market", icon: Store },
   { title: "Bulk Onboarding", url: "/dashboard/onboarding", icon: Upload },
   { title: "Alerts", url: "/dashboard/alerts", icon: Bell },
   { title: "System Settings", url: "/dashboard/settings", icon: Settings },
@@ -71,6 +72,9 @@ export const SECTION_TABS: Record<string, TabItem[]> = {
   "/onboarding": [
     { title: "Upload", path: "/dashboard/onboarding/upload" },
     { title: "Jobs History", path: "/dashboard/onboarding/jobs" },
+  ],
+  "/market": [
+    { title: "Market Management", path: "/dashboard/market" },
   ],
   "/analytics": [
     { title: "Overview", path: "/dashboard/analytics" },

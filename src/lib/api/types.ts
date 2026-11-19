@@ -1009,6 +1009,47 @@ export interface OnboardCancelResponse {
 }
 
 // =============================================================================
+// Market Management Types
+// =============================================================================
+
+export type MarketPermission =
+  | "market.view"
+  | "market.manage_master_toggle"
+  | "market.manage_ussd_toggle"
+  | "market.manage_deal_modes"
+  | "market.manage_commission_policy"
+  | "market.manage_crop_region_rollout"
+  | "market.manage_agent_policies";
+
+export interface MarketSettingsScope { crop_id?: string; region_id?: string; }
+export interface MarketSettingsVersion {
+  id: string; version: number; scope: MarketSettingsScope;
+  effective_from: string; effective_to?: string;
+  values: Record<string, unknown>;
+}
+export interface EffectiveMarketSettings {
+  current?: MarketSettingsVersion;
+  scheduled: MarketSettingsVersion[];
+}
+export interface MarketAuditEntry {
+  id: string; actor_id: string; permission: MarketPermission; scope: MarketSettingsScope;
+  reason: string; effective_from: string; effective_to?: string;
+  created_at: string; changes?: Record<string, unknown>;
+}
+export interface MarketSettingsHistory { items: MarketAuditEntry[]; next_cursor?: string; }
+export interface MarketAgentPolicy {
+  agent_id: string; version: number; eligibility: string;
+  permitted_modes?: string[]; exposure_cap_minor: number;
+  commission_participant: boolean; suspended: boolean;
+}
+export interface MarketAgentPoliciesResponse { items: MarketAgentPolicy[]; next_cursor?: string; }
+export interface MarketQueueItem {
+  id: string; status: string; crop_id?: string; region_id?: string; deal_id?: string;
+  quantity_grams?: number;
+}
+export interface MarketQueueResponse { items: MarketQueueItem[]; }
+
+// =============================================================================
 // WebSocket Types
 // =============================================================================
 

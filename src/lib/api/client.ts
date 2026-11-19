@@ -200,11 +200,14 @@ class MechAfricaAPIClient {
    */
   private async post<T>(
     endpoint: string,
-    body?: Record<string, unknown>
+    body?: Record<string, unknown>,
+    idempotencyKey?: string
   ): Promise<ApiResponse<T>> {
+    const headers: Record<string, string> = { ...(this.getHeaders() as Record<string, string>) };
+    if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: this.getHeaders(),
+      headers,
       body: body ? JSON.stringify(body) : undefined,
     });
 
@@ -249,6 +252,97 @@ class MechAfricaAPIClient {
     }
 
     return response.json();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Market Management Endpoints
+  // ---------------------------------------------------------------------------
+
+  private async requestRaw<T>(
+    method: "GET" | "POST",
+    endpoint: string,
+    body?: Record<string, unknown>,
+    idempotencyKey?: string
+  ): Promise<T> {
+    const headers: Record<string, string> = { ...(this.getHeaders() as Record<string, string>) };
+    if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      let code = "market_settings_error";
+      try {
+        const errBody = await response.json();
+        code = errBody?.error?.code || errBody?.message || code;
+      } catch {
+        code = response.statusText || code;
+      }
+      throw new Error(code);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  async getMarketSettings(scope?: string) {
+    return this.requestRaw<import("./types").EffectiveMarketSettings>(
+      "GET",
+      `/admin/market/settings${scope ? `?scope=${encodeURIComponent(scope)}` : ""}`
+    );
+  }
+  async getEffectiveMarketPolicy(cropId?: string, regionId?: string) {
+    const params = new URLSearchParams();
+    if (cropId) params.set("crop_id", cropId);
+    if (regionId) params.set("region_id", regionId);
+    const qs = params.toString();
+    return this.requestRaw<import("./types").EffectiveMarketSettings>(
+      "GET",
+      `/admin/market/policies/effective${qs ? `?${qs}` : ""}`
+    );
+  }
+  async getMarketSettingsHistory(limit = 50, cursor?: string, scope?: string) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set("cursor", cursor);
+    if (scope) params.set("scope", scope);
+    return this.requestRaw<import("./types").MarketSettingsHistory>(
+      "GET",
+      `/admin/market/settings/history?${params}`
+    );
+  }
+  async createMarketSettingsVersion(body: Record<string, unknown>, idempotencyKey: string) {
+    return this.requestRaw<{
+      version: import("./types").MarketSettingsVersion;
+      effective: import("./types").EffectiveMarketSettings;
+    }>("POST", "/admin/market/settings/versions", body, idempotencyKey);
+  }
+  async cancelMarketSettingsVersion(versionId: string, body: { expected_version: number; reason: string }, idempotencyKey: string) {
+    return this.requestRaw<{
+      version: import("./types").MarketSettingsVersion;
+      effective: import("./types").EffectiveMarketSettings;
+    }>("POST", `/admin/market/settings/versions/${encodeURIComponent(versionId)}/cancel`, body as Record<string, unknown>, idempotencyKey);
+  }
+  async getMarketAgentPolicies(cursor?: string) {
+    return this.requestRaw<import("./types").MarketAgentPoliciesResponse>(
+      "GET",
+      `/admin/market/agent-policies${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`
+    );
+  }
+  async createMarketAgentPolicyVersion(agentId: string, body: Record<string, unknown>, idempotencyKey: string) {
+    return this.requestRaw<import("./types").MarketAgentPolicy>(
+      "POST",
+      `/admin/market/agent-policies/${encodeURIComponent(agentId)}/versions`,
+      body,
+      idempotencyKey
+    );
+  }
+  async getMarketQueue(kind: "leads" | "listings" | "deals" | "settlements", status?: string) {
+    return this.requestRaw<import("./types").MarketQueueResponse>(
+      "GET",
+      `/admin/market/${kind}/queue${status ? `?status=${encodeURIComponent(status)}` : ""}`
+    );
   }
 
   // ---------------------------------------------------------------------------
