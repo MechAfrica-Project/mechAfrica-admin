@@ -185,6 +185,8 @@ export function transformBackendUser(user: BackendUser): FrontendUser {
     email: user.email || "",
     type: mapRoleToType(user.role),
     avatar: generateInitials(user.first_name, user.last_name),
+    role: user.admin?.admin_role || user.role,
+    permissions: user.admin?.permissions,
   };
 }
 

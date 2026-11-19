@@ -30,10 +30,21 @@ export default function MarketManagementPage() {
   const hasPermission = useCallback(
     (permission: MarketPermission): boolean => {
       if (!user) return false;
-      const role = (user as { role?: string; admin_type?: string }).role ?? (user as { admin_type?: string }).admin_type;
+      const u = user as {
+        role?: string;
+        type?: string;
+        admin_type?: string;
+        permissions?: string[];
+        admin?: { admin_role?: string; permissions?: string[] };
+      };
+      const role = u.admin?.admin_role ?? u.role ?? u.admin_type;
       if (role === "super_admin") return true;
-      const perms = (user as { permissions?: string[] }).permissions ?? [];
-      return perms.includes(permission);
+      const perms = u.permissions ?? u.admin?.permissions;
+      if (Array.isArray(perms) && perms.length > 0) {
+        return perms.includes(permission) || perms.includes("all") || perms.includes("*");
+      }
+      if (u.type === "Admin" || role === "admin") return true;
+      return false;
     },
     [user]
   );

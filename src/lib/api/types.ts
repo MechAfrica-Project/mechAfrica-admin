@@ -54,6 +54,11 @@ export interface BackendUser {
   roles?: string[];
   is_farmer?: boolean;
   is_provider?: boolean;
+  admin?: {
+    id: string;
+    admin_role?: string;
+    permissions?: string[];
+  };
 }
 
 export interface BackendLoginResponse {
@@ -370,6 +375,8 @@ export interface FrontendUser {
   email: string;
   type: "Admin" | "Agent" | "Farmer" | "Provider";
   avatar: string;
+  role?: string;
+  permissions?: string[];
 }
 
 export interface FrontendLoginResponse {
